@@ -1,0 +1,10 @@
+export const homeUrl = '/';
+export const layoutUrl = '/';
+export const employeesUrl = '/employees';
+export const employeeDetailUrl = '/employees/:id';
+export const accountsUrl = '/accounts';
+export const accountsDetailUrl = '/accounts/:id';
+export const batchesUrl = '/batches';
+export const batchDetailUrl = '/batches/:id';
+export const error403Url = '/403';
+export const error404Url = '/404';
