@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { Spin } from "antd";
 import MainLayout from "@/components/layout/MainLayout";
 import IDAView from "@/page/IDA/views/IDAview";
+import IDBView from "@/page/IDB/views/IDBView";
 
-import { layoutUrl, homeUrl, idaurl, error403Url } from "./urls";
+import { layoutUrl, homeUrl, idaurl, error403Url ,idburl } from "./urls";
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
@@ -38,7 +39,8 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Home /> },    
-      { path: idaurl, element: <IDAView /> },      
+      { path: idaurl, element: <IDAView /> },
+      { path: idburl, element: <IDBView /> },
     ],
   },
 
