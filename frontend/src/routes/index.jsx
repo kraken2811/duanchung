@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Spin } from "antd";
 import MainLayout from "@/components/layout/MainLayout";
 import IDAView from "@/page/IDA/views/IDAview";
-import IDBView from "@/page/IDB/views/IDBView";
+import IDBView from "@/page/IDB/views/IDBview";
 
 import { layoutUrl, homeUrl, idaurl, error403Url ,idburl } from "./urls";
 const Home = () => <h2>Home ✅</h2>;

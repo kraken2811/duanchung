@@ -1,18 +1,20 @@
 import { Steps } from "antd";
-import { FiFileText, FiUpload, FiCheckCircle } from "react-icons/fi";
+import { FiFileText, FiShoppingCart, FiCheckCircle } from "react-icons/fi";
 
 export default function IDBStepBar() {
   return (
     <Steps
-      current={0}
+      current={1} // Đang ở bước 2 (IDB)
       items={[
         {
-          title: "Thông tin tờ khai",
+          title: "Đăng ký (IDA)",
           icon: <FiFileText />,
+          description: "Đã hoàn thành"
         },
         {
-          title: "Chứng từ bổ sung",
-          icon: <FiUpload />,
+          title: "Khai chính thức (IDB)",
+          icon: <FiShoppingCart />,
+          description: "Đang thực hiện"
         },
         {
           title: "Hoàn tất",
