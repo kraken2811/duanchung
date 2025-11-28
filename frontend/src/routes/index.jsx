@@ -3,9 +3,15 @@ import { useEffect, useState } from "react";
 import { Spin } from "antd";
 import MainLayout from "@/components/layout/MainLayout";
 import IDAView from "@/page/IDA/views/IDAview";
-import IDBView from "@/page/IDB/views/IDBview";
+import IDBView from "@/page/IDB/views/IDBView";
+import IDCView from "@/page/IDC/views/IDCView";
+import DeclarationsView from "@/page/Declarations/views/DeclarationsView";
+import IDEView from "@/page/IDE/views/IDEview";
+import ProcessingLogView from "@/page/ProcessingLog/views/ProcessingLogView";
+import CustomsNotificationView from "@/page/CustomsNotification/views/CustomsNotificationView";
 
-import { layoutUrl, homeUrl, idaurl, error403Url ,idburl } from "./urls";
+
+import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl} from "./urls";
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
@@ -41,6 +47,11 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },    
       { path: idaurl, element: <IDAView /> },
       { path: idburl, element: <IDBView /> },
+      { path: idcurl, element: <IDCView /> },
+      { path: declarationsUrl, element: <DeclarationsView /> },
+      { path: ideurl, element: <IDEView /> },
+      { path: processingLog, element: <ProcessingLogView /> },
+      { path: hqNotifyUrl, element: <CustomsNotificationView /> },
     ],
   },
 
