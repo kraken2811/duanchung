@@ -1,5 +1,16 @@
 export const homeUrl = '/';
 export const layoutUrl = '/';
 export const idaurl = '/ida';
+export const idburl = '/idb';
+export const idcurl = '/idc';
+export const declarationsUrl = '/declarations';
+export const ideurl = '/ide';
+export const contractAppendixUrl = '/contract-appendix';
+export const contractInvoiceUrl = '/invoice';
+export const materialListUrl = '/contract-material';
+export const contractUrl = '/contracts';
+export const contractProductsUrl = '/contract-products';
+export const processingLog = '/logs';
+export const hqNotifyUrl = '/hq-notify';
 export const error403Url = '/403';
 export const error404Url = '/404';
