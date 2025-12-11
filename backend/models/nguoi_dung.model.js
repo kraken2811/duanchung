@@ -56,4 +56,25 @@ Nguoi_dung.delete = (id_nguoi_dung, callBack) => {
     callBack(null, "Xóa nguoi_dung id_nguoi_dung = " + "id_nguoi_dung" + " thành công");
   });
 };
+Nguoi_dung.login = (ten_dang_nhap, callBack) => {
+  const sqlString = `
+        SELECT 
+            nd.*,
+            vt.ten_vai_tro
+        FROM nguoi_dung nd
+        LEFT JOIN vai_tro vt ON nd.id_vai_tro = vt.id_vai_tro
+        WHERE nd.ten_dang_nhap = ?
+        LIMIT 1
+    `;
+  db.query(sqlString, [ten_dang_nhap], (err, result) => {
+    if (err) {
+      return callBack(err, null);
+    }
+    if (result.length > 0) {
+      return callBack(null, result[0]);
+    } else {
+      return callBack(null, null);
+    }
+  });
+};
 module.exports = Nguoi_dung;

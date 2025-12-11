@@ -1,11 +1,22 @@
-const express = require('express');
-const app = express();
-const port = 3000; // Cổng (port) mà server sẽ lắng nghe
+var express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+var app = express();
+app.use(cors());
+const port = 3000;
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
   res.send('Chào mừng bạn đến với server Node.js đầu tiên!');
 });
 
+
+var authRouter = require("./routes/auth.route");
+app.use("/auth", authRouter);
 var audit_logRouter = require('./routes/audit_log.route');
 app.use('/audit_logs', audit_logRouter);
 var bieu_thueRouter = require('./routes/bieu_thue.route');
