@@ -1,0 +1,664 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum loai_doi_tac {
+  XUAT_KHAU
+  NHAP_KHAU
+  DAI_LY
+  NHA_SAN_XUAT
+  GIA_CONG
+}
+
+enum trang_thai_nhap {
+  NHAP
+  DA_GUI
+  DA_DUYET
+}
+
+enum hanh_dong {
+  THEM
+  SUA
+  XOA
+}
+
+//////////////////////////////////////////////////////
+// CORE TABLES
+//////////////////////////////////////////////////////
+
+model vai_tro {
+  id_vai_tro  Int      @id @default(autoincrement())
+  ma_vai_tro  String   @unique
+  ten_vai_tro String
+  ghi_chu     String?
+  ngay_tao    DateTime @default(now())
+
+  nguoi_dung nguoi_dung[]
+}
+
+model cong_ty {
+  id_cong_ty    Int      @id @default(autoincrement())
+  ma_so_thue    String   @unique
+  ten_cong_ty   String
+  dia_chi       String?
+  ma_quoc_gia   String?
+  nguoi_lien_he String?
+  dien_thoai    String?
+  email         String?
+  ngay_tao      DateTime @default(now())
+
+  nguoi_dung       nguoi_dung[]
+  doi_tac          doi_tac[]
+  hop_dong         hop_dong[]
+  lo_hang          lo_hang[]
+  to_khai_hai_quan to_khai_hai_quan[]
+}
+
+model nguoi_dung {
+  id_nguoi_dung Int      @id @default(autoincrement())
+  ten_dang_nhap String   @unique
+  mat_khau      String
+  ho_ten        String?
+  email         String?
+  dien_thoai    String?
+  kich_hoat     Boolean  @default(true)
+  ngay_tao      DateTime @default(now())
+  ngay_cap_nhat DateTime @updatedAt
+
+  id_vai_tro Int?
+  vai_tro    vai_tro? @relation(fields: [id_vai_tro], references: [id_vai_tro])
+
+  id_cong_ty Int?
+  cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
+
+  hop_dong           hop_dong[]
+  audit_log          audit_log[]
+  thong_bao_he_thong thong_bao_he_thong[]
+  to_khai_hai_quan   to_khai_hai_quan[]
+  phu_luc_hop_dong   phu_luc_hop_dong[]
+  to_khai_tri_gia    to_khai_tri_gia[]
+  lich_su_trang_thai lich_su_trang_thai[]
+  cau_hinh_he_thong  cau_hinh_he_thong[]
+  tai_lieu_ky        tai_lieu[]           @relation("nguoi_ky")
+  tai_lieu_tai_len   tai_lieu[]           @relation("nguoi_tai_len")
+  loHangs            lo_hang[]
+}
+
+//////////////////////////////////////////////////////
+// BUSINESS
+//////////////////////////////////////////////////////
+
+model doi_tac {
+  id_doi_tac         Int          @id @default(autoincrement())
+  ma_so_thue         String?
+  ten_doi_tac        String
+  dia_chi            String?
+  ma_quoc_gia        String?
+  nguoi_lien_he      String?
+  dien_thoai_lien_he String?
+  email_lien_he      String?
+  loai_doi_tac       loai_doi_tac
+  ngay_tao           DateTime     @default(now())
+
+  id_cong_ty Int?
+  cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
+
+  hop_dongs          hop_dong[]
+  lo_hang_dai_ly     lo_hang[]  @relation("dai_ly")
+  lo_hang_van_chuyen lo_hang[]  @relation("van_chuyen")
+  hoa_don_ban        hoa_don[]  @relation("nguoi_ban")
+  hoa_don_mua        hoa_don[]  @relation("nguoi_mua")
+}
+
+//////////////////////////////////////////////////////
+// CONTRACT
+//////////////////////////////////////////////////////
+
+model hop_dong {
+  id_hop_dong          String    @id @db.Char(36)
+  so_hop_dong          String    @unique
+  loai_hop_dong        String
+  ngay_ky              DateTime?
+  ngay_het_han         DateTime?
+  hieu_luc_tu          DateTime?
+  hieu_luc_den         DateTime?
+  trang_thai           String?
+  tong_gia_tri         Decimal?  @db.Decimal(18, 2)
+  phi_gia_cong         Decimal?  @db.Decimal(18, 2)
+  ma_ngoai_te          String?
+  dieu_kien_thanh_toan String?
+  ma_cuc_hai_quan      String?
+  ngay_tao             DateTime  @default(now())
+  ngay_cap_nhat        DateTime  @updatedAt
+
+  id_cong_ty Int?
+  cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
+
+  id_doi_tac Int?
+  doi_tac    doi_tac? @relation(fields: [id_doi_tac], references: [id_doi_tac])
+
+  nguoi_tao  Int?
+  nguoi_dung nguoi_dung? @relation(fields: [nguoi_tao], references: [id_nguoi_dung])
+
+  vat_lieu_hop_dong vat_lieu_hop_dong[]
+  san_pham_hop_dong san_pham_hop_dong[]
+  danh_muc          danh_muc[]
+  phu_luc_hop_dong  phu_luc_hop_dong[]
+  van_ban_giay_phep van_ban_giay_phep[]
+  lo_hang           lo_hang[]
+  toKhaiHaiQuans    to_khai_hai_quan[]
+}
+
+model vat_lieu_hop_dong {
+  id_vat_lieu  Int      @id @default(autoincrement())
+  ma_vat_lieu  String
+  ten_vat_lieu String?
+  don_vi_tinh  String?
+  so_luong     Decimal? @db.Decimal(18, 4)
+  nguon_goc    String?
+  ma_hs        String?
+  don_gia      Decimal? @db.Decimal(18, 4)
+  tong_gia_tri Decimal? @db.Decimal(18, 2)
+  ngay_tao     DateTime @default(now())
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  danh_muc danh_muc[]
+}
+
+model san_pham_hop_dong {
+  id_san_pham  Int      @id @default(autoincrement())
+  ma_san_pham  String
+  ten_san_pham String?
+  don_vi_tinh  String?
+  so_luong     Decimal? @db.Decimal(18, 4)
+  ma_hs        String?
+  don_gia      Decimal? @db.Decimal(18, 4)
+  tong_gia_tri Decimal? @db.Decimal(18, 2)
+  ngay_tao     DateTime @default(now())
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  danh_muc danh_muc[]
+}
+
+model danh_muc {
+  id_danh_muc      Int              @id @default(autoincrement())
+  danh_muc         Decimal?         @db.Decimal(18, 6)
+  ty_le_hao_hut    Decimal?         @db.Decimal(5, 2)
+  ma_lenh_san_xuat String?
+  nam_tai_chinh    Int?
+  trang_thai       trang_thai_nhap?
+  ngay_gui         DateTime?
+  ngay_duyet       DateTime?
+  ngay_tao         DateTime         @default(now())
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  id_san_pham       Int?
+  san_pham_hop_dong san_pham_hop_dong? @relation(fields: [id_san_pham], references: [id_san_pham])
+
+  id_vat_lieu       Int?
+  vat_lieu_hop_dong vat_lieu_hop_dong? @relation(fields: [id_vat_lieu], references: [id_vat_lieu])
+}
+
+model phu_luc_hop_dong {
+  id_phu_luc    Int              @id @default(autoincrement())
+  so_phu_luc    String?
+  ngay_phu_luc  DateTime?
+  mo_ta         String?
+  loai_thay_doi String?
+  trang_thai    trang_thai_nhap?
+  ngay_tao      DateTime         @default(now())
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  nguoi_tao  Int?
+  nguoi_dung nguoi_dung? @relation(fields: [nguoi_tao], references: [id_nguoi_dung])
+}
+
+model van_ban_giay_phep {
+  id_van_ban Int      @id @default(autoincrement())
+  ma_so      String
+  loai       String?
+  ngay_tao   DateTime @default(now())
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+}
+
+//////////////////////////////////////////////////////
+// LOGISTICS
+//////////////////////////////////////////////////////
+
+model loai_van_tai {
+  id_loai_van_tai  Int      @id @default(autoincrement())
+  ma_loai_van_tai  String   @unique
+  ten_loai_van_tai String
+  mo_ta            String?
+  ngay_tao         DateTime @default(now())
+
+  lo_hang lo_hang[]
+}
+
+model lo_hang {
+  id_lo_hang        Int       @id @default(autoincrement())
+  so_lo_hang        String?   @unique
+  cang_xep_hang     String?
+  cang_do_hang      String?
+  ngay_du_kien_xuat DateTime?
+  ngay_du_kien_nhap DateTime?
+  tong_gia_tri      Decimal?  @db.Decimal(18, 2)
+  ma_ngoai_te       String?
+  mo_ta             String?
+  ngay_tao          DateTime  @default(now())
+  ngay_cap_nhat     DateTime  @updatedAt
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  id_cong_ty Int?
+  cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
+
+  id_dai_ly Int?
+  dai_ly    doi_tac? @relation("dai_ly", fields: [id_dai_ly], references: [id_doi_tac])
+
+  id_van_chuyen Int?
+  van_chuyen    doi_tac? @relation("van_chuyen", fields: [id_van_chuyen], references: [id_doi_tac])
+
+  id_loai_van_tai Int?
+  loai_van_tai    loai_van_tai? @relation(fields: [id_loai_van_tai], references: [id_loai_van_tai])
+
+  nguoi_tao  Int?
+  nguoi_dung nguoi_dung? @relation(fields: [nguoi_tao], references: [id_nguoi_dung])
+
+  hoa_don          hoa_don[]
+  van_don          van_don[]
+  container        container[]
+  to_khai_hai_quan to_khai_hai_quan[]
+}
+
+model hoa_don {
+  id_hoa_don          Int       @id @default(autoincrement())
+  so_hoa_don          String
+  ngay_hoa_don        DateTime?
+  tong_tien           Decimal?  @db.Decimal(18, 2)
+  ma_ngoai_te         String?
+  dieu_kien_giao_hang String?
+  ngay_tao            DateTime  @default(now())
+
+  id_lo_hang Int?
+  lo_hang    lo_hang? @relation(fields: [id_lo_hang], references: [id_lo_hang])
+
+  id_nguoi_ban Int?
+  nguoi_ban    doi_tac? @relation("nguoi_ban", fields: [id_nguoi_ban], references: [id_doi_tac])
+
+  id_nguoi_mua Int?
+  nguoi_mua    doi_tac? @relation("nguoi_mua", fields: [id_nguoi_mua], references: [id_doi_tac])
+}
+
+model van_don {
+  id_van_don   Int      @id @default(autoincrement())
+  so_van_don   String
+  ten_tau      String?
+  hanh_trinh   String?
+  so_container Int?
+  ngay_tao     DateTime @default(now())
+
+  id_lo_hang Int?
+  lo_hang    lo_hang? @relation(fields: [id_lo_hang], references: [id_lo_hang])
+}
+
+model container {
+  id_container     Int      @id @default(autoincrement())
+  so_container     String
+  so_chi           String?
+  loai_container   String?
+  trong_luong_brut Decimal? @db.Decimal(18, 3)
+  trong_luong_net  Decimal? @db.Decimal(18, 3)
+  ngay_tao         DateTime @default(now())
+
+  id_lo_hang Int?
+  lo_hang    lo_hang? @relation(fields: [id_lo_hang], references: [id_lo_hang])
+}
+
+//////////////////////////////////////////////////////
+// HẢI QUAN – THUẾ
+//////////////////////////////////////////////////////
+
+model ma_hs {
+  id_ma_hs               Int      @id @default(autoincrement())
+  ma_hs                  String   @unique
+  mo_ta                  String?
+  cap_do                 Int?
+  ma_cha                 String?
+  thue_nhap_khau         Decimal? @db.Decimal(10, 4)
+  thue_vat               Decimal? @db.Decimal(10, 4)
+  thue_xuat_khau         Decimal? @db.Decimal(10, 4)
+  thue_tieu_thu_dac_biet Decimal? @db.Decimal(10, 4)
+  thue_bao_ve_moi_truong Decimal? @db.Decimal(10, 4)
+  yeu_cau_giay_phep      Boolean  @default(false)
+  loai_giay_phep         String?
+  ngay_tao               DateTime @default(now())
+
+  bieu_thue bieu_thue[]
+}
+
+model bieu_thue {
+  id_bieu_thue           Int       @id @default(autoincrement())
+  hieu_luc_tu            DateTime
+  hieu_luc_den           DateTime?
+  thue_suat              Decimal?  @db.Decimal(10, 4)
+  thue_vat               Decimal?  @db.Decimal(10, 4)
+  thue_tieu_thu_dac_biet Decimal?  @db.Decimal(10, 4)
+  ghi_chu                String?
+
+  ma_hs     String
+  ma_hs_ref ma_hs  @relation(fields: [ma_hs], references: [ma_hs])
+
+  chi_tiet_to_khai chi_tiet_to_khai[]
+}
+
+model loai_hinh_dac_biet {
+  id_loai_hinh  Int     @id @default(autoincrement())
+  ma_loai_hinh  String?
+  ten_loai_hinh String?
+  mo_ta         String?
+
+  to_khai_hai_quan to_khai_hai_quan[]
+}
+
+model to_khai_hai_quan {
+  id_to_khai           Int       @id @default(autoincrement())
+  so_to_khai           String?   @unique
+  loai_to_khai         String
+  trang_thai_gui       String?
+  ma_thong_diep_vnacss String?
+  so_tiep_nhan_vnacss  String?
+  mau_kenh             String?
+  so_thong_bao_thue    String?
+  phan_loai            String
+  so_tien_thue         Decimal?  @db.Decimal(18, 2)
+  ma_cuc_hai_quan      String?
+  ngay_khai_bao        DateTime?
+  ngay_tao             DateTime  @default(now())
+  ngay_cap_nhat        DateTime  @updatedAt
+
+  id_lo_hang Int?
+  lo_hang    lo_hang? @relation(fields: [id_lo_hang], references: [id_lo_hang])
+
+  id_loai_hinh       Int?
+  loai_hinh_dac_biet loai_hinh_dac_biet? @relation(fields: [id_loai_hinh], references: [id_loai_hinh])
+
+  id_hop_dong String?
+  hop_dong    hop_dong? @relation(fields: [id_hop_dong], references: [id_hop_dong])
+
+  id_cong_ty Int?
+  cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
+
+  nguoi_tao  Int?
+  nguoi_dung nguoi_dung? @relation(fields: [nguoi_tao], references: [id_nguoi_dung])
+
+  chi_tiet_to_khai   chi_tiet_to_khai[]
+  to_khai_tri_gia    to_khai_tri_gia[]
+  phan_hoi_hai_quan  phan_hoi_hai_quan[]
+  thanh_toan_thue    thanh_toan_thue[]
+  lich_su_trang_thai lich_su_trang_thai[]
+  taiLieus           tai_lieu[]
+}
+
+model chi_tiet_to_khai {
+  id_chi_tiet    Int      @id @default(autoincrement())
+  so_dong        Int
+  ma_hs          String
+  mo_ta_hang_hoa String?
+  so_luong       Decimal? @db.Decimal(18, 4)
+  don_vi_tinh    String?
+  don_gia        Decimal? @db.Decimal(18, 4)
+  tong_gia_tri   Decimal? @db.Decimal(18, 2)
+  ma_ngoai_te    String?
+  ma_quoc_gia    String?
+  tien_thue      Decimal? @db.Decimal(18, 2)
+  tien_vat       Decimal? @db.Decimal(18, 2)
+  thue_bo_sung   Decimal? @db.Decimal(18, 2)
+  ngay_tao       DateTime @default(now())
+
+  id_to_khai       Int
+  to_khai_hai_quan to_khai_hai_quan @relation(fields: [id_to_khai], references: [id_to_khai])
+
+  id_bieu_thue Int?
+  bieu_thue    bieu_thue? @relation(fields: [id_bieu_thue], references: [id_bieu_thue])
+}
+
+model to_khai_tri_gia {
+  id_to_khai_tri_gia                    Int      @id @default(autoincrement())
+  ma_phan_loai_khai_tri_gia             String?
+  so_tiep_nhan_to_khai_tri_gia_tong_hop String?
+  ma_tien_te                            String?
+  gia_co_so_hieu_chinh                  Decimal? @db.Decimal(18, 2)
+  tong_he_so_phan_bo                    Decimal? @db.Decimal(18, 4)
+  nguoi_nop_thue                        String?
+  ngay_tao                              DateTime @default(now())
+
+  id_to_khai_hai_quan Int?
+  to_khai_hai_quan    to_khai_hai_quan? @relation(fields: [id_to_khai_hai_quan], references: [id_to_khai])
+
+  nguoi_tao  Int?
+  nguoi_dung nguoi_dung? @relation(fields: [nguoi_tao], references: [id_nguoi_dung])
+
+  khoan_dieu_chinh_tri_gia khoan_dieu_chinh_tri_gia[]
+}
+
+model khoan_dieu_chinh_tri_gia {
+  id_khoan_dieu_chinh Int      @id @default(autoincrement())
+  stt                 Int?
+  ma_ten              String?
+  ma_phan_loai        String?
+  ma_tien_te          String?
+  tri_gia_dieu_chinh  Decimal? @db.Decimal(18, 2)
+  tong_he_so_phan_bo  Decimal? @db.Decimal(18, 4)
+  loai_dieu_chinh     String?
+  ngay_tao            DateTime @default(now())
+
+  id_to_khai_tri_gia Int?
+  to_khai_tri_gia    to_khai_tri_gia? @relation(fields: [id_to_khai_tri_gia], references: [id_to_khai_tri_gia])
+
+  chi_tiet_dieu_chinh_tri_gia chi_tiet_dieu_chinh_tri_gia[]
+}
+
+model chi_tiet_dieu_chinh_tri_gia {
+  id_chi_tiet Int      @id @default(autoincrement())
+  ma_loai     String?
+  ma_tien_te  String?
+  phi         Decimal? @db.Decimal(18, 2)
+  so_dang_ky  String?
+  mo_ta       String?
+  ngay_tao    DateTime @default(now())
+
+  id_khoan_dieu_chinh      Int?
+  khoan_dieu_chinh_tri_gia khoan_dieu_chinh_tri_gia? @relation(fields: [id_khoan_dieu_chinh], references: [id_khoan_dieu_chinh])
+}
+
+model phan_hoi_hai_quan {
+  id_phan_hoi         Int      @id @default(autoincrement())
+  loai_thong_diep     String?
+  so_tiep_nhan_vnacss String?
+  mau_kenh            String?
+  ma_thong_diep       String?
+  noi_dung_thong_diep String?
+  du_lieu_goc         String?
+  ngay_nhan           DateTime @default(now())
+
+  id_to_khai       Int?
+  to_khai_hai_quan to_khai_hai_quan? @relation(fields: [id_to_khai], references: [id_to_khai])
+}
+
+model thanh_toan_thue {
+  id_thanh_toan          Int       @id @default(autoincrement())
+  so_tien                Decimal?  @db.Decimal(18, 2)
+  ma_ngoai_te            String?
+  phuong_thuc_thanh_toan String?
+  trang_thai_thanh_toan  String?
+  tham_chieu_ngan_hang   String?
+  ngay_thanh_toan        DateTime?
+  ngay_tao               DateTime  @default(now())
+
+  id_to_khai       Int?
+  to_khai_hai_quan to_khai_hai_quan? @relation(fields: [id_to_khai], references: [id_to_khai])
+
+  giao_dich_ngan_hang giao_dich_ngan_hang[]
+}
+
+model giao_dich_ngan_hang {
+  id_giao_dich        Int       @id @default(autoincrement())
+  ten_ngan_hang       String?
+  tai_khoan_ngan_hang String?
+  so_tien             Decimal?  @db.Decimal(18, 2)
+  thoi_gian_giao_dich DateTime?
+  ma_phan_hoi         String?
+  thong_diep_phan_hoi String?
+  ngay_tao            DateTime  @default(now())
+
+  id_thanh_toan   Int?
+  thanh_toan_thue thanh_toan_thue? @relation(fields: [id_thanh_toan], references: [id_thanh_toan])
+}
+
+//////////////////////////////////////////////////////
+// SYSTEM – LOG – AUDIT
+//////////////////////////////////////////////////////
+
+model audit_log {
+  id_log      BigInt    @id @default(autoincrement())
+  ten_bang    String
+  id_ban_ghi  Int
+  hanh_dong   hanh_dong
+  du_lieu_cu  Json?
+  du_lieu_moi Json?
+  ngay_tao    DateTime  @default(now())
+
+  id_nguoi_dung Int
+  nguoi_dung    nguoi_dung @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung])
+}
+
+model lich_su_trang_thai {
+  id_lich_su     Int      @id @default(autoincrement())
+  trang_thai_cu  String?
+  trang_thai_moi String?
+  ghi_chu        String?
+  ngay_thay_doi  DateTime @default(now())
+
+  id_to_khai       Int?
+  to_khai_hai_quan to_khai_hai_quan? @relation(fields: [id_to_khai], references: [id_to_khai])
+
+  nguoi_thay_doi Int?
+  nguoi_dung     nguoi_dung? @relation(fields: [nguoi_thay_doi], references: [id_nguoi_dung])
+}
+
+model thong_bao_he_thong {
+  id_thong_bao   Int      @id @default(autoincrement())
+  tieu_de        String?
+  noi_dung       String?
+  loai_thong_bao String?
+  id_lien_quan   Int?
+  da_doc         Boolean  @default(false)
+  ngay_tao       DateTime @default(now())
+
+  id_nguoi_dung Int?
+  nguoi_dung    nguoi_dung? @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung])
+}
+
+//////////////////////////////////////////////////////
+// FILE – DOCUMENT
+//////////////////////////////////////////////////////
+
+model tai_lieu {
+  id_tai_lieu              Int       @id @default(autoincrement())
+  loai_doi_tuong           String?
+  id_doi_tuong             Int?
+  loai_tai_lieu            String?
+  ten_file                 String?
+  duong_dan                String?
+  kich_thuoc               BigInt?
+  loai_mime                String?
+  ma_kiem_tra              String?
+  chu_ky_so                String?
+  ngay_ky                  DateTime?
+  ngay_tai_len             DateTime  @default(now())
+  ma_cuc_hai_quan          String?
+  nhom_xu_ly_ho_so         String?
+  phan_loai_khai_bao       String?
+  so_dien_thoai_nguoi_khai String?
+  so_quan_ly_noi_bo        String?
+  ghi_chu                  String?
+  so_dinh_kem              String?
+  trang_thai_gui           String?
+  ngay_gui                 DateTime?
+
+  nguoi_ky     Int?
+  nguoi_ky_ref nguoi_dung? @relation("nguoi_ky", fields: [nguoi_ky], references: [id_nguoi_dung])
+
+  nguoi_tai_len     Int?
+  nguoi_tai_len_ref nguoi_dung? @relation("nguoi_tai_len", fields: [nguoi_tai_len], references: [id_nguoi_dung])
+
+  id_to_khai       Int?
+  to_khai_hai_quan to_khai_hai_quan? @relation(fields: [id_to_khai], references: [id_to_khai])
+}
+
+//////////////////////////////////////////////////////
+// MASTER – LOCATION – INTEGRATION
+//////////////////////////////////////////////////////
+
+model dia_diem_kho_bai {
+  id_dia_diem     Int      @id @default(autoincrement())
+  ma_dia_diem     String   @unique
+  ten_dia_diem    String
+  dia_chi         String?
+  loai_dia_diem   String?
+  ma_cuc_hai_quan String?
+  id_tinh_thanh   Int?
+  ngay_tao        DateTime @default(now())
+}
+
+model log_tich_hop {
+  id_log           Int      @id @default(autoincrement())
+  ten_he_thong     String?
+  huong            String?
+  ma_tuong_quan    String?
+  du_lieu_yeu_cau  String?
+  du_lieu_phan_hoi String?
+  trang_thai       String?
+  thong_bao_loi    String?
+  ngay_tao         DateTime @default(now())
+}
+
+model cau_hinh_he_thong {
+  id_cau_hinh      Int      @id @default(autoincrement())
+  khoa_cau_hinh    String   @unique
+  gia_tri_cau_hinh String?
+  mo_ta            String?
+  ngay_cap_nhat    DateTime @updatedAt
+
+  nguoi_cap_nhat Int?
+  nguoi_dung     nguoi_dung? @relation(fields: [nguoi_cap_nhat], references: [id_nguoi_dung])
+}
+
+model quoc_gia {
+  id_quoc_gia  Int      @id @default(autoincrement())
+  ma_quoc_gia  String   @unique
+  ten_quoc_gia String?
+  ma_vung      String?
+  ngay_tao     DateTime @default(now())
+}

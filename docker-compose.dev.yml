@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ecus5-mysql-dev
+    restart: always
+    environment:
+      MYSQL_DATABASE: ecus5
+      MYSQL_USER: ecus5
+      MYSQL_PASSWORD: ecus5
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  backend:
+    build: ./backend
+    container_name: ecus5-backend-dev
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - mysql
+    ports:
+      - "3000:3000"
+    command: sh -c "npx prisma db push && npm run dev"
+
+  frontend:
+    build: ./frontend
+    container_name: ecus5-frontend-dev
+    ports:
+      - "5173:5173"
+    command: npm run dev
+
+volumes:
+  mysql_dev_data:
