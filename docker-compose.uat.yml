@@ -1,51 +1,28 @@
+version: "3.9"
+
 services:
-  db:
-    image: postgres:16
-    container_name: labelling-db-uat
-    env_file:
-      - .env.uat
+  mysql:
+    image: mysql:8.0
+    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - '5434:5432'
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - db-data-uat:/var/lib/postgresql/data
+      - mysql_uat:/var/lib/mysql
 
   backend:
-    build:
-      context: .
-      dockerfile: ./backend/Dockerfile
-      args:
-        DATABASE_URL: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}'
-    container_name: labelling-backend-uat
-    env_file:
-      - .env.uat
-      - backend/.env.uat
-    environment:
-      DATABASE_URL: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}'
-    ports:
-      - '3001:3000'
+    image: ecus5-backend:${IMAGE_TAG}
+    restart: always
     depends_on:
-      - db
-
-  frontend:
-    build:
-      context: .
-      dockerfile: ./frontend/Dockerfile
-      args:
-        VITE_BASE_URL: ${VITE_BASE_URL}
-    container_name: labelling-frontend-uat
-    env_file:
-      - .env.uat
-      - frontend/.env.uat
+      - mysql
     environment:
-      VITE_BASE_URL: 'http://192.168.20.180:3001'
+      NODE_ENV: uat
+      DATABASE_URL: ${DATABASE_URL}
     ports:
-      - '8080:80'
-    depends_on:
-      - backend
+      - "3001:3000"
+    command: node app.js
 
 volumes:
-  db-data-uat:
+  mysql_uat:
