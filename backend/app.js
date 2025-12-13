@@ -1,81 +1,15 @@
 const express = require('express');
+require('dotenv').config();
+
+const routes = require('./src/routes');
+
 const app = express();
-const port = 3000; // Cổng (port) mà server sẽ lắng nghe
-
+const PORT = process.env.PORT || 3000;
+app.use(express.json());
 app.get('/', (req, res) => {
-  res.send('Chào mừng bạn đến với server Node.js đầu tiên!');
+  res.send('ECUS5 API is running 🚀');
 });
-
-var audit_logRouter = require('./routes/audit_log.route');
-app.use('/audit_logs', audit_logRouter);
-var bieu_thueRouter = require('./routes/bieu_thue.route');
-app.use('/bieu_thues', bieu_thueRouter);
-var cau_hinh_he_thongRouter = require('./routes/cau_hinh_he_thong.route');
-app.use('/cau_hinh_he_thongs', cau_hinh_he_thongRouter);
-var chi_tiet_dieu_chinh_tri_giaRouter = require('./routes/chi_tiet_dieu_chinh_tri_gia.route');
-app.use('/chi_tiet_dieu_chinh_tri_gias', chi_tiet_dieu_chinh_tri_giaRouter);
-var chi_tiet_to_khaiRouter = require('./routes/chi_tiet_to_khai.route');
-app.use('/chi_tiet_to_khais', chi_tiet_to_khaiRouter);
-var cong_tyRouter = require('./routes/cong_ty.route');
-app.use('/cong_tys', cong_tyRouter);
-var containerRouter = require('./routes/container.route');
-app.use('/containers', containerRouter);
-var danh_mucRouter = require('./routes/danh_muc.route');
-app.use('/danh_mucs', danh_mucRouter);
-var dia_diem_kho_baiRouter = require('./routes/dia_diem_kho_bai.route');
-app.use('/dia_diem_kho_bais', dia_diem_kho_baiRouter);
-var doi_tacRouter = require('./routes/doi_tac.route');
-app.use('/doi_tacs', doi_tacRouter);
-var giao_dich_ngan_hangRouter = require('./routes/giao_dich_ngan_hang.route');
-app.use('/giao_dich_ngan_hangs', giao_dich_ngan_hangRouter);
-var hoa_donRouter = require('./routes/hoa_don.route');
-app.use('/hoa_dons', hoa_donRouter);
-var hop_dongRouter = require('./routes/hop_dong.route');
-app.use('/hop_dongs', hop_dongRouter);
-var khoan_dieu_chinh_tri_giaRouter = require('./routes/khoan_dieu_chinh_tri_gia.route');
-app.use('/khoan_dieu_chinh_tri_gias', khoan_dieu_chinh_tri_giaRouter);
-var lich_su_trang_thaiRouter = require('./routes/lich_su_trang_thai.route');
-app.use('/lich_su_trang_thais', lich_su_trang_thaiRouter);
-var lo_hangRouter = require('./routes/lo_hang.route');
-app.use('/lo_hangs', lo_hangRouter);
-var loai_hinh_dac_bietRouter = require('./routes/loai_hinh_dac_biet.route');
-app.use('/loai_hinh_dac_biets', loai_hinh_dac_bietRouter);
-var loai_van_taiRouter = require('./routes/loai_van_tai.route');
-app.use('/loai_van_tais', loai_van_taiRouter);
-var log_tich_hopRouter = require('./routes/log_tich_hop.route');
-app.use('/log_tich_hops', log_tich_hopRouter);
-var ma_hsRouter = require('./routes/ma_hs.route');
-app.use('/ma_hss', ma_hsRouter);
-var nguoi_dungRouter = require('./routes/nguoi_dung.route');
-app.use('/nguoi_dungs', nguoi_dungRouter);
-var phan_hoi_hai_quanRouter = require('./routes/phan_hoi_hai_quan.route');
-app.use('/phan_hoi_hai_quans', phan_hoi_hai_quanRouter);
-var phu_luc_hop_dongRouter = require('./routes/phu_luc_hop_dong.route');
-app.use('/phu_luc_hop_dongs', phu_luc_hop_dongRouter);
-var quoc_giaRouter = require('./routes/quoc_gia.route');
-app.use('/quoc_gias', quoc_giaRouter);
-var san_pham_hop_dongRouter = require('./routes/san_pham_hop_dong.route');
-app.use('/san_pham_hop_dongs', san_pham_hop_dongRouter);
-var tai_lieuRouter = require('./routes/tai_lieu.route');
-app.use('/tai_lieus', tai_lieuRouter);
-var thanh_toan_thueRouter = require('./routes/thanh_toan_thue.route');
-app.use('/thanh_toan_thues', thanh_toan_thueRouter);
-var thong_bao_he_thongRouter = require('./routes/thong_bao_he_thong.route');
-app.use('/thong_bao_he_thongs', thong_bao_he_thongRouter);
-var to_khai_hai_quanRouter = require('./routes/to_khai_hai_quan.route');
-app.use('/to_khai_hai_quans', to_khai_hai_quanRouter);
-var to_khai_tri_giaRouter = require('./routes/to_khai_tri_gia.route');
-app.use('/to_khai_tri_gias', to_khai_tri_giaRouter);
-var vai_troRouter = require('./routes/vai_tro.route');
-app.use('/vai_tros', vai_troRouter);
-var van_ban_giay_phepRouter = require('./routes/van_ban_giay_phep.route');
-app.use('/van_ban_giay_pheps', van_ban_giay_phepRouter);
-var van_donRouter = require('./routes/van_don.route');
-app.use('/van_dons', van_donRouter);
-var vat_lieu_hop_dongRouter = require('./routes/vat_lieu_hop_dong.route');
-app.use('/vat_lieu_hop_dongs', vat_lieu_hop_dongRouter);
-
-// Khởi động server
-app.listen(port, () => {
-  console.log(`Server đang chạy tại http://localhost:${port}`);
+app.use('/api', routes);
+app.listen(PORT, () => {
+  console.log(`Server đang chạy tại http://localhost:${PORT}`);
 });

@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_uat:/var/lib/mysql
+
+  backend:
+    image: ecus5-backend:${IMAGE_TAG}
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      NODE_ENV: uat
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "3001:3000"
+    command: node app.js
+
+volumes:
+  mysql_uat:

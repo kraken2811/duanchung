@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ecus5-mysql-local
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command:
+      --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_local:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: ecus5-backend-local
+    depends_on:
+      - mysql
+    environment:
+      NODE_ENV: local
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "
+      npx prisma generate &&
+      npx prisma db push &&
+      node app.js
+      "
+
+volumes:
+  mysql_local:
