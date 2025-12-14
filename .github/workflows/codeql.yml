@@ -1,10 +1,10 @@
 name: Code Quality - CodeQL
 
 on:
-  push:
-    branches: [ main, develop, release ]
   pull_request:
     branches: [ main, develop, release ]
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -25,15 +25,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          trap-caching: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: |
+          if [ -f backend/package.json ]; then
+            cd backend
+            npm ci || npm install
+            cd ..
+          fi
 
-      # Nếu project cần build (React / Node)
+          if [ -f frontend/package.json ]; then
+            cd frontend
+            npm ci || npm install
+            cd ..
+          fi
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
+        uses: github/codeql-action/autobuild@v4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
