@@ -1,10 +1,18 @@
 name: Code Quality - CodeQL
 
 on:
-  pull_request:
-    branches: [ main, develop, release ]
   push:
-    branches: [ main ]
+    branches:
+      - master
+      - main
+      - develop
+      - release
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+      - release
   workflow_dispatch:
 
 jobs:
@@ -20,43 +28,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript-typescript ]
+        language: [ javascript ]
 
     steps:
+      # 1️⃣ Checkout source
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
 
+      # 3️⃣ Initialize CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
 
+      # 4️⃣ Install Backend dependencies (nếu có)
       - name: Install Backend dependencies
-        if: hashFiles('backend/package.json') != ''
         run: |
-          cd backend
-          npm ci
+          if [ -f backend/package.json ]; then
+            echo "Installing backend dependencies"
+            cd backend
+            npm install --ignore-scripts
+            cd ..
+          else
+            echo "No backend/package.json found"
+          fi
 
+      # 5️⃣ Install Frontend dependencies (nếu có)
       - name: Install Frontend dependencies
-        if: hashFiles('frontend/package.json') != ''
         run: |
-          cd frontend
-          npm ci
+          if [ -f frontend/package.json ]; then
+            echo "Installing frontend dependencies"
+            cd frontend
+            npm install --ignore-scripts
+            cd ..
+          else
+            echo "No frontend/package.json found"
+          fi
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
+      # 6️⃣ Analyze
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:${{ matrix.language }}"
