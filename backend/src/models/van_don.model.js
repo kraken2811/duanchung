@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 const prisma = require('@prisma/client').prisma;
-=======
-const db = require("../../common/db");
->>>>>>> Stashed changes
 const Van_don = (van_don) => {
   this.id_van_don = van_don.id_van_don;
   this.so_van_don = van_don.so_van_don;
