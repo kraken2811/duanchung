@@ -69,7 +69,7 @@ module.exports = {
   // Xóa log tích hợp
   delete: (req, res) => {
     const id = req.params.id;
-    Log_tich_hop.delete(id, (err, result) => {
+    Log_tich_hop.remove(id, (err, result) => {
       if (err) {
         return res.status(500).json({
           message: "Lỗi khi xóa log tích hợp",

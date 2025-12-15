@@ -1,58 +1,79 @@
-const prisma = require('@prisma/client').prisma;
-const Khoan_dieu_chinh_tri_gia = (khoan_dieu_chinh_tri_gia) => {
-  this.id_khoan_dieu_chinh = khoan_dieu_chinh_tri_gia.id_khoan_dieu_chinh;
-  this.id_to_khai_tri_gia = khoan_dieu_chinh_tri_gia.id_to_khai_tri_gia;
-  this.stt = khoan_dieu_chinh_tri_gia.stt;
-  this.ma_ten = khoan_dieu_chinh_tri_gia.ma_ten;
-  this.ma_phan_loai = khoan_dieu_chinh_tri_gia.ma_phan_loai;
-  this.ma_tien_te = khoan_dieu_chinh_tri_gia.ma_tien_te;
-  this.tri_gia_dieu_chinh = khoan_dieu_chinh_tri_gia.tri_gia_dieu_chinh;
-  this.tong_he_so_phan_bo = khoan_dieu_chinh_tri_gia.tong_he_so_phan_bo;
-  this.loai_dieu_chinh = khoan_dieu_chinh_tri_gia.loai_dieu_chinh;
-  this.ngay_tao = khoan_dieu_chinh_tri_gia.ngay_tao;
-};
-Khoan_dieu_chinh_tri_gia.getById = (id_khoan_dieu_chinh, callback) => {
-  const sqlString = "SELECT * FROM khoan_dieu_chinh_tri_gia WHERE id_khoan_dieu_chinh = ? ";
-  db.query(sqlString, [id_khoan_dieu_chinh], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả khoản điều chỉnh trị giá
+ */
+const getAll = () => {
+  return prisma.khoan_dieu_chinh_tri_gia.findMany({
+    orderBy: {
+      id_khoan_dieu_chinh: 'desc',
+    },
   });
 };
-Khoan_dieu_chinh_tri_gia.getAll = (callback) => {
-  const sqlString = "SELECT * FROM khoan_dieu_chinh_tri_gia ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy khoản điều chỉnh trị giá theo ID
+ */
+const getById = (id_khoan_dieu_chinh) => {
+  return prisma.khoan_dieu_chinh_tri_gia.findUnique({
+    where: { id_khoan_dieu_chinh },
   });
 };
-Khoan_dieu_chinh_tri_gia.insert = (khoan_dieu_chinh_tri_gia, callBack) => {
-  const sqlString = "INSERT INTO khoan_dieu_chinh_tri_gia SET ?";
-  db.query(sqlString, [khoan_dieu_chinh_tri_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_khoan_dieu_chinh : res.insertId, ...khoan_dieu_chinh_tri_gia });
+
+/**
+ * Thêm mới khoản điều chỉnh trị giá
+ */
+const insert = (data) => {
+  return prisma.khoan_dieu_chinh_tri_gia.create({
+    data: {
+      id_to_khai_tri_gia: data.id_to_khai_tri_gia,
+      stt: data.stt,
+      ma_ten: data.ma_ten,
+      ma_phan_loai: data.ma_phan_loai,
+      ma_tien_te: data.ma_tien_te,
+      tri_gia_dieu_chinh: data.tri_gia_dieu_chinh,
+      tong_he_so_phan_bo: data.tong_he_so_phan_bo,
+      loai_dieu_chinh: data.loai_dieu_chinh,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Khoan_dieu_chinh_tri_gia.update = (khoan_dieu_chinh_tri_gia, id_khoan_dieu_chinh, callBack) => {
-  const sqlString = "UPDATE khoan_dieu_chinh_tri_gia SET ? WHERE id_khoan_dieu_chinh = ?";
-  db.query(sqlString, [khoan_dieu_chinh_tri_gia, id_khoan_dieu_chinh], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật khoan_dieu_chinh_tri_gia id_khoan_dieu_chinh = " + "id_khoan_dieu_chinh" + " thành công");
+
+/**
+ * Cập nhật khoản điều chỉnh trị giá
+ */
+const update = (id_khoan_dieu_chinh, data) => {
+  return prisma.khoan_dieu_chinh_tri_gia.update({
+    where: { id_khoan_dieu_chinh },
+    data: {
+      id_to_khai_tri_gia: data.id_to_khai_tri_gia,
+      stt: data.stt,
+      ma_ten: data.ma_ten,
+      ma_phan_loai: data.ma_phan_loai,
+      ma_tien_te: data.ma_tien_te,
+      tri_gia_dieu_chinh: data.tri_gia_dieu_chinh,
+      tong_he_so_phan_bo: data.tong_he_so_phan_bo,
+      loai_dieu_chinh: data.loai_dieu_chinh,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Khoan_dieu_chinh_tri_gia.delete = (id_khoan_dieu_chinh, callBack) => {
-  db.query("DELETE FROM khoan_dieu_chinh_tri_gia WHERE id_khoan_dieu_chinh = ?", [id_khoan_dieu_chinh], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa khoan_dieu_chinh_tri_gia id_khoan_dieu_chinh = " + "id_khoan_dieu_chinh" + " thành công");
+
+/**
+ * Xóa khoản điều chỉnh trị giá
+ * ⚠️ Nghiệp vụ tài chính: nên cân nhắc soft delete
+ */
+const remove = (id_khoan_dieu_chinh) => {
+  return prisma.khoan_dieu_chinh_tri_gia.delete({
+    where: { id_khoan_dieu_chinh },
   });
 };
-module.exports = Khoan_dieu_chinh_tri_gia;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

@@ -1,9 +1,15 @@
-var express = require('express');
-var router = express.Router();
-const to_khai_hai_quanController = require("../controllers/to_khai_hai_quan.controller");
-router.get('/', to_khai_hai_quanController.getAll);
-router.get('/:id',  to_khai_hai_quanController.getById);
-router.post('/',  to_khai_hai_quanController.insert);
-router.put('/:id',  to_khai_hai_quanController.update);
-router.delete('/:id', to_khai_hai_quanController.delete);
+// routes/to_khai_hai_quan.route.js
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/to_khai_hai_quan.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/lo-hang/:id_lo_hang", controller.getByLoHang);
+router.get("/cong-ty/:id_cong_ty", controller.getByCongTy);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.patch("/:id/vnaccs", controller.updateVNACCS);
+router.delete("/:id", controller.delete);
+
 module.exports = router;

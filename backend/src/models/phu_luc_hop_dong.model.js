@@ -1,57 +1,86 @@
-const prisma = require('@prisma/client').prisma;
-const Phu_luc_hop_dong = (phu_luc_hop_dong) => {
-  this.id_phu_luc = phu_luc_hop_dong.id_phu_luc;
-  this.id_hop_dong = phu_luc_hop_dong.id_hop_dong;
-  this.so_phu_luc = phu_luc_hop_dong.so_phu_luc;
-  this.ngay_phu_luc = phu_luc_hop_dong.ngay_phu_luc;
-  this.mo_ta = phu_luc_hop_dong.mo_ta;
-  this.loai_thay_doi = phu_luc_hop_dong.loai_thay_doi;
-  this.trang_thai = phu_luc_hop_dong.trang_thai;
-  this.nguoi_tao = phu_luc_hop_dong.nguoi_tao;
-  this.ngay_tao = phu_luc_hop_dong.ngay_tao;
-};
-Phu_luc_hop_dong.getById = (id_phu_luc, callback) => {
-  const sqlString = "SELECT * FROM phu_luc_hop_dong WHERE id_phu_luc = ? ";
-  db.query(sqlString, [id_phu_luc], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả phụ lục hợp đồng
+ */
+const getAll = () => {
+  return prisma.phu_luc_hop_dong.findMany({
+    orderBy: {
+      id_phu_luc: 'desc',
+    },
   });
 };
-Phu_luc_hop_dong.getAll = (callback) => {
-  const sqlString = "SELECT * FROM phu_luc_hop_dong ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy phụ lục hợp đồng theo ID
+ */
+const getById = (id_phu_luc) => {
+  return prisma.phu_luc_hop_dong.findUnique({
+    where: { id_phu_luc },
   });
 };
-Phu_luc_hop_dong.insert = (phu_luc_hop_dong, callBack) => {
-  const sqlString = "INSERT INTO phu_luc_hop_dong SET ?";
-  db.query(sqlString, [phu_luc_hop_dong], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_phu_luc : res.insertId, ...phu_luc_hop_dong });
+
+/**
+ * Lấy phụ lục theo hợp đồng
+ */
+const getByHopDong = (id_hop_dong) => {
+  return prisma.phu_luc_hop_dong.findMany({
+    where: { id_hop_dong },
+    orderBy: {
+      ngay_phu_luc: 'desc',
+    },
   });
 };
-Phu_luc_hop_dong.update = (phu_luc_hop_dong, id_phu_luc, callBack) => {
-  const sqlString = "UPDATE phu_luc_hop_dong SET ? WHERE id_phu_luc = ?";
-  db.query(sqlString, [phu_luc_hop_dong, id_phu_luc], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật phu_luc_hop_dong id_phu_luc = " + "id_phu_luc" + " thành công");
+
+/**
+ * Thêm mới phụ lục hợp đồng
+ */
+const insert = (data) => {
+  return prisma.phu_luc_hop_dong.create({
+    data: {
+      id_hop_dong: data.id_hop_dong,
+      so_phu_luc: data.so_phu_luc,
+      ngay_phu_luc: data.ngay_phu_luc,
+      mo_ta: data.mo_ta,
+      loai_thay_doi: data.loai_thay_doi,
+      trang_thai: data.trang_thai ?? 'DRAFT',
+      nguoi_tao: data.nguoi_tao,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-Phu_luc_hop_dong.delete = (id_phu_luc, callBack) => {
-  db.query("DELETE FROM phu_luc_hop_dong WHERE id_phu_luc = ?", [id_phu_luc], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa phu_luc_hop_dong id_phu_luc = " + "id_phu_luc" + " thành công");
+
+/**
+ * Cập nhật phụ lục hợp đồng
+ * ⚠️ Chỉ nên cho update khi còn DRAFT
+ */
+const update = (id_phu_luc, data) => {
+  return prisma.phu_luc_hop_dong.update({
+    where: { id_phu_luc },
+    data: {
+      mo_ta: data.mo_ta,
+      loai_thay_doi: data.loai_thay_doi,
+      trang_thai: data.trang_thai,
+    },
   });
 };
-module.exports = Phu_luc_hop_dong;
+
+/**
+ * ❌ KHÔNG NÊN delete phụ lục hợp đồng
+ * Nếu bắt buộc → soft delete / trạng thái HỦY
+ */
+const remove = (id_phu_luc) => {
+  return prisma.phu_luc_hop_dong.delete({
+    where: { id_phu_luc },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByHopDong,
+  insert,
+  update,
+  remove,
+};

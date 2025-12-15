@@ -81,7 +81,7 @@ exports.delete = (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: "id không hợp lệ" });
 
-  DanhMuc.delete(id, (err, msg) => {
+  DanhMuc.remove(id, (err, msg) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: msg });
   });

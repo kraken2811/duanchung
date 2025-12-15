@@ -1,53 +1,78 @@
-const prisma = require('@prisma/client').prisma;
-const Quoc_gia = (quoc_gia) => {
-  this.id_quoc_gia = quoc_gia.id_quoc_gia;
-  this.ma_quoc_gia = quoc_gia.ma_quoc_gia;
-  this.ten_quoc_gia = quoc_gia.ten_quoc_gia;
-  this.ma_vung = quoc_gia.ma_vung;
-  this.ngay_tao = quoc_gia.ngay_tao;
-};
-Quoc_gia.getById = (id_quoc_gia, callback) => {
-  const sqlString = "SELECT * FROM quoc_gia WHERE id_quoc_gia = ? ";
-  db.query(sqlString, [id_quoc_gia], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả quốc gia
+ */
+const getAll = () => {
+  return prisma.quoc_gia.findMany({
+    orderBy: {
+      ten_quoc_gia: 'asc',
+    },
   });
 };
-Quoc_gia.getAll = (callback) => {
-  const sqlString = "SELECT * FROM quoc_gia ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy quốc gia theo ID
+ */
+const getById = (id_quoc_gia) => {
+  return prisma.quoc_gia.findUnique({
+    where: { id_quoc_gia },
   });
 };
-Quoc_gia.insert = (quoc_gia, callBack) => {
-  const sqlString = "INSERT INTO quoc_gia SET ?";
-  db.query(sqlString, [quoc_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_quoc_gia : res.insertId, ...quoc_gia });
+
+/**
+ * Lấy quốc gia theo mã quốc gia
+ */
+const getByMa = (ma_quoc_gia) => {
+  return prisma.quoc_gia.findUnique({
+    where: { ma_quoc_gia },
   });
 };
-Quoc_gia.update = (quoc_gia, id_quoc_gia, callBack) => {
-  const sqlString = "UPDATE quoc_gia SET ? WHERE id_quoc_gia = ?";
-  db.query(sqlString, [quoc_gia, id_quoc_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật quoc_gia id_quoc_gia = " + "id_quoc_gia" + " thành công");
+
+/**
+ * Thêm mới quốc gia
+ */
+const insert = (data) => {
+  return prisma.quoc_gia.create({
+    data: {
+      ma_quoc_gia: data.ma_quoc_gia,
+      ten_quoc_gia: data.ten_quoc_gia,
+      ma_vung: data.ma_vung,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-Quoc_gia.delete = (id_quoc_gia, callBack) => {
-  db.query("DELETE FROM quoc_gia WHERE id_quoc_gia = ?", [id_quoc_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa quoc_gia id_quoc_gia = " + "id_quoc_gia" + " thành công");
+
+/**
+ * Cập nhật quốc gia
+ */
+const update = (id_quoc_gia, data) => {
+  return prisma.quoc_gia.update({
+    where: { id_quoc_gia },
+    data: {
+      ma_quoc_gia: data.ma_quoc_gia,
+      ten_quoc_gia: data.ten_quoc_gia,
+      ma_vung: data.ma_vung,
+    },
   });
 };
-module.exports = Quoc_gia;
+
+/**
+ * ❌ KHÔNG NÊN delete cứng quốc gia
+ * Nếu bắt buộc → soft delete / is_active
+ */
+const remove = (id_quoc_gia) => {
+  return prisma.quoc_gia.delete({
+    where: { id_quoc_gia },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByMa,
+  insert,
+  update,
+  remove,
+};
