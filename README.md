@@ -70,3 +70,4 @@ npx exec prisma migrate dev       # Tạo migration mới
 npx exec prisma generate          # Tạo Prisma Client
 npx exec prisma studio           # Mở Prisma Studio
 
+docker compose -f docker-compose.dev.yml up -d --build

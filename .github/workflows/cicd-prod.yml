@@ -5,46 +5,28 @@ on:
 
 jobs:
   deploy-prod:
-    name: Deploy ECUS5 PROD
     runs-on: [self-hosted, prod]
 
     environment:
       name: production
       url: https://ecus5.your-domain.com
 
-    env:
-      ENV: prod
-
     steps:
-      # =====================================================
-      # 1. Checkout
-      # =====================================================
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # =====================================================
-      # 2. Docker check
-      # =====================================================
       - name: Check Docker
         run: |
           docker --version
           docker compose version
 
-      # =====================================================
-      # 3. Create env files
-      # =====================================================
       - name: Create env files
         run: |
           echo "${{ secrets.ENV_PROD_ROOT }}" > .env.prod
-
           mkdir -p backend frontend
-
           echo "${{ secrets.ENV_PROD_BACKEND }}" > backend/.env.prod
           echo "${{ secrets.ENV_PROD_FRONTEND }}" > frontend/.env.prod
 
-      # =====================================================
-      # 4. Stop containers
-      # =====================================================
       - name: Stop containers
         run: |
           docker compose \
@@ -52,19 +34,13 @@ jobs:
             -f docker-compose.prod.yml \
             down
 
-      # =====================================================
-      # 5. Deploy
-      # =====================================================
-      - name: Build & deploy
+      - name: Build & Deploy PROD
         run: |
           docker compose \
             --env-file .env.prod \
             -f docker-compose.prod.yml \
             up -d --build
 
-      # =====================================================
-      # 6. Prisma migrate (PROD)
-      # =====================================================
       - name: Prisma migrate (PROD)
         run: |
           docker compose \
@@ -72,8 +48,5 @@ jobs:
             exec backend \
             npx prisma migrate deploy
 
-      # =====================================================
-      # 7. Cleanup
-      # =====================================================
-      - name: Cleanup Docker
+      - name: Cleanup
         run: docker image prune -f

@@ -2,47 +2,29 @@ name: Deploy ECUS5 - UAT (Self-hosted)
 
 on:
   push:
-    branches: ['release']
+    branches: [release]
   workflow_dispatch:
 
 jobs:
   deploy-uat:
-    name: Deploy ECUS5 UAT
     runs-on: [self-hosted, uat]
 
-    env:
-      ENV: uat
-
     steps:
-      # =====================================================
-      # 1. Checkout source
-      # =====================================================
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # =====================================================
-      # 2. Check Docker
-      # =====================================================
       - name: Check Docker
         run: |
           docker --version
           docker compose version
 
-      # =====================================================
-      # 3. Create env files from Secrets
-      # =====================================================
       - name: Create env files
         run: |
           echo "${{ secrets.ENV_UAT_ROOT }}" > .env.uat
-
           mkdir -p backend frontend
-
           echo "${{ secrets.ENV_UAT_BACKEND }}" > backend/.env.uat
           echo "${{ secrets.ENV_UAT_FRONTEND }}" > frontend/.env.uat
 
-      # =====================================================
-      # 4. Stop old containers
-      # =====================================================
       - name: Stop containers
         run: |
           docker compose \
@@ -50,28 +32,19 @@ jobs:
             -f docker-compose.uat.yml \
             down
 
-      # =====================================================
-      # 5. Build & deploy
-      # =====================================================
-      - name: Build & deploy
+      - name: Build & Deploy
         run: |
           docker compose \
             --env-file .env.uat \
             -f docker-compose.uat.yml \
             up -d --build
 
-      # =====================================================
-      # 6. Prisma migrate (UAT)
-      # =====================================================
-      - name: Prisma migrate
+      - name: Prisma migrate (UAT)
         run: |
           docker compose \
             -f docker-compose.uat.yml \
             exec backend \
             npx prisma migrate deploy
 
-      # =====================================================
-      # 7. Cleanup
-      # =====================================================
-      - name: Cleanup Docker
+      - name: Cleanup
         run: docker image prune -f

@@ -3,33 +3,62 @@ version: "3.9"
 services:
   mysql:
     image: mysql:8.0
+    container_name: ecus5-mysql-dev
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    command:
-      --default-authentication-plugin=mysql_native_password
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: ecus5_local
+      MYSQL_USER: ecus5
+      MYSQL_PASSWORD: ecus5
+    ports:
+      - "3307:3306"
     volumes:
       - mysql_dev:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    command:
+      --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
 
   backend:
-    build: ./backend
-    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecus5-backend-dev
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
     environment:
-      NODE_ENV: dev
-      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: development
+      DATABASE_URL: mysql://ecus5:ecus5@mysql:3306/ecus5_local
     ports:
       - "3000:3000"
     command: >
       sh -c "
       npx prisma generate &&
       npx prisma db push &&
-      node app.js
+      npm run dev
       "
+
+  frontend:
+    image: node:20-alpine
+    container_name: ecus5-frontend-dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      HOST: 0.0.0.0
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:3000"
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - backend
 
 volumes:
   mysql_dev:
