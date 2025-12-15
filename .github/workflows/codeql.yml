@@ -2,17 +2,9 @@ name: Code Quality - CodeQL
 
 on:
   push:
-    branches:
-      - master
-      - main
-      - develop
-      - release
+    branches: [ master, main, develop, release ]
   pull_request:
-    branches:
-      - master
-      - main
-      - develop
-      - release
+    branches: [ master, main, develop, release ]
   workflow_dispatch:
 
 jobs:
@@ -33,27 +25,37 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
-      - name: Install Backend dependencies
-        if: exists('backend/package.json')
+
+      - name: Install Backend dependencies (if exists)
         run: |
-          cd backend
-          npm install --ignore-scripts
-          cd ..
-      - name: Install Frontend dependencies
-        if: exists('frontend/package.json')
+          if [ -f backend/package.json ]; then
+            cd backend
+            npm install --ignore-scripts
+            cd ..
+          else
+            echo "Backend not found, skipping"
+          fi
+
+      - name: Install Frontend dependencies (if exists)
         run: |
-          cd frontend
-          npm install --ignore-scripts
-          cd ..
+          if [ -f frontend/package.json ]; then
+            cd frontend
+            npm install --ignore-scripts
+            cd ..
+          else
+            echo "Frontend not found, skipping"
+          fi
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
