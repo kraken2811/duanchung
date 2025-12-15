@@ -1,5 +1,5 @@
 // controllers/cau_hinh_he_thong.controller.js
-const CauHinh = require("../../models/cau_hinh_he_thong.model");
+const CauHinh = require("../models/cau_hinh_he_thong.model");
 
 // (helper) chuẩn hoá dữ liệu đầu vào
 function normalize(body = {}) {

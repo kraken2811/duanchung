@@ -1,4 +1,4 @@
-const Vai_tro = require("../../models/vai_tro.model");
+const Vai_tro = require("../models/vai_tro.model");
 
 module.exports = {
   getAll: (req, res) => {

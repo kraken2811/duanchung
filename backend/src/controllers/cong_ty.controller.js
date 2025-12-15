@@ -1,5 +1,5 @@
 // controllers/cong_ty.controller.js
-const CongTy = require("../../models/cong_ty.model");
+const CongTy = require("../models/cong_ty.model");
 
 // GET /cong_tys/all
 exports.getAll = (req, res) => {

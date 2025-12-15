@@ -1,4 +1,4 @@
-const Loai_van_tai = require("../../models/loai_van_tai.model");
+const Loai_van_tai = require("../models/loai_van_tai.model");
 
 module.exports = {
   // Lấy tất cả

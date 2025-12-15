@@ -1,4 +1,4 @@
-const Thong_bao_he_thong = require("../../models/thong_bao_he_thong.model");
+const Thong_bao_he_thong = require("../models/thong_bao_he_thong.model");
 
 module.exports = {
   // 🔹 Lấy tất cả thông báo hệ thống

@@ -1,4 +1,4 @@
-const Phan_hoi_hai_quan = require("../../models/phan_hoi_hai_quan.model");
+const Phan_hoi_hai_quan = require("../models/phan_hoi_hai_quan.model");
 
 module.exports = {
   // Lấy tất cả phản hồi

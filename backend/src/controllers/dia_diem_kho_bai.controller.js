@@ -1,5 +1,5 @@
 // controllers/dia_diem_kho_bai.controller.js
-const DiaDiemKhoBai = require("../../models/dia_diem_kho_bai.model");
+const DiaDiemKhoBai = require("../models/dia_diem_kho_bai.model");
 
 // Chuẩn hoá dữ liệu đầu vào (ép số, trim chuỗi, rỗng -> null)
 function normalize(body = {}) {

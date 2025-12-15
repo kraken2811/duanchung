@@ -1,4 +1,4 @@
-const Khoan_dieu_chinh_tri_gia = require("../../models/khoan_dieu_chinh_tri_gia.model");
+const Khoan_dieu_chinh_tri_gia = require("../models/khoan_dieu_chinh_tri_gia.model");
 
 module.exports = {
   // Lấy tất cả khoản điều chỉnh trị giá

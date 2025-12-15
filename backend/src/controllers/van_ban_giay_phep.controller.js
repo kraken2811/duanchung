@@ -1,4 +1,4 @@
-const Van_ban_giay_phep = require("../../models/van_ban_giay_phep.model");
+const Van_ban_giay_phep = require("../models/van_ban_giay_phep.model");
 
 module.exports = {
   getAll: (req, res) => {

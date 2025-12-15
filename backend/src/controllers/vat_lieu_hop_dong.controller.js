@@ -1,4 +1,4 @@
-const Vat_lieu_hop_dong = require("../../models/vat_lieu_hop_dong.model");
+const Vat_lieu_hop_dong = require("../models/vat_lieu_hop_dong.model");
 
 module.exports = {
   // 🔹 Lấy tất cả vật liệu hợp đồng

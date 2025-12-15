@@ -1,5 +1,5 @@
 // controllers/container.controller.js
-const Container = require("../../models/container.model");
+const Container = require("../models/container.model");
 
 // (helper) chuẩn hoá dữ liệu vào DB
 function normalize(body = {}) {
