@@ -1,4 +1,4 @@
-const Doi_tac = require("../../models/doi_tac.model");
+const Doi_tac = require("../models/doi_tac.model");
 
 module.exports = {
   // Lấy tất cả đối tác

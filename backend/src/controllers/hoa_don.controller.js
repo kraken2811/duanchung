@@ -1,4 +1,4 @@
-const Hoa_don = require("../../models/hoa_don.model");
+const Hoa_don = require("../models/hoa_don.model");
 
 module.exports = {
   // Lấy tất cả hóa đơn

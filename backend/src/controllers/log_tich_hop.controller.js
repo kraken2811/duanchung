@@ -1,4 +1,4 @@
-const Log_tich_hop = require("../../models/log_tich_hop.model");
+const Log_tich_hop = require("../models/log_tich_hop.model");
 
 module.exports = {
   // Lấy tất cả log tích hợp

@@ -1,4 +1,4 @@
-const Quoc_gia = require("../../models/quoc_gia.model");
+const Quoc_gia = require("../models/quoc_gia.model");
 
 module.exports = {
   // 🔹 Lấy tất cả quốc gia

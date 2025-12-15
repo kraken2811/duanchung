@@ -1,4 +1,4 @@
-const Giao_dich_ngan_hang = require("../../models/giao_dich_ngan_hang.model");
+const Giao_dich_ngan_hang = require("../models/giao_dich_ngan_hang.model");
 
 module.exports = {
   // Lấy tất cả giao dịch ngân hàng

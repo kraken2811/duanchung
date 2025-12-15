@@ -1,4 +1,4 @@
-const Chi_tiet_dieu_chinh_tri_gia = require("../../models/chi_tiet_dieu_chinh_tri_gia.model");
+const Chi_tiet_dieu_chinh_tri_gia = require("../models/chi_tiet_dieu_chinh_tri_gia.model");
 module.exports = {
   getAll: (req, res) => {
     Chi_tiet_dieu_chinh_tri_gia.getAll((result) => {

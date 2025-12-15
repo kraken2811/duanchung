@@ -1,4 +1,4 @@
-const Hop_dong = require("../../models/hop_dong.model");
+const Hop_dong = require("../models/hop_dong.model");
 
 module.exports = {
   // Lấy danh sách tất cả hợp đồng

@@ -1,4 +1,4 @@
-const Lo_hang = require("../../models/lo_hang.model");
+const Lo_hang = require("../models/lo_hang.model");
 
 module.exports = {
   getAll: (req, res) => {

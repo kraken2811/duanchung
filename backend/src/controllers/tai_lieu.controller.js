@@ -1,4 +1,4 @@
-const Tai_lieu = require("../../models/tai_lieu.model");
+const Tai_lieu = require("../models/tai_lieu.model");
 
 module.exports = {
   // 🔹 Lấy tất cả tài liệu

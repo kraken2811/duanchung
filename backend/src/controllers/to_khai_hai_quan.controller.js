@@ -1,4 +1,4 @@
-const To_khai_hai_quan = require("../../models/to_khai_hai_quan.model");
+const To_khai_hai_quan = require("../models/to_khai_hai_quan.model");
 
 module.exports = {
   // 🔹 Lấy tất cả tờ khai hải quan

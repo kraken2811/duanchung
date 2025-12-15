@@ -1,4 +1,4 @@
-const San_pham_hop_dong = require("../../models/san_pham_hop_dong.model");
+const San_pham_hop_dong = require("../models/san_pham_hop_dong.model");
 
 module.exports = {
   // 🔹 Lấy tất cả sản phẩm hợp đồng

@@ -1,4 +1,4 @@
-const db = require("../common/db");
+const prisma = require('@prisma/client').prisma;
 const Container = (container) => {
   this.id_container = container.id_container;
   this.id_lo_hang = container.id_lo_hang;
