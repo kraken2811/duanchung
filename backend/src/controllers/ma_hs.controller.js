@@ -1,4 +1,4 @@
-const Ma_hs = require("../../models/ma_hs.model");
+const Ma_hs = require("../models/ma_hs.model");
 
 module.exports = {
   // Lấy tất cả mã HS

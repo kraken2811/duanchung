@@ -1,4 +1,4 @@
-const Lich_su_trang_thai = require("../../models/lich_su_trang_thai.model");
+const Lich_su_trang_thai = require("../models/lich_su_trang_thai.model");
 
 module.exports = {
   // Lấy tất cả lịch sử trạng thái

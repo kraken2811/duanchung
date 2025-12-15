@@ -1,5 +1,5 @@
 // controllers/danh_muc.controller.js
-const DanhMuc = require("../../models/danh_muc.model");
+const DanhMuc = require("../models/danh_muc.model");
 
 // Chuẩn hoá dữ liệu đầu vào (ép số, trim chuỗi, rỗng -> null)
 function normalize(body = {}) {

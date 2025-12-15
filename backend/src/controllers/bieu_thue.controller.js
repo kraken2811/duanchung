@@ -1,5 +1,5 @@
 // controllers/bieu_thue.controller.js
-const BieuThue = require("../../models/bieu_thue.model");
+const BieuThue = require("../models/bieu_thue.model");
 
 // (helper) chuẩn hoá dữ liệu đầu vào (ép kiểu số, rỗng -> null)
 function normalize(body = {}) {

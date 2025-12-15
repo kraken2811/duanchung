@@ -1,4 +1,4 @@
-const prisma = require('../prisma/client');
+const prisma = require('@prisma/client').prisma;
 
 const getAll = () => {
   return prisma.audit_log.findMany({

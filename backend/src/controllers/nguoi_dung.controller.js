@@ -1,4 +1,4 @@
-const Nguoi_dung = require("../../models/nguoi_dung.model");
+const Nguoi_dung = require("../models/nguoi_dung.model");
 
 module.exports = {
   // Lấy tất cả người dùng

@@ -1,4 +1,4 @@
-const Van_don = require("../../models/van_don.model");
+const Van_don = require("../models/van_don.model");
 
 module.exports = {
   // 🔹 Lấy tất cả vận đơn

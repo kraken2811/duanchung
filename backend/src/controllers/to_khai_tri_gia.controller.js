@@ -1,4 +1,4 @@
-const To_khai_tri_gia = require("../../models/to_khai_tri_gia.model");
+const To_khai_tri_gia = require("../models/to_khai_tri_gia.model");
 
 module.exports = {
   // 🔹 Lấy tất cả tờ khai trị giá

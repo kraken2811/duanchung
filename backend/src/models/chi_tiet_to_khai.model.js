@@ -1,4 +1,4 @@
-const db = require("../common/db");
+const prisma = require('@prisma/client').prisma;
 const Chi_tiet_to_khai = (chi_tiet_to_khai) => {
   this.id_chi_tiet = chi_tiet_to_khai.id_chi_tiet;
   this.id_to_khai = chi_tiet_to_khai.id_to_khai;

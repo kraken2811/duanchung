@@ -1,4 +1,4 @@
-const Phu_luc_hop_dong = require("../../models/phu_luc_hop_dong.model");
+const Phu_luc_hop_dong = require("../models/phu_luc_hop_dong.model");
 
 module.exports = {
   // Lấy tất cả phụ lục hợp đồng

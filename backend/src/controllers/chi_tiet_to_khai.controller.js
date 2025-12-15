@@ -1,4 +1,4 @@
-const Chi_tiet_to_khai = require("../../models/chi_tiet_to_khai.model");
+const Chi_tiet_to_khai = require("../models/chi_tiet_to_khai.model");
 module.exports = {
   getAll: (req, res) => {
     Chi_tiet_to_khai.getAll((result) => {
