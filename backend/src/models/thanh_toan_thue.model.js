@@ -1,57 +1,86 @@
-const prisma = require('@prisma/client').prisma;
-const Thanh_toan_thue = (thanh_toan_thue) => {
-  this.id_thanh_toan = thanh_toan_thue.id_thanh_toan;
-  this.id_to_khai = thanh_toan_thue.id_to_khai;
-  this.so_tien = thanh_toan_thue.so_tien;
-  this.ma_ngoai_te = thanh_toan_thue.ma_ngoai_te;
-  this.phuong_thuc_thanh_toan = thanh_toan_thue.phuong_thuc_thanh_toan;
-  this.trang_thai_thanh_toan = thanh_toan_thue.trang_thai_thanh_toan;
-  this.tham_chieu_ngan_hang = thanh_toan_thue.tham_chieu_ngan_hang;
-  this.ngay_thanh_toan = thanh_toan_thue.ngay_thanh_toan;
-  this.ngay_tao = thanh_toan_thue.ngay_tao;
-};
-Thanh_toan_thue.getById = (id_thanh_toan, callback) => {
-  const sqlString = "SELECT * FROM thanh_toan_thue WHERE id_thanh_toan = ? ";
-  db.query(sqlString, [id_thanh_toan], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả thanh toán thuế
+ */
+const getAll = () => {
+  return prisma.thanh_toan_thue.findMany({
+    orderBy: {
+      id_thanh_toan: 'desc',
+    },
   });
 };
-Thanh_toan_thue.getAll = (callback) => {
-  const sqlString = "SELECT * FROM thanh_toan_thue ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy thanh toán theo ID
+ */
+const getById = (id_thanh_toan) => {
+  return prisma.thanh_toan_thue.findUnique({
+    where: { id_thanh_toan },
   });
 };
-Thanh_toan_thue.insert = (thanh_toan_thue, callBack) => {
-  const sqlString = "INSERT INTO thanh_toan_thue SET ?";
-  db.query(sqlString, [thanh_toan_thue], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_thanh_toan : res.insertId, ...thanh_toan_thue });
+
+/**
+ * Lấy thanh toán theo tờ khai
+ */
+const getByToKhai = (id_to_khai) => {
+  return prisma.thanh_toan_thue.findMany({
+    where: { id_to_khai },
+    orderBy: {
+      ngay_tao: 'desc',
+    },
   });
 };
-Thanh_toan_thue.update = (thanh_toan_thue, id_thanh_toan, callBack) => {
-  const sqlString = "UPDATE thanh_toan_thue SET ? WHERE id_thanh_toan = ?";
-  db.query(sqlString, [thanh_toan_thue, id_thanh_toan], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật thanh_toan_thue id_thanh_toan = " + "id_thanh_toan" + " thành công");
+
+/**
+ * Tạo mới thanh toán thuế
+ */
+const insert = (data) => {
+  return prisma.thanh_toan_thue.create({
+    data: {
+      id_to_khai: data.id_to_khai,
+      so_tien: data.so_tien,
+      ma_ngoai_te: data.ma_ngoai_te,
+      phuong_thuc_thanh_toan: data.phuong_thuc_thanh_toan,
+      trang_thai_thanh_toan: data.trang_thai_thanh_toan ?? 'CHO_THANH_TOAN',
+      tham_chieu_ngan_hang: data.tham_chieu_ngan_hang,
+      ngay_thanh_toan: data.ngay_thanh_toan,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-Thanh_toan_thue.delete = (id_thanh_toan, callBack) => {
-  db.query("DELETE FROM thanh_toan_thue WHERE id_thanh_toan = ?", [id_thanh_toan], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa thanh_toan_thue id_thanh_toan = " + "id_thanh_toan" + " thành công");
+
+/**
+ * Cập nhật trạng thái thanh toán
+ * (ví dụ: ngân hàng phản hồi)
+ */
+const update = (id_thanh_toan, data) => {
+  return prisma.thanh_toan_thue.update({
+    where: { id_thanh_toan },
+    data: {
+      trang_thai_thanh_toan: data.trang_thai_thanh_toan,
+      tham_chieu_ngan_hang: data.tham_chieu_ngan_hang,
+      ngay_thanh_toan: data.ngay_thanh_toan,
+    },
   });
 };
-module.exports = Thanh_toan_thue;
+
+/**
+ * ❌ KHÔNG NÊN delete cứng thanh toán
+ * Chỉ dùng khi tạo nhầm & CHƯA phát sinh giao dịch
+ */
+const remove = (id_thanh_toan) => {
+  return prisma.thanh_toan_thue.delete({
+    where: { id_thanh_toan },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByToKhai,
+  insert,
+  update,
+  remove,
+};

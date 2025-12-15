@@ -1,58 +1,87 @@
-const prisma = require('@prisma/client').prisma;
-const To_khai_tri_gia = (to_khai_tri_gia) => {
-  this.id_to_khai_tri_gia = to_khai_tri_gia.id_to_khai_tri_gia;
-  this.id_to_khai_hai_quan = to_khai_tri_gia.id_to_khai_hai_quan;
-  this.ma_phan_loai_khai_tri_gia = to_khai_tri_gia.ma_phan_loai_khai_tri_gia;
-  this.so_tiep_nhan_to_khai_tri_gia_tong_hop = to_khai_tri_gia.so_tiep_nhan_to_khai_tri_gia_tong_hop;
-  this.ma_tien_te = to_khai_tri_gia.ma_tien_te;
-  this.gia_co_so_hieu_chinh = to_khai_tri_gia.gia_co_so_hieu_chinh;
-  this.tong_he_so_phan_bo = to_khai_tri_gia.tong_he_so_phan_bo;
-  this.nguoi_nop_thue = to_khai_tri_gia.nguoi_nop_thue;
-  this.ngay_tao = to_khai_tri_gia.ngay_tao;
-  this.nguoi_tao = to_khai_tri_gia.nguoi_tao;
-};
-To_khai_tri_gia.getById = (id_to_khai_tri_gia, callback) => {
-  const sqlString = "SELECT * FROM to_khai_tri_gia WHERE id_to_khai_tri_gia = ? ";
-  db.query(sqlString, [id_to_khai_tri_gia], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả tờ khai trị giá
+ */
+const getAll = () => {
+  return prisma.to_khai_tri_gia.findMany({
+    orderBy: {
+      ngay_tao: 'desc',
+    },
   });
 };
-To_khai_tri_gia.getAll = (callback) => {
-  const sqlString = "SELECT * FROM to_khai_tri_gia ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy tờ khai trị giá theo ID
+ */
+const getById = (id_to_khai_tri_gia) => {
+  return prisma.to_khai_tri_gia.findUnique({
+    where: { id_to_khai_tri_gia },
   });
 };
-To_khai_tri_gia.insert = (to_khai_tri_gia, callBack) => {
-  const sqlString = "INSERT INTO to_khai_tri_gia SET ?";
-  db.query(sqlString, [to_khai_tri_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_to_khai_tri_gia : res.insertId, ...to_khai_tri_gia });
+
+/**
+ * Lấy tờ khai trị giá theo tờ khai hải quan
+ */
+const getByToKhaiHaiQuan = (id_to_khai_hai_quan) => {
+  return prisma.to_khai_tri_gia.findUnique({
+    where: { id_to_khai_hai_quan },
   });
 };
-To_khai_tri_gia.update = (to_khai_tri_gia, id_to_khai_tri_gia, callBack) => {
-  const sqlString = "UPDATE to_khai_tri_gia SET ? WHERE id_to_khai_tri_gia = ?";
-  db.query(sqlString, [to_khai_tri_gia, id_to_khai_tri_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật to_khai_tri_gia id_to_khai_tri_gia = " + "id_to_khai_tri_gia" + " thành công");
+
+/**
+ * Tạo mới tờ khai trị giá
+ */
+const insert = (data) => {
+  return prisma.to_khai_tri_gia.create({
+    data: {
+      id_to_khai_hai_quan: data.id_to_khai_hai_quan,
+      ma_phan_loai_khai_tri_gia: data.ma_phan_loai_khai_tri_gia,
+      so_tiep_nhan_to_khai_tri_gia_tong_hop:
+        data.so_tiep_nhan_to_khai_tri_gia_tong_hop,
+      ma_tien_te: data.ma_tien_te,
+      gia_co_so_hieu_chinh: data.gia_co_so_hieu_chinh,
+      tong_he_so_phan_bo: data.tong_he_so_phan_bo,
+      nguoi_nop_thue: data.nguoi_nop_thue,
+      nguoi_tao: data.nguoi_tao,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-To_khai_tri_gia.delete = (id_to_khai_tri_gia, callBack) => {
-  db.query("DELETE FROM to_khai_tri_gia WHERE id_to_khai_tri_gia = ?", [id_to_khai_tri_gia], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa to_khai_tri_gia id_to_khai_tri_gia = " + "id_to_khai_tri_gia" + " thành công");
+
+/**
+ * Cập nhật tờ khai trị giá
+ * ⚠️ Chỉ cho phép khi chưa gửi VNACCS / chưa tính thuế
+ */
+const update = (id_to_khai_tri_gia, data) => {
+  return prisma.to_khai_tri_gia.update({
+    where: { id_to_khai_tri_gia },
+    data: {
+      ma_phan_loai_khai_tri_gia: data.ma_phan_loai_khai_tri_gia,
+      ma_tien_te: data.ma_tien_te,
+      gia_co_so_hieu_chinh: data.gia_co_so_hieu_chinh,
+      tong_he_so_phan_bo: data.tong_he_so_phan_bo,
+      nguoi_nop_thue: data.nguoi_nop_thue,
+    },
   });
 };
-module.exports = To_khai_tri_gia;
+
+/**
+ * ❌ TUYỆT ĐỐI KHÔNG DELETE nếu đã phát sinh thuế
+ * Nếu cần → VOID / HỦY
+ */
+const remove = (id_to_khai_tri_gia) => {
+  return prisma.to_khai_tri_gia.delete({
+    where: { id_to_khai_tri_gia },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByToKhaiHaiQuan,
+  insert,
+  update,
+  remove,
+};

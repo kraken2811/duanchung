@@ -64,7 +64,7 @@ module.exports = {
 
   delete: (req, res) => {
     const id = req.params.id;
-    Loai_hinh_dac_biet.delete(id, (err, result) => {
+    Loai_hinh_dac_biet.remove(id, (err, result) => {
       if (err) {
         return res.status(500).json({
           message: "Lỗi khi xóa loại hình đặc biệt",

@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
-const thanh_toan_thueController = require("../controllers/thanh_toan_thue.controller");
-router.get('/', thanh_toan_thueController.getAll);
-router.get('/:id',  thanh_toan_thueController.getById);
-router.post('/',  thanh_toan_thueController.insert);
-router.put('/:id',  thanh_toan_thueController.update);
-router.delete('/:id', thanh_toan_thueController.delete);
+// routes/thanh_toan_thue.route.js
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/thanh_toan_thue.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/to-khai/:id_to_khai", controller.getByToKhai);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
+
 module.exports = router;

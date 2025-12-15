@@ -58,7 +58,7 @@ module.exports = {
   // Xóa giao dịch theo ID
   delete: (req, res) => {
     const id = req.params.id;
-    Giao_dich_ngan_hang.delete(id, (err, result) => {
+    Giao_dich_ngan_hang.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa giao dịch:", err);
         return res.status(500).json({ message: "Xóa giao dịch thất bại", error: err });

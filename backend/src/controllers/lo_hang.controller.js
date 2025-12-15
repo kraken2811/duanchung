@@ -43,7 +43,7 @@ module.exports = {
 
   delete: (req, res) => {
     const id = req.params.id;
-    Lo_hang.delete(id, (err, result) => {
+    Lo_hang.remove(id, (err, result) => {
       if (err) {
         return res.status(500).json({ message: "Lỗi khi xóa lô hàng", error: err });
       }

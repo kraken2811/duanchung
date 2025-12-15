@@ -58,7 +58,7 @@ module.exports = {
   // Xóa đối tác
   delete: (req, res) => {
     const id = req.params.id;
-    Doi_tac.delete(id, (err, result) => {
+    Doi_tac.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa đối tác:", err);
         return res.status(500).json({ message: "Xóa đối tác thất bại", error: err });

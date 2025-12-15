@@ -1,57 +1,76 @@
-const prisma = require('@prisma/client').prisma;
-const Giao_dich_ngan_hang = (giao_dich_ngan_hang) => {
-  this.id_giao_dich = giao_dich_ngan_hang.id_giao_dich;
-  this.id_thanh_toan = giao_dich_ngan_hang.id_thanh_toan;
-  this.ten_ngan_hang = giao_dich_ngan_hang.ten_ngan_hang;
-  this.tai_khoan_ngan_hang = giao_dich_ngan_hang.tai_khoan_ngan_hang;
-  this.so_tien = giao_dich_ngan_hang.so_tien;
-  this.thoi_gian_giao_dich = giao_dich_ngan_hang.thoi_gian_giao_dich;
-  this.ma_phan_hoi = giao_dich_ngan_hang.ma_phan_hoi;
-  this.thong_diep_phan_hoi = giao_dich_ngan_hang.thong_diep_phan_hoi;
-  this.ngay_tao = giao_dich_ngan_hang.ngay_tao;
-};
-Giao_dich_ngan_hang.getById = (id_giao_dich, callback) => {
-  const sqlString = "SELECT * FROM giao_dich_ngan_hang WHERE id_giao_dich = ? ";
-  db.query(sqlString, [id_giao_dich], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả giao dịch ngân hàng
+ */
+const getAll = () => {
+  return prisma.giao_dich_ngan_hang.findMany({
+    orderBy: {
+      id_giao_dich: 'desc',
+    },
   });
 };
-Giao_dich_ngan_hang.getAll = (callback) => {
-  const sqlString = "SELECT * FROM giao_dich_ngan_hang ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy giao dịch ngân hàng theo ID
+ */
+const getById = (id_giao_dich) => {
+  return prisma.giao_dich_ngan_hang.findUnique({
+    where: { id_giao_dich },
   });
 };
-Giao_dich_ngan_hang.insert = (giao_dich_ngan_hang, callBack) => {
-  const sqlString = "INSERT INTO giao_dich_ngan_hang SET ?";
-  db.query(sqlString, [giao_dich_ngan_hang], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_giao_dich : res.insertId, ...giao_dich_ngan_hang });
+
+/**
+ * Thêm mới giao dịch ngân hàng
+ */
+const insert = (data) => {
+  return prisma.giao_dich_ngan_hang.create({
+    data: {
+      id_thanh_toan: data.id_thanh_toan,
+      ten_ngan_hang: data.ten_ngan_hang,
+      tai_khoan_ngan_hang: data.tai_khoan_ngan_hang,
+      so_tien: data.so_tien,
+      thoi_gian_giao_dich: data.thoi_gian_giao_dich,
+      ma_phan_hoi: data.ma_phan_hoi,
+      thong_diep_phan_hoi: data.thong_diep_phan_hoi,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Giao_dich_ngan_hang.update = (giao_dich_ngan_hang, id_giao_dich, callBack) => {
-  const sqlString = "UPDATE giao_dich_ngan_hang SET ? WHERE id_giao_dich = ?";
-  db.query(sqlString, [giao_dich_ngan_hang, id_giao_dich], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật giao_dich_ngan_hang id_giao_dich = " + "id_giao_dich" + " thành công");
+
+/**
+ * Cập nhật giao dịch ngân hàng
+ */
+const update = (id_giao_dich, data) => {
+  return prisma.giao_dich_ngan_hang.update({
+    where: { id_giao_dich },
+    data: {
+      id_thanh_toan: data.id_thanh_toan,
+      ten_ngan_hang: data.ten_ngan_hang,
+      tai_khoan_ngan_hang: data.tai_khoan_ngan_hang,
+      so_tien: data.so_tien,
+      thoi_gian_giao_dich: data.thoi_gian_giao_dich,
+      ma_phan_hoi: data.ma_phan_hoi,
+      thong_diep_phan_hoi: data.thong_diep_phan_hoi,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Giao_dich_ngan_hang.delete = (id_giao_dich, callBack) => {
-  db.query("DELETE FROM giao_dich_ngan_hang WHERE id_giao_dich = ?", [id_giao_dich], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa giao_dich_ngan_hang id_giao_dich = " + "id_giao_dich" + " thành công");
+
+/**
+ * Xóa giao dịch ngân hàng
+ */
+const remove = (id_giao_dich) => {
+  return prisma.giao_dich_ngan_hang.delete({
+    where: { id_giao_dich },
   });
 };
-module.exports = Giao_dich_ngan_hang;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

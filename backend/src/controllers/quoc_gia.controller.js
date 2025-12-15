@@ -1,87 +1,157 @@
-const Quoc_gia = require("../models/quoc_gia.model");
+// controllers/quoc_gia.controller.js
+const QuocGia = require("../models/quoc_gia.model");
 
-module.exports = {
-  // 🔹 Lấy tất cả quốc gia
-  getAll: (req, res) => {
-    Quoc_gia.getAll((err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy danh sách quốc gia",
-          error: err,
-        });
-      }
-      res.status(200).json(result);
+/**
+ * GET /quoc-gia
+ * Lấy tất cả quốc gia
+ */
+exports.getAll = async (_req, res) => {
+  try {
+    const data = await QuocGia.getAll();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy danh sách quốc gia",
+      error: error.message,
     });
-  },
+  }
+};
 
-  // 🔹 Lấy quốc gia theo ID
-  getById: (req, res) => {
-    const id = req.params.id;
-    Quoc_gia.getById(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy thông tin quốc gia",
-          error: err,
-        });
-      }
-      if (!result || result.length === 0) {
-        return res.status(404).json({
-          message: "Không tìm thấy quốc gia",
-        });
-      }
-      res.status(200).json(result[0]);
-    });
-  },
+/**
+ * GET /quoc-gia/:id
+ * Lấy quốc gia theo ID
+ */
+exports.getById = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "id_quoc_gia không hợp lệ" });
+    }
 
-  // 🔹 Thêm quốc gia mới
-  insert: (req, res) => {
-    const quoc_gia = req.body;
-    Quoc_gia.insert(quoc_gia, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi thêm quốc gia",
-          error: err,
-        });
-      }
-      res.status(201).json({
-        message: "Thêm quốc gia thành công",
-        data: result,
+    const data = await QuocGia.getById(id);
+    if (!data) {
+      return res.status(404).json({
+        message: "Không tìm thấy quốc gia",
       });
-    });
-  },
+    }
 
-  // 🔹 Cập nhật thông tin quốc gia
-  update: (req, res) => {
-    const id = req.params.id;
-    const quoc_gia = req.body;
-    Quoc_gia.update(quoc_gia, id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi cập nhật quốc gia",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Cập nhật quốc gia thành công",
-        data: result,
-      });
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy thông tin quốc gia",
+      error: error.message,
     });
-  },
+  }
+};
 
-  // 🔹 Xóa quốc gia
-  delete: (req, res) => {
-    const id = req.params.id;
-    Quoc_gia.delete(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi xóa quốc gia",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Xóa quốc gia thành công",
-        data: result,
+/**
+ * GET /quoc-gia/ma/:ma_quoc_gia
+ * Lấy quốc gia theo mã
+ */
+exports.getByMa = async (req, res) => {
+  try {
+    const { ma_quoc_gia } = req.params;
+    if (!ma_quoc_gia) {
+      return res.status(400).json({ message: "Thiếu mã quốc gia" });
+    }
+
+    const data = await QuocGia.getByMa(ma_quoc_gia);
+    if (!data) {
+      return res.status(404).json({
+        message: "Không tìm thấy quốc gia",
       });
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy quốc gia theo mã",
+      error: error.message,
     });
-  },
+  }
+};
+
+/**
+ * POST /quoc-gia
+ * Thêm mới quốc gia
+ */
+exports.insert = async (req, res) => {
+  try {
+    const { ma_quoc_gia, ten_quoc_gia } = req.body;
+
+    if (!ma_quoc_gia || !ten_quoc_gia) {
+      return res.status(400).json({
+        message: "Thiếu dữ liệu bắt buộc (ma_quoc_gia, ten_quoc_gia)",
+      });
+    }
+
+    const created = await QuocGia.insert(req.body);
+
+    res.status(201).json({
+      message: "Thêm quốc gia thành công",
+      data: created,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi thêm quốc gia",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /quoc-gia/:id
+ * Cập nhật quốc gia
+ */
+exports.update = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "id_quoc_gia không hợp lệ" });
+    }
+
+    // kiểm tra tồn tại
+    const exists = await QuocGia.getById(id);
+    if (!exists) {
+      return res.status(404).json({
+        message: "Không tìm thấy quốc gia",
+      });
+    }
+
+    const updated = await QuocGia.update(id, req.body);
+
+    res.status(200).json({
+      message: "Cập nhật quốc gia thành công",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi cập nhật quốc gia",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /quoc-gia/:id
+ * ⚠️ Không khuyến nghị delete cứng
+ */
+exports.delete = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "id_quoc_gia không hợp lệ" });
+    }
+
+    await QuocGia.remove(id);
+
+    res.status(200).json({
+      message: "Xóa quốc gia thành công",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi xóa quốc gia",
+      error: error.message,
+    });
+  }
 };

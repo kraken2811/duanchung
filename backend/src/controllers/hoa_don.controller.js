@@ -58,7 +58,7 @@ module.exports = {
   // Xóa hóa đơn theo ID
   delete: (req, res) => {
     const id = req.params.id;
-    Hoa_don.delete(id, (err, result) => {
+    Hoa_don.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa hóa đơn:", err);
         return res.status(500).json({ message: "Xóa hóa đơn thất bại", error: err });

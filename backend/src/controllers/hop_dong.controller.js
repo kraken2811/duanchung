@@ -58,7 +58,7 @@ module.exports = {
   // Xóa hợp đồng theo ID
   delete: (req, res) => {
     const id = req.params.id;
-    Hop_dong.delete(id, (err, result) => {
+    Hop_dong.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa hợp đồng:", err);
         return res.status(500).json({ message: "Xóa hợp đồng thất bại", error: err });

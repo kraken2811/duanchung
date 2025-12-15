@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
-const quoc_giaController = require("../controllers/quoc_gia.controller");
-router.get('/', quoc_giaController.getAll);
-router.get('/:id',  quoc_giaController.getById);
-router.post('/',  quoc_giaController.insert);
-router.put('/:id',  quoc_giaController.update);
-router.delete('/:id', quoc_giaController.delete);
+// routes/quoc_gia.route.js
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/quoc_gia.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/ma/:ma_quoc_gia", controller.getByMa);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
+
 module.exports = router;

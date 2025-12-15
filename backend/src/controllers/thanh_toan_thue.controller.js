@@ -1,87 +1,163 @@
-const Thong_bao_he_thong = require("../models/thong_bao_he_thong.model");
+// controllers/thanh_toan_thue.controller.js
+const ThanhToanThue = require("../models/thanh_toan_thue.model");
 
-module.exports = {
-  // 🔹 Lấy tất cả thông báo hệ thống
-  getAll: (req, res) => {
-    Thong_bao_he_thong.getAll((err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy danh sách thông báo hệ thống",
-          error: err,
-        });
-      }
-      res.status(200).json(result);
+/**
+ * GET /thanh-toan-thue
+ * Lấy tất cả thanh toán thuế
+ */
+exports.getAll = async (_req, res) => {
+  try {
+    const data = await ThanhToanThue.getAll();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy danh sách thanh toán thuế",
+      error: error.message,
     });
-  },
+  }
+};
 
-  // 🔹 Lấy thông báo hệ thống theo ID
-  getById: (req, res) => {
-    const id = req.params.id;
-    Thong_bao_he_thong.getById(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy thông tin thông báo hệ thống",
-          error: err,
-        });
-      }
-      if (!result || result.length === 0) {
-        return res.status(404).json({
-          message: "Không tìm thấy thông báo hệ thống",
-        });
-      }
-      res.status(200).json(result[0]);
-    });
-  },
-
-  // 🔹 Thêm thông báo hệ thống mới
-  insert: (req, res) => {
-    const thong_bao_he_thong = req.body;
-    Thong_bao_he_thong.insert(thong_bao_he_thong, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi thêm thông báo hệ thống",
-          error: err,
-        });
-      }
-      res.status(201).json({
-        message: "Thêm thông báo hệ thống thành công",
-        data: result,
+/**
+ * GET /thanh-toan-thue/:id
+ * Lấy thanh toán theo ID
+ */
+exports.getById = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: "id_thanh_toan không hợp lệ",
       });
-    });
-  },
+    }
 
-  // 🔹 Cập nhật thông báo hệ thống
-  update: (req, res) => {
-    const id = req.params.id;
-    const thong_bao_he_thong = req.body;
-    Thong_bao_he_thong.update(thong_bao_he_thong, id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi cập nhật thông báo hệ thống",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Cập nhật thông báo hệ thống thành công",
-        data: result,
+    const data = await ThanhToanThue.getById(id);
+    if (!data) {
+      return res.status(404).json({
+        message: "Không tìm thấy thanh toán thuế",
       });
-    });
-  },
+    }
 
-  // 🔹 Xóa thông báo hệ thống
-  delete: (req, res) => {
-    const id = req.params.id;
-    Thong_bao_he_thong.delete(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi xóa thông báo hệ thống",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Xóa thông báo hệ thống thành công",
-        data: result,
-      });
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy thanh toán thuế",
+      error: error.message,
     });
-  },
+  }
+};
+
+/**
+ * GET /thanh-toan-thue/to-khai/:id_to_khai
+ * Lấy thanh toán theo tờ khai
+ */
+exports.getByToKhai = async (req, res) => {
+  try {
+    const id_to_khai = Number(req.params.id_to_khai);
+    if (!Number.isInteger(id_to_khai)) {
+      return res.status(400).json({
+        message: "id_to_khai không hợp lệ",
+      });
+    }
+
+    const data = await ThanhToanThue.getByToKhai(id_to_khai);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy thanh toán theo tờ khai",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * POST /thanh-toan-thue
+ * Tạo mới thanh toán thuế
+ */
+exports.insert = async (req, res) => {
+  try {
+    const {
+      id_to_khai,
+      so_tien,
+      ma_ngoai_te,
+      phuong_thuc_thanh_toan,
+    } = req.body;
+
+    if (!id_to_khai || !so_tien || !phuong_thuc_thanh_toan) {
+      return res.status(400).json({
+        message: "Thiếu dữ liệu bắt buộc",
+      });
+    }
+
+    const created = await ThanhToanThue.insert(req.body);
+
+    res.status(201).json({
+      message: "Tạo thanh toán thuế thành công",
+      data: created,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi tạo thanh toán thuế",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /thanh-toan-thue/:id
+ * Cập nhật trạng thái thanh toán
+ */
+exports.update = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: "id_thanh_toan không hợp lệ",
+      });
+    }
+
+    const exists = await ThanhToanThue.getById(id);
+    if (!exists) {
+      return res.status(404).json({
+        message: "Không tìm thấy thanh toán thuế",
+      });
+    }
+
+    const updated = await ThanhToanThue.update(id, req.body);
+
+    res.status(200).json({
+      message: "Cập nhật thanh toán thuế thành công",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi cập nhật thanh toán thuế",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * DELETE /thanh-toan-thue/:id
+ * ⚠️ Không khuyến khích delete cứng
+ */
+exports.delete = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: "id_thanh_toan không hợp lệ",
+      });
+    }
+
+    await ThanhToanThue.remove(id);
+
+    res.status(200).json({
+      message: "Xóa thanh toán thuế thành công",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi xóa thanh toán thuế",
+      error: error.message,
+    });
+  }
 };

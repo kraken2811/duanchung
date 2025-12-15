@@ -1,57 +1,76 @@
-const prisma = require('@prisma/client').prisma;
-const Cong_ty = (cong_ty) => {
-  this.id_cong_ty = cong_ty.id_cong_ty;
-  this.ma_so_thue = cong_ty.ma_so_thue;
-  this.ten_cong_ty = cong_ty.ten_cong_ty;
-  this.dia_chi = cong_ty.dia_chi;
-  this.ma_quoc_gia = cong_ty.ma_quoc_gia;
-  this.nguoi_lien_he = cong_ty.nguoi_lien_he;
-  this.dien_thoai = cong_ty.dien_thoai;
-  this.email = cong_ty.email;
-  this.ngay_tao = cong_ty.ngay_tao;
-};
-Cong_ty.getById = (id_cong_ty, callback) => {
-  const sqlString = "SELECT * FROM cong_ty WHERE id_cong_ty = ? ";
-  db.query(sqlString, [id_cong_ty], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả công ty
+ */
+const getAll = () => {
+  return prisma.cong_ty.findMany({
+    orderBy: {
+      id_cong_ty: 'desc',
+    },
   });
 };
-Cong_ty.getAll = (callback) => {
-  const sqlString = "SELECT * FROM cong_ty ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy công ty theo ID
+ */
+const getById = (id_cong_ty) => {
+  return prisma.cong_ty.findUnique({
+    where: { id_cong_ty },
   });
 };
-Cong_ty.insert = (cong_ty, callBack) => {
-  const sqlString = "INSERT INTO cong_ty SET ?";
-  db.query(sqlString, [cong_ty], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_cong_ty : res.insertId, ...cong_ty });
+
+/**
+ * Thêm mới công ty
+ */
+const insert = (data) => {
+  return prisma.cong_ty.create({
+    data: {
+      ma_so_thue: data.ma_so_thue,
+      ten_cong_ty: data.ten_cong_ty,
+      dia_chi: data.dia_chi,
+      ma_quoc_gia: data.ma_quoc_gia,
+      nguoi_lien_he: data.nguoi_lien_he,
+      dien_thoai: data.dien_thoai,
+      email: data.email,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Cong_ty.update = (cong_ty, id_cong_ty, callBack) => {
-  const sqlString = "UPDATE cong_ty SET ? WHERE id_cong_ty = ?";
-  db.query(sqlString, [cong_ty, id_cong_ty], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật cong_ty id_cong_ty = " + "id_cong_ty" + " thành công");
+
+/**
+ * Cập nhật công ty
+ */
+const update = (id_cong_ty, data) => {
+  return prisma.cong_ty.update({
+    where: { id_cong_ty },
+    data: {
+      ma_so_thue: data.ma_so_thue,
+      ten_cong_ty: data.ten_cong_ty,
+      dia_chi: data.dia_chi,
+      ma_quoc_gia: data.ma_quoc_gia,
+      nguoi_lien_he: data.nguoi_lien_he,
+      dien_thoai: data.dien_thoai,
+      email: data.email,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Cong_ty.delete = (id_cong_ty, callBack) => {
-  db.query("DELETE FROM cong_ty WHERE id_cong_ty = ?", [id_cong_ty], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa cong_ty id_cong_ty = " + "id_cong_ty" + " thành công");
+
+/**
+ * Xóa công ty
+ */
+const remove = (id_cong_ty) => {
+  return prisma.cong_ty.delete({
+    where: { id_cong_ty },
   });
 };
-module.exports = Cong_ty;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

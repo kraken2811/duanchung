@@ -1,72 +1,121 @@
-const prisma = require('@prisma/client').prisma;
-const Tai_lieu = (tai_lieu) => {
-  this.id_tai_lieu = tai_lieu.id_tai_lieu;
-  this.loai_doi_tuong = tai_lieu.loai_doi_tuong;
-  this.id_doi_tuong = tai_lieu.id_doi_tuong;
-  this.loai_tai_lieu = tai_lieu.loai_tai_lieu;
-  this.ten_file = tai_lieu.ten_file;
-  this.duong_dan = tai_lieu.duong_dan;
-  this.kich_thuoc = tai_lieu.kich_thuoc;
-  this.loai_mime = tai_lieu.loai_mime;
-  this.ma_kiem_tra = tai_lieu.ma_kiem_tra;
-  this.chu_ky_so = tai_lieu.chu_ky_so;
-  this.nguoi_ky = tai_lieu.nguoi_ky;
-  this.ngay_ky = tai_lieu.ngay_ky;
-  this.nguoi_tai_len = tai_lieu.nguoi_tai_len;
-  this.ngay_tai_len = tai_lieu.ngay_tai_len;
-  this.ma_cuc_hai_quan = tai_lieu.ma_cuc_hai_quan;
-  this.nhom_xu_ly_ho_so = tai_lieu.nhom_xu_ly_ho_so;
-  this.phan_loai_khai_bao = tai_lieu.phan_loai_khai_bao;
-  this.so_dien_thoai_nguoi_khai = tai_lieu.so_dien_thoai_nguoi_khai;
-  this.so_quan_ly_noi_bo = tai_lieu.so_quan_ly_noi_bo;
-  this.ghi_chu = tai_lieu.ghi_chu;
-  this.so_dinh_kem = tai_lieu.so_dinh_kem;
-  this.trang_thai_gui = tai_lieu.trang_thai_gui;
-  this.ngay_gui = tai_lieu.ngay_gui;
-  this.id_to_khai = tai_lieu.id_to_khai;
-};
-Tai_lieu.getById = (id_tai_lieu, callback) => {
-  const sqlString = "SELECT * FROM tai_lieu WHERE id_tai_lieu = ? ";
-  db.query(sqlString, [id_tai_lieu], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả tài liệu
+ */
+const getAll = () => {
+  return prisma.tai_lieu.findMany({
+    orderBy: {
+      id_tai_lieu: 'desc',
+    },
   });
 };
-Tai_lieu.getAll = (callback) => {
-  const sqlString = "SELECT * FROM tai_lieu ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy tài liệu theo ID
+ */
+const getById = (id_tai_lieu) => {
+  return prisma.tai_lieu.findUnique({
+    where: { id_tai_lieu },
   });
 };
-Tai_lieu.insert = (tai_lieu, callBack) => {
-  const sqlString = "INSERT INTO tai_lieu SET ?";
-  db.query(sqlString, [tai_lieu], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_tai_lieu : res.insertId, ...tai_lieu });
+
+/**
+ * Lấy tài liệu theo đối tượng (đa hình)
+ */
+const getByDoiTuong = (loai_doi_tuong, id_doi_tuong) => {
+  return prisma.tai_lieu.findMany({
+    where: {
+      loai_doi_tuong,
+      id_doi_tuong,
+    },
+    orderBy: {
+      ngay_tai_len: 'desc',
+    },
   });
 };
-Tai_lieu.update = (tai_lieu, id_tai_lieu, callBack) => {
-  const sqlString = "UPDATE tai_lieu SET ? WHERE id_tai_lieu = ?";
-  db.query(sqlString, [tai_lieu, id_tai_lieu], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật tai_lieu id_tai_lieu = " + "id_tai_lieu" + " thành công");
+
+/**
+ * Lấy tài liệu theo tờ khai
+ */
+const getByToKhai = (id_to_khai) => {
+  return prisma.tai_lieu.findMany({
+    where: { id_to_khai },
+    orderBy: {
+      ngay_tai_len: 'desc',
+    },
   });
 };
-Tai_lieu.delete = (id_tai_lieu, callBack) => {
-  db.query("DELETE FROM tai_lieu WHERE id_tai_lieu = ?", [id_tai_lieu], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa tai_lieu id_tai_lieu = " + "id_tai_lieu" + " thành công");
+
+/**
+ * Thêm mới tài liệu
+ */
+const insert = (data) => {
+  return prisma.tai_lieu.create({
+    data: {
+      loai_doi_tuong: data.loai_doi_tuong,
+      id_doi_tuong: data.id_doi_tuong,
+      loai_tai_lieu: data.loai_tai_lieu,
+      ten_file: data.ten_file,
+      duong_dan: data.duong_dan,
+      kich_thuoc: data.kich_thuoc,
+      loai_mime: data.loai_mime,
+      ma_kiem_tra: data.ma_kiem_tra,
+      chu_ky_so: data.chu_ky_so,
+      nguoi_ky: data.nguoi_ky,
+      ngay_ky: data.ngay_ky,
+      nguoi_tai_len: data.nguoi_tai_len,
+      ngay_tai_len: data.ngay_tai_len ?? new Date(),
+      ma_cuc_hai_quan: data.ma_cuc_hai_quan,
+      nhom_xu_ly_ho_so: data.nhom_xu_ly_ho_so,
+      phan_loai_khai_bao: data.phan_loai_khai_bao,
+      so_dien_thoai_nguoi_khai: data.so_dien_thoai_nguoi_khai,
+      so_quan_ly_noi_bo: data.so_quan_ly_noi_bo,
+      ghi_chu: data.ghi_chu,
+      so_dinh_kem: data.so_dinh_kem,
+      trang_thai_gui: data.trang_thai_gui ?? 'CHUA_GUI',
+      ngay_gui: data.ngay_gui,
+      id_to_khai: data.id_to_khai,
+    },
   });
 };
-module.exports = Tai_lieu;
+
+/**
+ * Cập nhật metadata tài liệu
+ */
+const update = (id_tai_lieu, data) => {
+  return prisma.tai_lieu.update({
+    where: { id_tai_lieu },
+    data: {
+      loai_tai_lieu: data.loai_tai_lieu,
+      ghi_chu: data.ghi_chu,
+      so_dinh_kem: data.so_dinh_kem,
+      trang_thai_gui: data.trang_thai_gui,
+      ngay_gui: data.ngay_gui,
+      chu_ky_so: data.chu_ky_so,
+      nguoi_ky: data.nguoi_ky,
+      ngay_ky: data.ngay_ky,
+    },
+  });
+};
+
+/**
+ * ❌ KHÔNG KHUYẾN KHÍCH delete cứng
+ * Nếu bắt buộc → soft delete / trạng thái
+ */
+const remove = (id_tai_lieu) => {
+  return prisma.tai_lieu.delete({
+    where: { id_tai_lieu },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByDoiTuong,
+  getByToKhai,
+  insert,
+  update,
+  remove,
+};

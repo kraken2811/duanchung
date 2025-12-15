@@ -1,57 +1,75 @@
-const prisma = require('@prisma/client').prisma;
-const Log_tich_hop = (log_tich_hop) => {
-  this.id_log = log_tich_hop.id_log;
-  this.ten_he_thong = log_tich_hop.ten_he_thong;
-  this.huong = log_tich_hop.huong;
-  this.ma_tuong_quan = log_tich_hop.ma_tuong_quan;
-  this.du_lieu_yeu_cau = log_tich_hop.du_lieu_yeu_cau;
-  this.du_lieu_phan_hoi = log_tich_hop.du_lieu_phan_hoi;
-  this.trang_thai = log_tich_hop.trang_thai;
-  this.thong_bao_loi = log_tich_hop.thong_bao_loi;
-  this.ngay_tao = log_tich_hop.ngay_tao;
-};
-Log_tich_hop.getById = (id_log, callback) => {
-  const sqlString = "SELECT * FROM log_tich_hop WHERE id_log = ? ";
-  db.query(sqlString, [id_log], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả log tích hợp
+ */
+const getAll = () => {
+  return prisma.log_tich_hop.findMany({
+    orderBy: {
+      id_log: 'desc',
+    },
   });
 };
-Log_tich_hop.getAll = (callback) => {
-  const sqlString = "SELECT * FROM log_tich_hop ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy log tích hợp theo ID
+ */
+const getById = (id_log) => {
+  return prisma.log_tich_hop.findUnique({
+    where: { id_log },
   });
 };
-Log_tich_hop.insert = (log_tich_hop, callBack) => {
-  const sqlString = "INSERT INTO log_tich_hop SET ?";
-  db.query(sqlString, [log_tich_hop], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_log : res.insertId, ...log_tich_hop });
+
+/**
+ * Thêm mới log tích hợp
+ * 👉 append-only (nên chỉ INSERT)
+ */
+const insert = (data) => {
+  return prisma.log_tich_hop.create({
+    data: {
+      ten_he_thong: data.ten_he_thong,
+      huong: data.huong,
+      ma_tuong_quan: data.ma_tuong_quan,
+      du_lieu_yeu_cau: data.du_lieu_yeu_cau,
+      du_lieu_phan_hoi: data.du_lieu_phan_hoi,
+      trang_thai: data.trang_thai,
+      thong_bao_loi: data.thong_bao_loi,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Log_tich_hop.update = (log_tich_hop, id_log, callBack) => {
-  const sqlString = "UPDATE log_tich_hop SET ? WHERE id_log = ?";
-  db.query(sqlString, [log_tich_hop, id_log], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật log_tich_hop id_log = " + "id_log" + " thành công");
+
+/**
+ * ⚠️ KHÔNG NÊN update log tích hợp
+ * (log hệ thống / tích hợp nên immutable)
+ * Nếu bắt buộc (không khuyến nghị)
+ */
+const update = (id_log, data) => {
+  return prisma.log_tich_hop.update({
+    where: { id_log },
+    data: {
+      trang_thai: data.trang_thai,
+      du_lieu_phan_hoi: data.du_lieu_phan_hoi,
+      thong_bao_loi: data.thong_bao_loi,
+    },
   });
 };
-Log_tich_hop.delete = (id_log, callBack) => {
-  db.query("DELETE FROM log_tich_hop WHERE id_log = ?", [id_log], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa log_tich_hop id_log = " + "id_log" + " thành công");
+
+/**
+ * ❌ KHÔNG NÊN delete log tích hợp
+ * Nếu buộc phải làm (không khuyến nghị)
+ */
+const remove = (id_log) => {
+  return prisma.log_tich_hop.delete({
+    where: { id_log },
   });
 };
-module.exports = Log_tich_hop;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};
