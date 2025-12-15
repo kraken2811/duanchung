@@ -28,50 +28,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript ]
+        language: [ javascript-typescript ]
 
     steps:
-      # 1️⃣ Checkout source
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # 3️⃣ Initialize CodeQL
+          cache: npm
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
-
-      # 4️⃣ Install Backend dependencies (nếu có)
       - name: Install Backend dependencies
+        if: exists('backend/package.json')
         run: |
-          if [ -f backend/package.json ]; then
-            echo "Installing backend dependencies"
-            cd backend
-            npm install --ignore-scripts
-            cd ..
-          else
-            echo "No backend/package.json found"
-          fi
-
-      # 5️⃣ Install Frontend dependencies (nếu có)
+          cd backend
+          npm install --ignore-scripts
+          cd ..
       - name: Install Frontend dependencies
+        if: exists('frontend/package.json')
         run: |
-          if [ -f frontend/package.json ]; then
-            echo "Installing frontend dependencies"
-            cd frontend
-            npm install --ignore-scripts
-            cd ..
-          else
-            echo "No frontend/package.json found"
-          fi
-
-      # 6️⃣ Analyze
+          cd frontend
+          npm install --ignore-scripts
+          cd ..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
