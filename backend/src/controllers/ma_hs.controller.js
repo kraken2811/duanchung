@@ -71,7 +71,7 @@ module.exports = {
   // Xóa mã HS
   delete: (req, res) => {
     const id = req.params.id;
-    Ma_hs.delete(id, (err, result) => {
+    Ma_hs.remove(id, (err, result) => {
       if (err) {
         return res.status(500).json({
           message: "Lỗi khi xóa mã HS",

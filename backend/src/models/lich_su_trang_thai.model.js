@@ -1,55 +1,70 @@
-const prisma = require('@prisma/client').prisma;
-const Lich_su_trang_thai = (lich_su_trang_thai) => {
-  this.id_lich_su = lich_su_trang_thai.id_lich_su;
-  this.id_to_khai = lich_su_trang_thai.id_to_khai;
-  this.trang_thai_cu = lich_su_trang_thai.trang_thai_cu;
-  this.trang_thai_moi = lich_su_trang_thai.trang_thai_moi;
-  this.nguoi_thay_doi = lich_su_trang_thai.nguoi_thay_doi;
-  this.ngay_thay_doi = lich_su_trang_thai.ngay_thay_doi;
-  this.ghi_chu = lich_su_trang_thai.ghi_chu;
-};
-Lich_su_trang_thai.getById = (id_lich_su, callback) => {
-  const sqlString = "SELECT * FROM lich_su_trang_thai WHERE id_lich_su = ? ";
-  db.query(sqlString, [id_lich_su], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả lịch sử trạng thái
+ */
+const getAll = () => {
+  return prisma.lich_su_trang_thai.findMany({
+    orderBy: {
+      id_lich_su: 'desc',
+    },
   });
 };
-Lich_su_trang_thai.getAll = (callback) => {
-  const sqlString = "SELECT * FROM lich_su_trang_thai ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy lịch sử trạng thái theo ID
+ */
+const getById = (id_lich_su) => {
+  return prisma.lich_su_trang_thai.findUnique({
+    where: { id_lich_su },
   });
 };
-Lich_su_trang_thai.insert = (lich_su_trang_thai, callBack) => {
-  const sqlString = "INSERT INTO lich_su_trang_thai SET ?";
-  db.query(sqlString, [lich_su_trang_thai], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_lich_su : res.insertId, ...lich_su_trang_thai });
+
+/**
+ * Thêm mới lịch sử trạng thái
+ * ⚠️ Thực tế nghiệp vụ: chỉ nên INSERT (append-only)
+ */
+const insert = (data) => {
+  return prisma.lich_su_trang_thai.create({
+    data: {
+      id_to_khai: data.id_to_khai,
+      trang_thai_cu: data.trang_thai_cu,
+      trang_thai_moi: data.trang_thai_moi,
+      nguoi_thay_doi: data.nguoi_thay_doi,
+      ngay_thay_doi: data.ngay_thay_doi,
+      ghi_chu: data.ghi_chu,
+    },
   });
 };
-Lich_su_trang_thai.update = (lich_su_trang_thai, id_lich_su, callBack) => {
-  const sqlString = "UPDATE lich_su_trang_thai SET ? WHERE id_lich_su = ?";
-  db.query(sqlString, [lich_su_trang_thai, id_lich_su], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật lich_su_trang_thai id_lich_su = " + "id_lich_su" + " thành công");
+
+/**
+ * ❌ KHÔNG NÊN update lịch sử trạng thái (audit trail)
+ * Nếu vẫn cần (không khuyến nghị)
+ */
+const update = (id_lich_su, data) => {
+  return prisma.lich_su_trang_thai.update({
+    where: { id_lich_su },
+    data: {
+      ghi_chu: data.ghi_chu,
+    },
   });
 };
-Lich_su_trang_thai.delete = (id_lich_su, callBack) => {
-  db.query("DELETE FROM lich_su_trang_thai WHERE id_lich_su = ?", [id_lich_su], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa lich_su_trang_thai id_lich_su = " + "id_lich_su" + " thành công");
+
+/**
+ * ❌ KHÔNG NÊN delete lịch sử trạng thái
+ * Nếu bắt buộc (không khuyến nghị)
+ */
+const remove = (id_lich_su) => {
+  return prisma.lich_su_trang_thai.delete({
+    where: { id_lich_su },
   });
 };
-module.exports = Lich_su_trang_thai;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

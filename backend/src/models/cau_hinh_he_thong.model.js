@@ -1,54 +1,70 @@
-const prisma = require('@prisma/client').prisma;
-const Cau_hinh_he_thong = (cau_hinh_he_thong) => {
-  this.id_cau_hinh = cau_hinh_he_thong.id_cau_hinh;
-  this.khoa_cau_hinh = cau_hinh_he_thong.khoa_cau_hinh;
-  this.gia_tri_cau_hinh = cau_hinh_he_thong.gia_tri_cau_hinh;
-  this.mo_ta = cau_hinh_he_thong.mo_ta;
-  this.nguoi_cap_nhat = cau_hinh_he_thong.nguoi_cap_nhat;
-  this.ngay_cap_nhat = cau_hinh_he_thong.ngay_cap_nhat;
-};
-Cau_hinh_he_thong.getById = (id_cau_hinh, callback) => {
-  const sqlString = "SELECT * FROM cau_hinh_he_thong WHERE id_cau_hinh = ? ";
-  db.query(sqlString, [id_cau_hinh], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả cấu hình hệ thống
+ */
+const getAll = () => {
+  return prisma.cau_hinh_he_thong.findMany({
+    orderBy: {
+      id_cau_hinh: 'desc',
+    },
   });
 };
-Cau_hinh_he_thong.getAll = (callback) => {
-  const sqlString = "SELECT * FROM cau_hinh_he_thong ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy cấu hình theo ID
+ */
+const getById = (id_cau_hinh) => {
+  return prisma.cau_hinh_he_thong.findUnique({
+    where: { id_cau_hinh },
   });
 };
-Cau_hinh_he_thong.insert = (cau_hinh_he_thong, callBack) => {
-  const sqlString = "INSERT INTO cau_hinh_he_thong SET ?";
-  db.query(sqlString, [cau_hinh_he_thong], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_cau_hinh : res.insertId, ...cau_hinh_he_thong });
+
+/**
+ * Thêm cấu hình hệ thống
+ */
+const insert = (data) => {
+  return prisma.cau_hinh_he_thong.create({
+    data: {
+      khoa_cau_hinh: data.khoa_cau_hinh,
+      gia_tri_cau_hinh: data.gia_tri_cau_hinh,
+      mo_ta: data.mo_ta,
+      nguoi_cap_nhat: data.nguoi_cap_nhat,
+      ngay_cap_nhat: data.ngay_cap_nhat,
+    },
   });
 };
-Cau_hinh_he_thong.update = (cau_hinh_he_thong, id_cau_hinh, callBack) => {
-  const sqlString = "UPDATE cau_hinh_he_thong SET ? WHERE id_cau_hinh = ?";
-  db.query(sqlString, [cau_hinh_he_thong, id_cau_hinh], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật cau_hinh_he_thong id_cau_hinh = " + "id_cau_hinh" + " thành công");
+
+/**
+ * Cập nhật cấu hình hệ thống
+ */
+const update = (id_cau_hinh, data) => {
+  return prisma.cau_hinh_he_thong.update({
+    where: { id_cau_hinh },
+    data: {
+      khoa_cau_hinh: data.khoa_cau_hinh,
+      gia_tri_cau_hinh: data.gia_tri_cau_hinh,
+      mo_ta: data.mo_ta,
+      nguoi_cap_nhat: data.nguoi_cap_nhat,
+      ngay_cap_nhat: data.ngay_cap_nhat,
+    },
   });
 };
-Cau_hinh_he_thong.delete = (id_cau_hinh, callBack) => {
-  db.query("DELETE FROM cau_hinh_he_thong WHERE id_cau_hinh = ?", [id_cau_hinh], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa cau_hinh_he_thong id_cau_hinh = " + "id_cau_hinh" + " thành công");
+
+/**
+ * Xóa cấu hình hệ thống
+ */
+const remove = (id_cau_hinh) => {
+  return prisma.cau_hinh_he_thong.delete({
+    where: { id_cau_hinh },
   });
 };
-module.exports = Cau_hinh_he_thong;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

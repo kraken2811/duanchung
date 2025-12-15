@@ -1,9 +1,12 @@
-var express = require('express');
-var router = express.Router();
-const vat_lieu_hop_dongController = require("../controllers/vat_lieu_hop_dong.controller");
-router.get('/', vat_lieu_hop_dongController.getAll);
-router.get('/:id',  vat_lieu_hop_dongController.getById);
-router.post('/',  vat_lieu_hop_dongController.insert);
-router.put('/:id',  vat_lieu_hop_dongController.update);
-router.delete('/:id', vat_lieu_hop_dongController.delete);
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/vat_lieu_hop_dong.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/hop-dong/:id_hop_dong", controller.getByHopDong);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
+
 module.exports = router;

@@ -62,12 +62,12 @@ WHERE user = 'ECUS5';
 Bước 1: Thiết lập file .env
 Bước 2: cd BE,FE và chạy lệnh npm install
 Bước 3: Khởi tạo Prisma (cd Backend) npx prisma generate
-Bước 4: để đấy lên mysql npm prisma db push
+Bước 4: để đấy lên mysql npx prisma db push
 
 cd backend
 npx prisma migrate deploy    # Áp dụng migration vào database
 npx exec prisma migrate dev       # Tạo migration mới
 npx exec prisma generate          # Tạo Prisma Client
-npx exec prisma studio           # Mở Prisma Studio
+npx exec prisma studio           
 
 docker compose -f docker-compose.dev.yml up -d --build

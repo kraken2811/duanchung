@@ -58,7 +58,7 @@ module.exports = {
   // Xóa khoản điều chỉnh trị giá
   delete: (req, res) => {
     const id = req.params.id;
-    Khoan_dieu_chinh_tri_gia.delete(id, (err, result) => {
+    Khoan_dieu_chinh_tri_gia.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa khoản điều chỉnh trị giá:", err);
         return res.status(500).json({ message: "Xóa khoản điều chỉnh trị giá thất bại", error: err });

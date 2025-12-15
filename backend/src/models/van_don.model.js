@@ -1,55 +1,85 @@
-const prisma = require('@prisma/client').prisma;
-const Van_don = (van_don) => {
-  this.id_van_don = van_don.id_van_don;
-  this.so_van_don = van_don.so_van_don;
-  this.id_lo_hang = van_don.id_lo_hang;
-  this.ten_tau = van_don.ten_tau;
-  this.hanh_trinh = van_don.hanh_trinh;
-  this.so_container = van_don.so_container;
-  this.ngay_tao = van_don.ngay_tao;
-};
-Van_don.getById = (id_van_don, callback) => {
-  const sqlString = "SELECT * FROM van_don WHERE id_van_don = ? ";
-  db.query(sqlString, [id_van_don], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả vận đơn
+ */
+const getAll = () => {
+  return prisma.van_don.findMany({
+    orderBy: {
+      ngay_tao: 'desc',
+    },
   });
 };
-Van_don.getAll = (callback) => {
-  const sqlString = "SELECT * FROM van_don ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy vận đơn theo ID
+ */
+const getById = (id_van_don) => {
+  return prisma.van_don.findUnique({
+    where: { id_van_don },
   });
 };
-Van_don.insert = (van_don, callBack) => {
-  const sqlString = "INSERT INTO van_don SET ?";
-  db.query(sqlString, [van_don], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_van_don : res.insertId, ...van_don });
+
+/**
+ * Lấy vận đơn theo lô hàng
+ */
+const getByLoHang = (id_lo_hang) => {
+  return prisma.van_don.findMany({
+    where: { id_lo_hang },
+    orderBy: {
+      ngay_tao: 'desc',
+    },
   });
 };
-Van_don.update = (van_don, id_van_don, callBack) => {
-  const sqlString = "UPDATE van_don SET ? WHERE id_van_don = ?";
-  db.query(sqlString, [van_don, id_van_don], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật van_don id_van_don = " + "id_van_don" + " thành công");
+
+/**
+ * Tạo mới vận đơn
+ */
+const insert = (data) => {
+  return prisma.van_don.create({
+    data: {
+      so_van_don: data.so_van_don,
+      id_lo_hang: data.id_lo_hang,
+      ten_tau: data.ten_tau,
+      hanh_trinh: data.hanh_trinh,
+      so_container: data.so_container,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-Van_don.delete = (id_van_don, callBack) => {
-  db.query("DELETE FROM van_don WHERE id_van_don = ?", [id_van_don], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa van_don id_van_don = " + "id_van_don" + " thành công");
+
+/**
+ * Cập nhật vận đơn
+ * ⚠️ Chỉ nên cho phép khi CHƯA dùng cho tờ khai
+ */
+const update = (id_van_don, data) => {
+  return prisma.van_don.update({
+    where: { id_van_don },
+    data: {
+      so_van_don: data.so_van_don,
+      ten_tau: data.ten_tau,
+      hanh_trinh: data.hanh_trinh,
+      so_container: data.so_container,
+    },
   });
 };
-module.exports = Van_don;
+
+/**
+ * ❌ KHÔNG KHUYẾN KHÍCH delete cứng
+ * Nếu cần → soft delete / void
+ */
+const remove = (id_van_don) => {
+  return prisma.van_don.delete({
+    where: { id_van_don },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByLoHang,
+  insert,
+  update,
+  remove,
+};

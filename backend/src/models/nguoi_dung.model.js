@@ -1,59 +1,130 @@
-const prisma = require('@prisma/client').prisma;
-const Nguoi_dung = (nguoi_dung) => {
-  this.id_nguoi_dung = nguoi_dung.id_nguoi_dung;
-  this.ten_dang_nhap = nguoi_dung.ten_dang_nhap;
-  this.mat_khau = nguoi_dung.mat_khau;
-  this.ho_ten = nguoi_dung.ho_ten;
-  this.email = nguoi_dung.email;
-  this.dien_thoai = nguoi_dung.dien_thoai;
-  this.id_vai_tro = nguoi_dung.id_vai_tro;
-  this.id_cong_ty = nguoi_dung.id_cong_ty;
-  this.kich_hoat = nguoi_dung.kich_hoat;
-  this.ngay_tao = nguoi_dung.ngay_tao;
-  this.ngay_cap_nhat = nguoi_dung.ngay_cap_nhat;
-};
-Nguoi_dung.getById = (id_nguoi_dung, callback) => {
-  const sqlString = "SELECT * FROM nguoi_dung WHERE id_nguoi_dung = ? ";
-  db.query(sqlString, [id_nguoi_dung], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy danh sách người dùng (KHÔNG trả mật khẩu)
+ */
+const getAll = () => {
+  return prisma.nguoi_dung.findMany({
+    select: {
+      id_nguoi_dung: true,
+      ten_dang_nhap: true,
+      ho_ten: true,
+      email: true,
+      dien_thoai: true,
+      id_vai_tro: true,
+      id_cong_ty: true,
+      kich_hoat: true,
+      ngay_tao: true,
+      ngay_cap_nhat: true,
+    },
+    orderBy: {
+      id_nguoi_dung: 'desc',
+    },
   });
 };
-Nguoi_dung.getAll = (callback) => {
-  const sqlString = "SELECT * FROM nguoi_dung ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy người dùng theo ID (KHÔNG trả mật khẩu)
+ */
+const getById = (id_nguoi_dung) => {
+  return prisma.nguoi_dung.findUnique({
+    where: { id_nguoi_dung },
+    select: {
+      id_nguoi_dung: true,
+      ten_dang_nhap: true,
+      ho_ten: true,
+      email: true,
+      dien_thoai: true,
+      id_vai_tro: true,
+      id_cong_ty: true,
+      kich_hoat: true,
+      ngay_tao: true,
+      ngay_cap_nhat: true,
+    },
   });
 };
-Nguoi_dung.insert = (nguoi_dung, callBack) => {
-  const sqlString = "INSERT INTO nguoi_dung SET ?";
-  db.query(sqlString, [nguoi_dung], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_nguoi_dung : res.insertId, ...nguoi_dung });
+
+/**
+ * Lấy user để login (CÓ mật khẩu – dùng nội bộ)
+ */
+const getByUsername = (ten_dang_nhap) => {
+  return prisma.nguoi_dung.findUnique({
+    where: { ten_dang_nhap },
   });
 };
-Nguoi_dung.update = (nguoi_dung, id_nguoi_dung, callBack) => {
-  const sqlString = "UPDATE nguoi_dung SET ? WHERE id_nguoi_dung = ?";
-  db.query(sqlString, [nguoi_dung, id_nguoi_dung], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật nguoi_dung id_nguoi_dung = " + "id_nguoi_dung" + " thành công");
+
+/**
+ * Thêm mới người dùng
+ * 👉 mat_khau PHẢI là password đã hash
+ */
+const insert = (data) => {
+  return prisma.nguoi_dung.create({
+    data: {
+      ten_dang_nhap: data.ten_dang_nhap,
+      mat_khau: data.mat_khau, // hash rồi
+      ho_ten: data.ho_ten,
+      email: data.email,
+      dien_thoai: data.dien_thoai,
+      id_vai_tro: data.id_vai_tro,
+      id_cong_ty: data.id_cong_ty,
+      kich_hoat: data.kich_hoat ?? true,
+      ngay_tao: new Date(),
+    },
   });
 };
-Nguoi_dung.delete = (id_nguoi_dung, callBack) => {
-  db.query("DELETE FROM nguoi_dung WHERE id_nguoi_dung = ?", [id_nguoi_dung], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa nguoi_dung id_nguoi_dung = " + "id_nguoi_dung" + " thành công");
+
+/**
+ * Cập nhật thông tin người dùng (KHÔNG cập nhật mật khẩu)
+ */
+const update = (id_nguoi_dung, data) => {
+  return prisma.nguoi_dung.update({
+    where: { id_nguoi_dung },
+    data: {
+      ho_ten: data.ho_ten,
+      email: data.email,
+      dien_thoai: data.dien_thoai,
+      id_vai_tro: data.id_vai_tro,
+      id_cong_ty: data.id_cong_ty,
+      kich_hoat: data.kich_hoat,
+      ngay_cap_nhat: new Date(),
+    },
   });
 };
-module.exports = Nguoi_dung;
+
+/**
+ * Đổi mật khẩu
+ */
+const updatePassword = (id_nguoi_dung, mat_khau_hash) => {
+  return prisma.nguoi_dung.update({
+    where: { id_nguoi_dung },
+    data: {
+      mat_khau: mat_khau_hash,
+      ngay_cap_nhat: new Date(),
+    },
+  });
+};
+
+/**
+ * ❌ KHÔNG DELETE cứng user
+ * 👉 Chỉ deactivate
+ */
+const deactivate = (id_nguoi_dung) => {
+  return prisma.nguoi_dung.update({
+    where: { id_nguoi_dung },
+    data: {
+      kich_hoat: false,
+      ngay_cap_nhat: new Date(),
+    },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByUsername,
+  insert,
+  update,
+  updatePassword,
+  deactivate,
+};

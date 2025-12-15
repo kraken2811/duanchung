@@ -1,56 +1,74 @@
-const prisma = require('@prisma/client').prisma;
-const Container = (container) => {
-  this.id_container = container.id_container;
-  this.id_lo_hang = container.id_lo_hang;
-  this.so_container = container.so_container;
-  this.so_chi = container.so_chi;
-  this.loai_container = container.loai_container;
-  this.trong_luong_brut = container.trong_luong_brut;
-  this.trong_luong_net = container.trong_luong_net;
-  this.ngay_tao = container.ngay_tao;
-};
-Container.getById = (id_container, callback) => {
-  const sqlString = "SELECT * FROM container WHERE id_container = ? ";
-  db.query(sqlString, [id_container], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả container
+ */
+const getAll = () => {
+  return prisma.container.findMany({
+    orderBy: {
+      id_container: 'desc',
+    },
   });
 };
-Container.getAll = (callback) => {
-  const sqlString = "SELECT * FROM container ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy container theo ID
+ */
+const getById = (id_container) => {
+  return prisma.container.findUnique({
+    where: { id_container },
   });
 };
-Container.insert = (container, callBack) => {
-  const sqlString = "INSERT INTO container SET ?";
-  db.query(sqlString, [container], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_container : res.insertId, ...container });
+
+/**
+ * Thêm mới container
+ */
+const insert = (data) => {
+  return prisma.container.create({
+    data: {
+      id_lo_hang: data.id_lo_hang,
+      so_container: data.so_container,
+      so_chi: data.so_chi,
+      loai_container: data.loai_container,
+      trong_luong_brut: data.trong_luong_brut,
+      trong_luong_net: data.trong_luong_net,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Container.update = (container, id_container, callBack) => {
-  const sqlString = "UPDATE container SET ? WHERE id_container = ?";
-  db.query(sqlString, [container, id_container], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật container id_container = " + "id_container" + " thành công");
+
+/**
+ * Cập nhật container
+ */
+const update = (id_container, data) => {
+  return prisma.container.update({
+    where: { id_container },
+    data: {
+      id_lo_hang: data.id_lo_hang,
+      so_container: data.so_container,
+      so_chi: data.so_chi,
+      loai_container: data.loai_container,
+      trong_luong_brut: data.trong_luong_brut,
+      trong_luong_net: data.trong_luong_net,
+      ngay_tao: data.ngay_tao,
+    },
   });
 };
-Container.delete = (id_container, callBack) => {
-  db.query("DELETE FROM container WHERE id_container = ?", [id_container], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa container id_container = " + "id_container" + " thành công");
+
+/**
+ * Xóa container
+ */
+const remove = (id_container) => {
+  return prisma.container.delete({
+    where: { id_container },
   });
 };
-module.exports = Container;
+
+module.exports = {
+  getAll,
+  getById,
+  insert,
+  update,
+  remove,
+};

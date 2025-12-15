@@ -1,58 +1,96 @@
-const prisma = require('@prisma/client').prisma;
-const San_pham_hop_dong = (san_pham_hop_dong) => {
-  this.id_san_pham = san_pham_hop_dong.id_san_pham;
-  this.id_hop_dong = san_pham_hop_dong.id_hop_dong;
-  this.ma_san_pham = san_pham_hop_dong.ma_san_pham;
-  this.ten_san_pham = san_pham_hop_dong.ten_san_pham;
-  this.don_vi_tinh = san_pham_hop_dong.don_vi_tinh;
-  this.so_luong = san_pham_hop_dong.so_luong;
-  this.ma_hs = san_pham_hop_dong.ma_hs;
-  this.don_gia = san_pham_hop_dong.don_gia;
-  this.tong_gia_tri = san_pham_hop_dong.tong_gia_tri;
-  this.ngay_tao = san_pham_hop_dong.ngay_tao;
-};
-San_pham_hop_dong.getById = (id_san_pham, callback) => {
-  const sqlString = "SELECT * FROM san_pham_hop_dong WHERE id_san_pham = ? ";
-  db.query(sqlString, [id_san_pham], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+/**
+ * Lấy tất cả sản phẩm hợp đồng
+ */
+const getAll = () => {
+  return prisma.san_pham_hop_dong.findMany({
+    orderBy: {
+      id_san_pham: 'desc',
+    },
   });
 };
-San_pham_hop_dong.getAll = (callback) => {
-  const sqlString = "SELECT * FROM san_pham_hop_dong ";
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-    callback(null, result);
+
+/**
+ * Lấy sản phẩm hợp đồng theo ID
+ */
+const getById = (id_san_pham) => {
+  return prisma.san_pham_hop_dong.findUnique({
+    where: { id_san_pham },
   });
 };
-San_pham_hop_dong.insert = (san_pham_hop_dong, callBack) => {
-  const sqlString = "INSERT INTO san_pham_hop_dong SET ?";
-  db.query(sqlString, [san_pham_hop_dong], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null,{id_san_pham : res.insertId, ...san_pham_hop_dong });
+
+/**
+ * Lấy danh sách sản phẩm theo hợp đồng
+ */
+const getByHopDong = (id_hop_dong) => {
+  return prisma.san_pham_hop_dong.findMany({
+    where: { id_hop_dong },
+    orderBy: {
+      ngay_tao: 'asc',
+    },
   });
 };
-San_pham_hop_dong.update = (san_pham_hop_dong, id_san_pham, callBack) => {
-  const sqlString = "UPDATE san_pham_hop_dong SET ? WHERE id_san_pham = ?";
-  db.query(sqlString, [san_pham_hop_dong, id_san_pham], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Cập nhật san_pham_hop_dong id_san_pham = " + "id_san_pham" + " thành công");
+
+/**
+ * Thêm mới sản phẩm hợp đồng
+ */
+const insert = (data) => {
+  const so_luong = data.so_luong ?? 0;
+  const don_gia = data.don_gia ?? 0;
+
+  return prisma.san_pham_hop_dong.create({
+    data: {
+      id_hop_dong: data.id_hop_dong,
+      ma_san_pham: data.ma_san_pham,
+      ten_san_pham: data.ten_san_pham,
+      don_vi_tinh: data.don_vi_tinh,
+      so_luong,
+      ma_hs: data.ma_hs,
+      don_gia,
+      tong_gia_tri: so_luong * don_gia,
+      ngay_tao: data.ngay_tao ?? new Date(),
+    },
   });
 };
-San_pham_hop_dong.delete = (id_san_pham, callBack) => {
-  db.query("DELETE FROM san_pham_hop_dong WHERE id_san_pham = ?", [id_san_pham], (err, res) => {
-    if (err) {
-      return callBack(err, null);
-    }
-    callBack(null, "Xóa san_pham_hop_dong id_san_pham = " + "id_san_pham" + " thành công");
+
+/**
+ * Cập nhật sản phẩm hợp đồng
+ */
+const update = (id_san_pham, data) => {
+  const so_luong = data.so_luong ?? 0;
+  const don_gia = data.don_gia ?? 0;
+
+  return prisma.san_pham_hop_dong.update({
+    where: { id_san_pham },
+    data: {
+      ma_san_pham: data.ma_san_pham,
+      ten_san_pham: data.ten_san_pham,
+      don_vi_tinh: data.don_vi_tinh,
+      so_luong,
+      ma_hs: data.ma_hs,
+      don_gia,
+      tong_gia_tri: so_luong * don_gia,
+    },
   });
 };
-module.exports = San_pham_hop_dong;
+
+/**
+ * ❌ KHÔNG NÊN delete cứng nếu đã phát sinh nghiệp vụ
+ * Nếu bắt buộc → soft delete / trạng thái
+ */
+const remove = (id_san_pham) => {
+  return prisma.san_pham_hop_dong.delete({
+    where: { id_san_pham },
+  });
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByHopDong,
+  insert,
+  update,
+  remove,
+};

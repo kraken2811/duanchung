@@ -69,7 +69,7 @@ module.exports = {
   // Xóa
   delete: (req, res) => {
     const id = req.params.id;
-    Loai_van_tai.delete(id, (err, result) => {
+    Loai_van_tai.remove(id, (err, result) => {
       if (err) {
         return res.status(500).json({
           message: "Lỗi khi xóa loại vận tải",

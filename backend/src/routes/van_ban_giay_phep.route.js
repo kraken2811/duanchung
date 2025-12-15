@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
-const van_ban_giay_phepController = require("../controllers/van_ban_giay_phep.controller");
-router.get('/', van_ban_giay_phepController.getAll);
-router.get('/:id',  van_ban_giay_phepController.getById);
-router.post('/',  van_ban_giay_phepController.insert);
-router.put('/:id',  van_ban_giay_phepController.update);
-router.delete('/:id', van_ban_giay_phepController.delete);
+// routes/van_ban_giay_phep.route.js
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/van_ban_giay_phep.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/hop-dong/:id_hop_dong", controller.getByHopDong);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
+
 module.exports = router;

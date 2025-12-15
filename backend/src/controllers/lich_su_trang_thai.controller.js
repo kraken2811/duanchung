@@ -62,7 +62,7 @@ module.exports = {
   delete: (req, res) => {
     const id = req.params.id;
 
-    Lich_su_trang_thai.delete(id, (err, result) => {
+    Lich_su_trang_thai.remove(id, (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa lịch sử trạng thái:", err);
         return res.status(500).json({ message: "Xóa lịch sử trạng thái thất bại", error: err });

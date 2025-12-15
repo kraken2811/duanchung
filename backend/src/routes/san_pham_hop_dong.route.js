@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
-const san_pham_hop_dongController = require("../controllers/san_pham_hop_dong.controller");
-router.get('/', san_pham_hop_dongController.getAll);
-router.get('/:id',  san_pham_hop_dongController.getById);
-router.post('/',  san_pham_hop_dongController.insert);
-router.put('/:id',  san_pham_hop_dongController.update);
-router.delete('/:id', san_pham_hop_dongController.delete);
+// routes/san_pham_hop_dong.route.js
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/san_pham_hop_dong.controller");
+
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.get("/hop-dong/:id_hop_dong", controller.getByHopDong);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.delete);
+
 module.exports = router;
