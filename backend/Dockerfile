@@ -26,3 +26,22 @@ ENV NODE_ENV=uat
 EXPOSE 3000
 
 CMD ["sh", "-c", "npx prisma db push && node app.js"]
+
+FROM node:18-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+RUN npx prisma generate
+
+# ================= PROD =================
+FROM node:18-alpine AS prod
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=build /app /app
+
+EXPOSE 3000
+CMD ["node", "app.js"]
