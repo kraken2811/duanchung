@@ -68,6 +68,12 @@ cd backend
 npx prisma migrate deploy    # Áp dụng migration vào database
 npx exec prisma migrate dev       # Tạo migration mới
 npx exec prisma generate          # Tạo Prisma Client
-npx exec prisma studio           
+npx exec prisma studio   
+
+npx prisma db seed  
+(để mã hoá mật khẩu)
+node scripts/hash-passwords.js
+(chạy backend)
+npm run dev
 
 docker compose -f docker-compose.dev.yml up -d --build
