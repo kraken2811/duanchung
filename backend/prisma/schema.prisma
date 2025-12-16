@@ -91,6 +91,21 @@ model nguoi_dung {
   tai_lieu_ky        tai_lieu[]           @relation("nguoi_ky")
   tai_lieu_tai_len   tai_lieu[]           @relation("nguoi_tai_len")
   loHangs            lo_hang[]
+  refresh_tokens refresh_token[]
+}
+
+model refresh_token {
+  id_refresh_token String   @id @default(uuid())
+  token            String   @unique
+
+  id_nguoi_dung Int
+  nguoi_dung    nguoi_dung @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung], onDelete: Cascade)
+
+  is_revoked  Boolean  @default(false)
+  expires_at  DateTime
+  ngay_tao    DateTime @default(now())
+
+  @@index([id_nguoi_dung])
 }
 
 //////////////////////////////////////////////////////
