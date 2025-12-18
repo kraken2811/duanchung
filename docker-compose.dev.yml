@@ -1,10 +1,7 @@
-version: "3.9"
-
 services:
   mysql:
     image: mysql:8.0
     container_name: ecus5-mysql-dev
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: ecus5_local
@@ -14,26 +11,21 @@ services:
       - "3307:3306"
     volumes:
       - mysql_dev:/var/lib/mysql
-      - ./docker/mysql-init:/docker-entrypoint-initdb.d
-    command:
-      --default-authentication-plugin=mysql_native_password
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 5
+      interval: 5s
+      retries: 10
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     container_name: ecus5-backend-dev
     depends_on:
       mysql:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - /app/node_modules
     environment:
-      NODE_ENV: development
       DATABASE_URL: mysql://ecus5:ecus5@mysql:3306/ecus5_local
     ports:
       - "3000:3000"
@@ -55,10 +47,8 @@ services:
       HOST: 0.0.0.0
       CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "5173:3000"
-    command: sh -c "npm install && npm run dev"
-    depends_on:
-      - backend
+      - "5317:5317"
+    command: sh -c "npm install && npm start"
 
 volumes:
   mysql_dev:

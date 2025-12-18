@@ -1,28 +1,38 @@
+# ================= BASE =================
 FROM node:18-alpine AS base
 
-# ====== App dir ======
 WORKDIR /app
 
-# ====== Cài dependencies ======
 COPY package*.json ./
 RUN npm install
 
-# ====== Copy source ======
 COPY . .
 
-# ====== Prisma ======
+# Prisma client (KHÔNG migrate, chỉ generate)
 RUN npx prisma generate
 
-# ====== Expose port ======
+# ================= DEV =================
+FROM base AS dev
+ENV NODE_ENV=development
 EXPOSE 3000
-
-# ====== Dev command ======
 CMD ["npm", "run", "dev"]
 
-
+# ================= UAT =================
 FROM base AS uat
-
 ENV NODE_ENV=uat
 EXPOSE 3000
+CMD ["node", "app.js"]
 
-CMD ["sh", "-c", "npx prisma db push && node app.js"]
+# ================= PROD =================
+FROM node:18-alpine AS prod
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+RUN npx prisma generate
+
+EXPOSE 3000
+CMD ["node", "app.js"]

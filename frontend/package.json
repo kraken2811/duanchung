@@ -18,8 +18,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "dev": "cross-env HOST=0.0.0.0 PORT=3000 react-app-rewired start",
-    "start": "react-app-rewired start",
+    "dev": "cross-env HOST=0.0.0.0 PORT=5317 react-app-rewired start",
+    "start": "cross-env PORT=5317 react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject"

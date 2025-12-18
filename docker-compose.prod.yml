@@ -1,28 +1,32 @@
-version: "3.9"
-
 services:
   mysql:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: ecus5
+      MYSQL_USER: ecus5
+      MYSQL_PASSWORD: ecus5
     volumes:
       - mysql_prod:/var/lib/mysql
 
   backend:
-    image: ecus5-backend:${IMAGE_TAG}
+    build:
+      context: ./backend
+      target: prod
     restart: always
-    depends_on:
-      - mysql
     environment:
-      NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: mysql://ecus5:ecus5@mysql:3306/ecus5
     ports:
       - "3000:3000"
-    command: node app.js
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runtime
+    restart: always
+    ports:
+      - "80:80"
 
 volumes:
   mysql_prod:
