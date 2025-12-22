@@ -2,35 +2,29 @@ name: Deploy ECUS5 - DEV
 
 on:
   push:
-    branches: [develop]
+    branches: [dev]
   workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy to Pi5 (DEV)
     runs-on: [self-hosted, dev]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Runner info
         run: |
-          echo "Runner hostname:"
           hostname
-          echo "Working directory:"
           pwd
-          echo "Docker version:"
           docker --version
           docker compose version
+
       - name: Deploy DEV containers
         run: |
-          cd ~/Desktop/Project/duanchung
           docker compose -f docker-compose.dev.yml down
           docker compose -f docker-compose.dev.yml up -d --build
+
       - name: Docker status
         run: |
           docker ps
-          docker ps -a
-
-      - name: Cleanup unused images
-        run: docker image prune -f
