@@ -45,6 +45,37 @@ exports.getById = async (req, res) => {
 };
 
 /**
+ * GET /api/to_khai_hai_quans/:ma/idb
+ * Lấy dữ liệu hiển thị màn IDB
+ */
+exports.getIDB = async (req, res) => {
+  try {
+    const ma = req.params.ma;
+
+    if (!ma || typeof ma !== "string") {
+      return res.status(400).json({
+        message: "so_to_khai không hợp lệ",
+      });
+    }
+
+    const data = await ToKhai.getIDBData(ma);
+
+    if (!data) {
+      return res.status(404).json({
+        message: "Không tìm thấy tờ khai",
+      });
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi lấy dữ liệu IDB",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * GET /to-khai/lo-hang/:id_lo_hang
  * Lấy tờ khai theo lô hàng
  */
@@ -184,6 +215,29 @@ exports.delete = async (req, res) => {
     res.status(500).json({
       message: "Lỗi khi xóa tờ khai hải quan",
       error: error.message,
+    });
+  }
+};
+
+exports.getList = async (req, res) => {
+  try{
+    const results = await ToKhai.getList(req.query);
+    res.json(results);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách tờ khai', error: err.message });
+  }
+};
+
+exports.statistics = async (req, res) => {
+  try {
+    const data = await ToKhai.statistics();
+    res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Lỗi khi lấy thống kê tờ khai hải quan",
+      error: err.message,
     });
   }
 };

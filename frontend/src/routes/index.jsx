@@ -14,11 +14,12 @@ import ContractInvoiceView from "@/page/ContractInvoice/views/ContractInvoiceVie
 import MaterialListView from "@/page/MaterialList/views/MaterialListView";
 import ContractView from "@/page/Contract/views/ContractView";
 import ContractProductView  from "@/page/ContractProducts/views/ContractProductsView";
+import LoginView from "@/page/Login/views/LoginView";
 
 
 
 
-import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl} from "./urls";
+import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
       { path: materialListUrl, element: <MaterialListView /> },
       { path: contractUrl, element: <ContractView /> },
       { path: contractProductsUrl, element: <ContractProductView /> },
+      { path: loginUrl, element: <LoginView /> }
     ],
   },
 

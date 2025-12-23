@@ -2,49 +2,34 @@ name: Deploy ECUS5 - DEV (Self-hosted)
 
 on:
   push:
-    branches: [develop]
+    branches: [dev]
   workflow_dispatch:
 
 jobs:
-  deploy-dev:
+  deploy:
     runs-on: [self-hosted, dev]
 
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Check Docker
+      - name: Runner info
         run: |
+          echo "Host:"
+          hostname
+          echo "Path:"
+          pwd
           docker --version
           docker compose version
 
-      - name: Create env files
+      - name: Stop old containers
         run: |
-          echo "${{ secrets.ENV_DEV_ROOT }}" > .env.dev
-          mkdir -p backend frontend
-          echo "${{ secrets.ENV_DEV_BACKEND }}" > backend/.env.dev
-          echo "${{ secrets.ENV_DEV_FRONTEND }}" > frontend/.env.dev
+          docker compose -f docker-compose.dev.yml down
 
-      - name: Stop containers
+      - name: Build & Deploy DEV
         run: |
-          docker compose \
-            --env-file .env.dev \
-            -f docker-compose.dev.yml \
-            down
+          docker compose -f docker-compose.dev.yml up -d --build
 
-      - name: Start DEV
+      - name: Check running containers
         run: |
-          docker compose \
-            --env-file .env.dev \
-            -f docker-compose.dev.yml \
-            up -d
-
-      - name: Prisma migrate (DEV)
-        run: |
-          docker compose \
-            -f docker-compose.dev.yml \
-            exec backend \
-            npx prisma migrate deploy
-
-      - name: Cleanup
-        run: docker image prune -f
+          docker ps
