@@ -1,4 +1,4 @@
-name: Deploy ECUS5 - DEV
+name: Deploy ECUS5 - DEV (Self-hosted)
 
 on:
   push:
@@ -6,31 +6,45 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to Pi5 (DEV)
+  deploy-dev:
     runs-on: [self-hosted, dev]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Runner info
+
+      - name: Check Docker
         run: |
-          echo "Runner hostname:"
-          hostname
-          echo "Working directory:"
-          pwd
-          echo "Docker version:"
           docker --version
           docker compose version
-      - name: Deploy DEV containers
-        run: |
-          cd ~/Desktop/Project/duanchung
-          docker compose -f docker-compose.dev.yml down
-          docker compose -f docker-compose.dev.yml up -d --build
-      - name: Docker status
-        run: |
-          docker ps
-          docker ps -a
 
-      - name: Cleanup unused images
+      - name: Create env files
+        run: |
+          echo "${{ secrets.ENV_DEV_ROOT }}" > .env.dev
+          mkdir -p backend frontend
+          echo "${{ secrets.ENV_DEV_BACKEND }}" > backend/.env.dev
+          echo "${{ secrets.ENV_DEV_FRONTEND }}" > frontend/.env.dev
+
+      - name: Stop containers
+        run: |
+          docker compose \
+            --env-file .env.dev \
+            -f docker-compose.dev.yml \
+            down
+
+      - name: Start DEV
+        run: |
+          docker compose \
+            --env-file .env.dev \
+            -f docker-compose.dev.yml \
+            up -d
+
+      - name: Prisma migrate (DEV)
+        run: |
+          docker compose \
+            -f docker-compose.dev.yml \
+            exec backend \
+            npx prisma migrate deploy
+
+      - name: Cleanup
         run: docker image prune -f
