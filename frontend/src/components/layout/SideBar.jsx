@@ -11,6 +11,7 @@ import {
   FiSettings,
   FiTool,
   FiHelpCircle,
+  FiLogIn,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -136,6 +137,16 @@ const menuItems = [
       { key: "/support", label: "Hỗ trợ kỹ thuật" },
       { key: "/manual", label: "Hướng dẫn sử dụng" },
       { key: "/about", label: "Thông tin phiên bản" },
+    ],
+  },
+
+  {
+    key: "account",
+    label: "Tài khoản",
+    icon: <FiLogIn />,
+    children: [
+      { key: "/account", label: "Thông tin tài khoản" },
+      { key: "/profile", label: "Hồ sơ cá nhân" },
     ],
   },
 ];
