@@ -10,21 +10,26 @@ jobs:
     runs-on: [self-hosted, dev]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Runner info
         run: |
+          echo "Host:"
           hostname
+          echo "Path:"
           pwd
           docker --version
           docker compose version
 
-      - name: Deploy DEV containers
+      - name: Stop old containers
         run: |
           docker compose -f docker-compose.dev.yml down
+
+      - name: Build & Deploy DEV
+        run: |
           docker compose -f docker-compose.dev.yml up -d --build
 
-      - name: Docker status
+      - name: Check running containers
         run: |
           docker ps
