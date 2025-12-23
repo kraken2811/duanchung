@@ -14,10 +14,6 @@ export default function IDAStepBar() {
           title: "Hàng hóa",
           icon: <FiEdit3 />,
         },
-        {
-          title: "Hoàn tất",
-          icon: <FiCheckCircle />,
-        },
       ]}
     />
   );
