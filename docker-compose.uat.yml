@@ -1,50 +1,45 @@
+version: "3.9"
+
 services:
   mysql:
     image: mysql:8.0
-    container_name: ecus5-mysql-local
-    restart: unless-stopped
+    container_name: ecus5-mysql-uat
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: ecus5_local
+      MYSQL_DATABASE: ecus5_uat
       MYSQL_USER: ecus5
       MYSQL_PASSWORD: ecus5
-    ports:
-      - "3307:3306"
     volumes:
-      - mysql_local:/var/lib/mysql
+      - mysql_uat:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
       interval: 5s
       retries: 10
 
   backend:
     build:
       context: ./backend
-      target: dev
-    container_name: ecus5-backend-local
+      target: uat
+    container_name: ecus5-backend-uat
+    restart: always
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      DATABASE_URL: mysql://ecus5:ecus5@mysql:3306/ecus5_local
+      NODE_ENV: uat
+      DATABASE_URL: mysql://ecus5:ecus5@mysql:3306/ecus5_uat
     ports:
-      - "3000:3000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - "3001:3000"
 
   frontend:
     build:
       context: ./frontend
-      target: dev
-    container_name: ecus5-frontend-local
-    depends_on:
-      - backend
+      target: runtime
+    container_name: ecus5-frontend-uat
+    restart: always
     ports:
-      - "5317:5317"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "8080:80"
 
 volumes:
-  mysql_local:
+  mysql_uat:
