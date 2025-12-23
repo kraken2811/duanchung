@@ -51,8 +51,8 @@ export default function CustomsNotificationView() {
            </Title>
         </Space>
         <Space>
-           <Button icon={<FiPrinter />} onClick={() => window.print()}>In ấn</Button>
-           <Button icon={<FiDownload />}>Tải XML</Button>
+           <Button className="textSibar" icon={<FiPrinter />} onClick={() => window.print()}>In ấn</Button>
+           <Button className="textSibar" icon={<FiDownload />}>Tải XML</Button>
         </Space>
       </Card>
 

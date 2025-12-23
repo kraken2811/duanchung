@@ -11,6 +11,7 @@ import useNotify from "@/components/notification/useNotify";
 import { CONTRACT_DEFAULT, MATERIAL_DEFAULT, PRODUCT_DEFAULT, EQUIPMENT_DEFAULT } from "../types";
 import { CONTRACT_RULES } from "../api/rule.api";
 import { formatContractPayload } from "../utils/status"; // <--- Import hàm xử lý dữ liệu
+import "../css/contract.css";
 
 const { Option } = Select;
 
@@ -120,11 +121,11 @@ export default function ContractForm() {
       <Space>
         {/* Nút Save gọi handleSubmit(onSave) */}
         <Button type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
-        <Button type="default" style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>Thêm mới</Button>
+        <Button className="textSibar" type="default" style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>Thêm mới</Button>
         <Button danger icon={<FiTrash2 />}>Xóa HĐ</Button>
         <Divider type="vertical" />
-        <Button icon={<FiUpload />}>Nhập Excel</Button>
-        <Button icon={<FiPrinter />}>In phiếu</Button>
+        <Button className="textSibar" icon={<FiUpload />}>Nhập Excel</Button>
+        <Button className="textSibar" icon={<FiPrinter />}>In phiếu</Button>
       </Space>
       {/* Nút Declare gọi handleSubmit(onDeclare) */}
       <Button type="primary" danger icon={<FiSend />} onClick={handleSubmit(onDeclare)}>Khai báo HQ</Button>
@@ -217,7 +218,7 @@ export default function ContractForm() {
         children: (
           <div>
             <div style={{ marginBottom: 8 }}>
-              <Button size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>Thêm NPL</Button>
+              <Button className="textSibar" size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>Thêm NPL</Button>
             </div>
             <Table columns={materialColumns} dataSource={materials} rowKey="id" {...tableProps} />
           </div>
@@ -228,7 +229,7 @@ export default function ContractForm() {
         children: (
           <div>
              <div style={{ marginBottom: 8 }}>
-              <Button size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>Thêm SP</Button>
+              <Button className="textSibar"  size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>Thêm SP</Button>
             </div>
             <Table columns={productColumns} dataSource={products} rowKey="id" {...tableProps} />
           </div>

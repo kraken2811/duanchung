@@ -65,16 +65,16 @@ export default function MaterialListToolbar({
             Xóa
           </Button>
           <Divider type="vertical" />
-          <Button icon={<FiUpload />} onClick={onImport}>
+          <Button className="textSibar" icon={<FiUpload />} onClick={onImport}>
             Nhập Excel
           </Button>
-          <Button icon={<FiDownload />} onClick={onExport}>
+          <Button className="textSibar" icon={<FiDownload />} onClick={onExport}>
             Xuất Excel
           </Button>
         </Space>
 
         <Space>
-          <Button icon={<FiRefreshCw />}>Nạp lại</Button>
+          <Button className="textSibar" icon={<FiRefreshCw />}>Nạp lại</Button>
           <Button icon={<FiX />} danger onClick={onClose}>
             Đóng
           </Button>

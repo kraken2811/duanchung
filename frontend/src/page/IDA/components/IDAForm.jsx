@@ -17,7 +17,7 @@ import { useState } from "react";
 import useNotify from "@/components/notification/useNotify";
 import { IDA_DEFAULT } from "../types";
 import { formatIDA } from "../utils/status";
-
+import "../css/IDAForm.css";
 const { TextArea } = Input;
 
 export default function IDAForm() {
@@ -393,7 +393,7 @@ export default function IDAForm() {
   const renderGoodsList = () => (
     <div>
       <Space style={{ marginBottom: 16 }}>
-        <Button type="dashed" icon={<FiPlus />} onClick={addGoods}>
+        <Button className="textSibar" type="dashed" icon={<FiPlus />} onClick={addGoods}>
           Thêm hàng hóa
         </Button>
       </Space>
@@ -480,25 +480,25 @@ export default function IDAForm() {
       <h3>Đính kèm chứng từ điện tử</h3>
       <Space direction="vertical" size="middle" style={{ width: "100%" }}>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Hợp đồng</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Hợp đồng</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, Word, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Invoice</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Invoice</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Packing List</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Packing List</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, Excel, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên C/O (Giấy chứng nhận xuất xứ)</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên C/O (Giấy chứng nhận xuất xứ)</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, không quá 5MB)
           </span>
@@ -533,7 +533,7 @@ export default function IDAForm() {
   return (
     <div>
       {/* Thanh công cụ */}
-      <div
+      <div 
         style={{
           background: "#fff",
           padding: "12px 16px",
@@ -542,16 +542,16 @@ export default function IDAForm() {
         }}
       >
         <Space>
-          <Button icon={<FiSave />} onClick={handleSubmit(onSave)}>
+          <Button className="textSibar" icon={<FiSave />} onClick={handleSubmit(onSave)}>
             Ghi
           </Button>
-          <Button type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
+          <Button  type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
             Khai báo
           </Button>
-          <Button icon={<FiPrinter />}>In</Button>
+          <Button className="textSibar" icon={<FiPrinter />}>In</Button>
           <Divider type="vertical" />
-          <Button>Lấy phản hồi</Button>
-          <Button>Đăng ký mới</Button>
+          <Button className="textSibar">Lấy phản hồi</Button>
+          <Button className="textSibar">Đăng ký mới</Button>
           <Button danger>Xóa</Button>
         </Space>
       </div>

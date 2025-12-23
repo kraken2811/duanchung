@@ -27,6 +27,7 @@ import { useState, useEffect } from "react";
 import useNotify from "@/components/notification/useNotify";
 import { INVOICE_DEFAULT } from "../types";
 import dayjs from "dayjs";
+import "../css/invoics.css";
 
 const { Text } = Typography;
 
@@ -219,14 +220,14 @@ export default function ContractInvoiceForm() {
             <Typography.Title level={5} style={{ margin: 0, marginRight: 16, color: "#003a8c" }}>
                 <FiEdit style={{ marginRight: 8 }}/> CẬP NHẬT HÓA ĐƠN
             </Typography.Title>
-            <Button size="small" icon={<FiPlus />} onClick={() => { /* Logic reset form */ }}>Thêm mới</Button>
-            <Button size="small" icon={<FiEdit />}>Sửa</Button>
+            <Button className="textSibar" size="small" icon={<FiPlus />} onClick={() => { /* Logic reset form */ }}>Thêm mới</Button>
+            <Button className="textSibar" size="small" icon={<FiEdit />}>Sửa</Button>
             <Button size="small" type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
             <Button size="small" danger icon={<FiTrash2 />}>Xóa</Button>
             <Divider type="vertical" />
-            <Button size="small" icon={<FiUpload />}>Nhập từ Excel</Button>
+            <Button className="textSibar" size="small" icon={<FiUpload />}>Nhập từ Excel</Button>
         </Space>
-        <Button size="small" icon={<FiX />}>Thoát</Button>
+        <Button className="textSibar" size="small" icon={<FiX />}>Thoát</Button>
       </div>
 
       {/* 2. KHUNG THÔNG TIN CHUNG (GENERAL INFORMATION) */}
@@ -323,7 +324,7 @@ export default function ContractInvoiceForm() {
       {/* 3. KHUNG CHI TIẾT HÀNG HÓA (PRODUCT DETAILS - DATA GRID) */}
       <div style={{ flex: 1, padding: 12, background: "#fff", display: "flex", flexDirection: "column" }}>
         <div style={{ marginBottom: 8 }}>
-            <Button type="dashed" size="small" icon={<FiPlus />} onClick={addItem}>Thêm dòng hàng</Button>
+            <Button className="textSibar" type="dashed" size="small" icon={<FiPlus />} onClick={addItem}>Thêm dòng hàng</Button>
             <span style={{ marginLeft: 12, fontStyle: "italic", color: "#888", fontSize: 12 }}>Nhấn 'Thêm dòng hàng' để bắt đầu nhập liệu chi tiết.</span>
         </div>
         

@@ -92,39 +92,7 @@ exports.getByToKhai = async (req, res) => {
   }
 };
 
-/**
- * POST /tai-lieu
- * Thêm mới tài liệu
- */
-exports.insert = async (req, res) => {
-  try {
-    const {
-      loai_doi_tuong,
-      id_doi_tuong,
-      loai_tai_lieu,
-      ten_file,
-      duong_dan,
-    } = req.body;
 
-    if (!loai_doi_tuong || !id_doi_tuong || !loai_tai_lieu || !ten_file || !duong_dan) {
-      return res.status(400).json({
-        message: "Thiếu dữ liệu bắt buộc",
-      });
-    }
-
-    const created = await TaiLieu.insert(req.body);
-
-    res.status(201).json({
-      message: "Thêm tài liệu thành công",
-      data: created,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi khi thêm tài liệu",
-      error: error.message,
-    });
-  }
-};
 
 /**
  * PUT /tai-lieu/:id
@@ -181,3 +149,36 @@ exports.delete = async (req, res) => {
     });
   }
 };
+exports.upload = async (req, res) =>{
+  try{
+    const id_to_khai = Number(req.params.id_to_khai);
+    const {loai_tai_lieu} = req.body;
+    const userID = req.user?.id;
+    if(!file){
+      return res.status(400).json({message:"No file upload"});
+    }
+    const data = {
+      loai_doi_tuong : "To_khai_hai_quan",
+      id_doi_tuong: id_to_khai,
+      loai_tai_lieu,
+      ten_file: file.originalname,
+      duong_dan: file.path,
+      kich_thuoc: file.size,
+      loai_mime: file.mimetype,
+      id_to_khai,
+      nguoi_tai_len: userID,
+    };
+    const created = await TaiLieu.insert(req.body);
+
+    res.status(201).json({
+      message: "Thêm tài liệu thành công",
+      data: created,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi thêm tài liệu",
+      error: error.message,
+    });
+  
+  }
+}

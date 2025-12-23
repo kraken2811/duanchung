@@ -7,6 +7,7 @@ import {
   FiDownload,
   FiSend,
 } from "react-icons/fi";
+import "../css/Declaration.css";
 
 export default function DeclarationsToolbar({
   selectedCount,
@@ -32,7 +33,7 @@ export default function DeclarationsToolbar({
       <Button icon={<FiPrinter />} disabled={selectedCount === 0} onClick={onPrint}>
         In
       </Button>
-      <Button icon={<FiDownload />} onClick={onExport}>
+      <Button className="textSibar" icon={<FiDownload />} onClick={onExport}>
         Xuất Excel
       </Button>
       <Divider type="vertical" />

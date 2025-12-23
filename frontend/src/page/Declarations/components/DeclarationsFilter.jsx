@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, Row, Col, Input, DatePicker, Select, Button, Space } from "antd";
 import { FiSearch } from "react-icons/fi";
+import "../css/Declaration.css";
 import {
   DECLARATION_TYPES,
   INCOTERMS,
@@ -134,7 +135,7 @@ export default function DeclarationsFilter({ onSearch, onReset }) {
             <Button type="primary" icon={<FiSearch />} size="large" onClick={handleSearch}>
               Tìm kiếm
             </Button>
-            <Button size="large" onClick={handleReset}>
+            <Button className="textSibar" size="large" onClick={handleReset}>
               Xóa bộ lọc
             </Button>
           </Space>

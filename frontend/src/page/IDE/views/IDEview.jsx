@@ -5,6 +5,7 @@ import {
 import IDEForm from "../components/IDEForm";
 import IDEStepBar from "../components/IDEStepBar";
 import useNotify from "@/components/notification/useNotify";
+import "../css/IDE.css";
 
 const { Title } = Typography;
 
@@ -42,21 +43,19 @@ export default function IDEView() {
         </Space>
         
         <Space size="small">
-            <Button icon={<FiSave />} onClick={handleSave}>Ghi</Button>
+            <Button className="textSibar" icon={<FiSave />} onClick={handleSave}>Ghi</Button>
             <Button type="primary" danger icon={<FiSend />} form="ide-form" htmlType="submit">
                 Khai báo
             </Button>
-            <Button icon={<FiDownload />}>Lấy phản hồi</Button>
-            <Button icon={<FiPrinter />}>In phiếu</Button>
-            <Button icon={<FiX />}>Đóng</Button>
+            <Button className="textSibar" icon={<FiDownload />}>Lấy phản hồi</Button>
+            <Button className="textSibar" icon={<FiPrinter />}>In phiếu</Button>
+            <Button className="textSibar" icon={<FiX />}>Đóng</Button>
         </Space>
       </Card>
 
-      {/* --- 2. THÊM STEP BAR VÀO ĐÂY --- */}
       <Card size="small" style={{ marginBottom: 16 }}>
         <IDEStepBar />
       </Card>
-
       {/* FORM CHÍNH */}
       <Card bodyStyle={{ padding: 0 }}>
         <IDEForm formId="ide-form" onSubmit={handleDeclare} />
