@@ -1,69 +1,123 @@
-const Hoa_don = require("../models/hoa_don.model");
+// controllers/hoa_don.controller.js
+const HoaDon = require("../models/hoa_don.model");
 
-module.exports = {
-  // Lấy tất cả hóa đơn
-  getAll: (req, res) => {
-    Hoa_don.getAll((err, result) => {
-      if (err) {
-        console.error("Lỗi khi lấy danh sách hóa đơn:", err);
-        return res.status(500).json({ message: "Lỗi server", error: err });
-      }
-      res.status(200).json(result);
-    });
-  },
+/**
+ * Chuẩn hoá dữ liệu đầu vào
+ * - ép số
+ * - trim chuỗi
+ * - rỗng -> null
+ */
+function normalize(body = {}) {
+  const data = { ...body };
 
-  // Lấy hóa đơn theo ID
-  getById: (req, res) => {
-    const id = req.params.id;
-    Hoa_don.getById(id, (err, result) => {
-      if (err) {
-        console.error("Lỗi khi lấy hóa đơn:", err);
-        return res.status(500).json({ message: "Lỗi server", error: err });
-      }
-      if (result.length === 0) {
-        return res.status(404).json({ message: `Không tìm thấy hóa đơn có id = ${id}` });
-      }
-      res.status(200).json(result[0]);
-    });
-  },
+  const toNumOrNull = (v) =>
+    v === undefined || v === null || v === "" || Number.isNaN(Number(v))
+      ? null
+      : Number(v);
 
-  // Thêm mới hóa đơn
-  insert: (req, res) => {
-    const hoa_don = req.body;
-    Hoa_don.insert(hoa_don, (err, result) => {
-      if (err) {
-        console.error("Lỗi khi thêm hóa đơn:", err);
-        return res.status(500).json({ message: "Thêm hóa đơn thất bại", error: err });
-      }
-      res.status(201).json({
-        message: "Thêm hóa đơn thành công",
-        data: result,
-      });
-    });
-  },
+  // Ép số
+  data.id_lo_hang = toNumOrNull(data.id_lo_hang);
+  data.id_nguoi_ban = toNumOrNull(data.id_nguoi_ban);
+  data.id_nguoi_mua = toNumOrNull(data.id_nguoi_mua);
+  data.tong_tien = toNumOrNull(data.tong_tien);
 
-  // Cập nhật hóa đơn theo ID
-  update: (req, res) => {
-    const hoa_don = req.body;
-    const id = req.params.id;
-    Hoa_don.update(hoa_don, id, (err, result) => {
-      if (err) {
-        console.error("Lỗi khi cập nhật hóa đơn:", err);
-        return res.status(500).json({ message: "Cập nhật hóa đơn thất bại", error: err });
-      }
-      res.status(200).json({ message: `Cập nhật hóa đơn id = ${id} thành công` });
-    });
-  },
+  // Trim chuỗi
+  ["so_hoa_don", "ma_ngoai_te", "dieu_kien_giao_hang"].forEach((k) => {
+    if (typeof data[k] === "string") data[k] = data[k].trim();
+  });
 
-  // Xóa hóa đơn theo ID
-  delete: (req, res) => {
-    const id = req.params.id;
-    Hoa_don.remove(id, (err, result) => {
-      if (err) {
-        console.error("Lỗi khi xóa hóa đơn:", err);
-        return res.status(500).json({ message: "Xóa hóa đơn thất bại", error: err });
-      }
-      res.status(200).json({ message: `Xóa hóa đơn id = ${id} thành công` });
-    });
-  },
+  // Ngày
+  if (data.ngay_hoa_don === "") data.ngay_hoa_don = null;
+  if (data.ngay_tao === "") data.ngay_tao = null;
+
+  return data;
+}
+
+/**
+ * GET /hoa_don/all
+ */
+exports.getAll = async (_req, res) => {
+  try {
+    const rows = await HoaDon.getAll();
+    res.json(rows);
+  } catch (err) {
+    console.error("Lỗi khi lấy danh sách hóa đơn:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * GET /hoa_don/:id
+ */
+exports.getById = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  try {
+    const row = await HoaDon.getById(id);
+    if (!row)
+      return res.status(404).json({ error: "Không tìm thấy hóa đơn" });
+
+    res.json(row);
+  } catch (err) {
+    console.error("Lỗi khi lấy hóa đơn:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * POST /hoa_don
+ */
+exports.insert = async (req, res) => {
+  const payload = normalize(req.body);
+
+  // (tuỳ chọn) validate tối thiểu
+  // if (!payload.so_hoa_don || !payload.id_lo_hang)
+  //   return res.status(400).json({ error: "Thiếu so_hoa_don hoặc id_lo_hang" });
+
+  try {
+    const created = await HoaDon.insert(payload);
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("Lỗi khi thêm hóa đơn:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * PUT /hoa_don/:id
+ */
+exports.update = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  const payload = normalize(req.body);
+
+  try {
+    await HoaDon.update(id, payload);
+    res.json({ message: "Cập nhật hóa đơn thành công" });
+  } catch (err) {
+    console.error("Lỗi khi cập nhật hóa đơn:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * DELETE /hoa_don/:id
+ * ⚠️ Nghiệp vụ thực tế: nên chuyển sang soft delete
+ */
+exports.delete = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  try {
+    await HoaDon.remove(id);
+    res.json({ message: "Xóa hóa đơn thành công" });
+  } catch (err) {
+    console.error("Lỗi khi xóa hóa đơn:", err);
+    res.status(500).json({ error: err.message });
+  }
 };

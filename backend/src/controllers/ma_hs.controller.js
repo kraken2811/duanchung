@@ -1,87 +1,136 @@
-const Ma_hs = require("../models/ma_hs.model");
+// controllers/ma_hs.controller.js
+const MaHS = require("../models/ma_hs.model");
 
-module.exports = {
-  // Lấy tất cả mã HS
-  getAll: (req, res) => {
-    Ma_hs.getAll((err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy danh sách mã HS",
-          error: err,
-        });
-      }
-      res.status(200).json(result);
-    });
-  },
+/**
+ * Chuẩn hoá dữ liệu đầu vào
+ * - ép số
+ * - trim chuỗi
+ * - rỗng -> null
+ */
+function normalize(body = {}) {
+  const data = { ...body };
 
-  // Lấy mã HS theo ID
-  getById: (req, res) => {
-    const id = req.params.id;
-    Ma_hs.getById(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi lấy mã HS theo ID",
-          error: err,
-        });
-      }
+  const toNumOrNull = (v) =>
+    v === undefined || v === null || v === "" || Number.isNaN(Number(v))
+      ? null
+      : Number(v);
 
-      if (result.length === 0) {
-        return res.status(404).json({ message: "Không tìm thấy mã HS" });
-      }
+  // Ép số
+  data.cap_do = toNumOrNull(data.cap_do);
+  data.ma_cha = toNumOrNull(data.ma_cha);
 
-      res.status(200).json(result[0]);
-    });
-  },
+  data.thue_nhap_khau = toNumOrNull(data.thue_nhap_khau);
+  data.thue_vat = toNumOrNull(data.thue_vat);
+  data.thue_xuat_khau = toNumOrNull(data.thue_xuat_khau);
+  data.thue_tieu_thu_dac_biet = toNumOrNull(data.thue_tieu_thu_dac_biet);
+  data.thue_bao_ve_moi_trung = toNumOrNull(data.thue_bao_ve_moi_trung);
 
-  // Thêm mã HS
-  insert: (req, res) => {
-    const ma_hs = req.body;
-    Ma_hs.insert(ma_hs, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi thêm mã HS",
-          error: err,
-        });
-      }
-      res.status(201).json({
-        message: "Thêm mã HS thành công",
-        data: result,
-      });
-    });
-  },
+  // Boolean
+  if (typeof data.yeu_cau_giay_phep === "string") {
+    data.yeu_cau_giay_phep = data.yeu_cau_giay_phep === "true";
+  }
 
-  // Cập nhật mã HS
-  update: (req, res) => {
-    const ma_hs = req.body;
-    const id = req.params.id;
-    Ma_hs.update(ma_hs, id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi cập nhật mã HS",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Cập nhật mã HS thành công",
-        data: result,
-      });
-    });
-  },
+  // Trim chuỗi
+  ["ma_hs", "mo_ta", "loai_giay_phep"].forEach((k) => {
+    if (typeof data[k] === "string") data[k] = data[k].trim();
+  });
 
-  // Xóa mã HS
-  delete: (req, res) => {
-    const id = req.params.id;
-    Ma_hs.remove(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Lỗi khi xóa mã HS",
-          error: err,
-        });
-      }
-      res.status(200).json({
-        message: "Xóa mã HS thành công",
-        data: result,
-      });
-    });
-  },
+  // Rỗng -> null
+  if (data.mo_ta === "") data.mo_ta = null;
+  if (data.loai_giay_phep === "") data.loai_giay_phep = null;
+  if (data.ngay_tao === "") data.ngay_tao = null;
+
+  return data;
+}
+
+/**
+ * GET /ma_hs/all
+ */
+exports.getAll = async (_req, res) => {
+  try {
+    const rows = await MaHS.getAll();
+    res.json(rows);
+  } catch (err) {
+    console.error("Lỗi khi lấy danh sách mã HS:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * GET /ma_hs/:id
+ */
+exports.getById = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  try {
+    const row = await MaHS.getById(id);
+    if (!row)
+      return res.status(404).json({ error: "Không tìm thấy mã HS" });
+
+    res.json(row);
+  } catch (err) {
+    console.error("Lỗi khi lấy mã HS:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * POST /ma_hs
+ */
+exports.insert = async (req, res) => {
+  const payload = normalize(req.body);
+
+  // (khuyến nghị) validate tối thiểu
+  // if (!payload.ma_hs || payload.cap_do === null)
+  //   return res.status(400).json({ error: "Thiếu ma_hs hoặc cap_do" });
+
+  try {
+    payload.ngay_tao = payload.ngay_tao ?? new Date();
+
+    const created = await MaHS.insert(payload);
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("Lỗi khi thêm mã HS:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * PUT /ma_hs/:id
+ * ⚠️ Hạn chế cập nhật – mã HS là master data
+ */
+exports.update = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  const payload = normalize(req.body);
+
+  try {
+    await MaHS.update(id, payload);
+    res.json({ message: "Cập nhật mã HS thành công" });
+  } catch (err) {
+    console.error("Lỗi khi cập nhật mã HS:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * DELETE /ma_hs/:id
+ * ❌ KHÔNG KHUYẾN NGHỊ – mã HS thường không delete cứng
+ */
+exports.delete = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: "id không hợp lệ" });
+
+  try {
+    await MaHS.remove(id);
+    res.json({ message: "Xóa mã HS thành công" });
+  } catch (err) {
+    console.error("Lỗi khi xóa mã HS:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
