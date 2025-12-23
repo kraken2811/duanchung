@@ -1,50 +1,28 @@
-name: Deploy ECUS5 - UAT (Self-hosted)
+name: Deploy ECUS5 - UAT
 
 on:
   push:
-    branches: [release]
+    branches: [uat]
   workflow_dispatch:
 
 jobs:
-  deploy-uat:
+  deploy:
     runs-on: [self-hosted, uat]
 
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Check Docker
+      - name: Runner info
         run: |
+          hostname
           docker --version
           docker compose version
 
-      - name: Create env files
+      - name: Deploy UAT containers
         run: |
-          echo "${{ secrets.ENV_UAT_ROOT }}" > .env.uat
-          mkdir -p backend frontend
-          echo "${{ secrets.ENV_UAT_BACKEND }}" > backend/.env.uat
-          echo "${{ secrets.ENV_UAT_FRONTEND }}" > frontend/.env.uat
+          docker compose -f docker-compose.uat.yml down
+          docker compose -f docker-compose.uat.yml up -d --build
 
-      - name: Stop containers
-        run: |
-          docker compose \
-            --env-file .env.uat \
-            -f docker-compose.uat.yml \
-            down
-
-      - name: Build & Deploy
-        run: |
-          docker compose \
-            --env-file .env.uat \
-            -f docker-compose.uat.yml \
-            up -d --build
-
-      - name: Prisma migrate (UAT)
-        run: |
-          docker compose \
-            -f docker-compose.uat.yml \
-            exec backend \
-            npx prisma migrate deploy
-
-      - name: Cleanup
-        run: docker image prune -f
+      - name: Docker status
+        run: docker ps
