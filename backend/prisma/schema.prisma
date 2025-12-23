@@ -25,6 +25,16 @@ enum trang_thai_nhap {
   DA_DUYET
 }
 
+enum TrangThaiToKhai {
+  NHAP
+  CHO_GUI
+  DA_GUI
+  TU_CHOI
+  DA_TIEP_NHAN
+  DA_THONG_QUAN
+  HUY
+}
+
 enum hanh_dong {
   THEM
   SUA
@@ -400,7 +410,7 @@ model to_khai_hai_quan {
   id_to_khai           Int       @id @default(autoincrement())
   so_to_khai           String?   @unique
   loai_to_khai         String
-  trang_thai_gui       String?
+  trang_thai_gui       TrangThaiToKhai @default(NHAP)
   ma_thong_diep_vnacss String?
   so_tiep_nhan_vnacss  String?
   mau_kenh             String?
