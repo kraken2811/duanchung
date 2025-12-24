@@ -1,61 +1,113 @@
-name: Code Quality - CodeQL
+name: Code Quality - CodeQL & Conflict Check
 
 on:
   push:
-    branches: [ master, main, develop, release ]
+    branches:
+      - master
+      - dev
+      - uat
+      - prod
+      - "**"
   pull_request:
-    branches: [ master, main, develop, release ]
+    branches:
+      - master
+      - dev
+      - uat
+      - prod
+      - "**"
   workflow_dispatch:
 
 jobs:
   analyze:
-    name: Analyze Code with CodeQL
+    name: CodeQL + Conflict Guard
     runs-on: ubuntu-latest
 
     permissions:
       actions: read
       contents: read
       security-events: write
+      pull-requests: read
 
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript-typescript ]
+        language: [javascript-typescript]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect merge conflict markers
+        run: |
+          echo "🔍 Checking for conflict markers in source code..."
 
+          EXCLUDES="--exclude-dir=.git \
+                    --exclude-dir=node_modules \
+                    --exclude-dir=dist \
+                    --exclude-dir=build \
+                    --exclude-dir=.github"
+
+          if grep -R $EXCLUDES "<<<<<<< HEAD" .; then
+            echo "❌ Conflict marker <<<<<<< HEAD found"
+            exit 1
+          fi
+
+          if grep -R $EXCLUDES "=======" .; then
+            echo "❌ Conflict marker ======= found"
+            exit 1
+          fi
+
+          if grep -R $EXCLUDES ">>>>>>>" .; then
+            echo "❌ Conflict marker >>>>>>> found"
+            exit 1
+          fi
+
+          echo "✅ No conflict markers detected"
+      - name: Check PR mergeability
+        if: github.event_name == 'pull_request'
+        run: |
+          TARGET="${{ github.base_ref }}"
+          echo "🔍 Checking mergeability into: $TARGET"
+
+          git fetch origin "$TARGET"
+
+          if ! git merge --no-commit --no-ff "origin/$TARGET"; then
+            echo "❌ PR has merge conflicts with $TARGET"
+            git merge --abort
+            exit 1
+          fi
+
+          git merge --abort
+          echo "✅ PR can be merged cleanly into $TARGET"
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
-
-      - name: Install Backend dependencies (if exists)
+      - name: Install Backend dependencies
         run: |
           if [ -f backend/package.json ]; then
+            echo "📦 Installing backend dependencies"
             cd backend
-            npm install --ignore-scripts
+            npm ci --ignore-scripts
             cd ..
           else
-            echo "Backend not found, skipping"
+            echo "ℹ️ No backend found"
           fi
-
-      - name: Install Frontend dependencies (if exists)
+      - name: Install Frontend dependencies
         run: |
           if [ -f frontend/package.json ]; then
+            echo "📦 Installing frontend dependencies"
             cd frontend
-            npm install --ignore-scripts
+            npm ci --ignore-scripts
             cd ..
           else
-            echo "Frontend not found, skipping"
+            echo "ℹ️ No frontend found"
           fi
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
