@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Space, Button, Typography } from "antd";
 import { FiRefreshCw, FiPrinter, FiX } from "react-icons/fi";
+import "../css/log.css";
 
 const { Title } = Typography;
 
@@ -22,10 +23,10 @@ export default function LogToolbar({ onRefresh, onPrint, onClose }) {
         </Title>
       </Space>
       <Space>
-        <Button icon={<FiRefreshCw />} onClick={onRefresh}>
+        <Button className="textSibar" icon={<FiRefreshCw />} onClick={onRefresh}>
           Lấy phản hồi
         </Button>
-        <Button icon={<FiPrinter />} onClick={onPrint}>
+        <Button className="textSibar" icon={<FiPrinter />} onClick={onPrint}>
           In danh sách
         </Button>
         <Button danger icon={<FiX />} onClick={onClose}>

@@ -25,6 +25,7 @@ import {
 import { useState } from "react";
 import useNotify from "@/components/notification/useNotify";
 import { CONTRACT_APPENDIX_DEFAULT } from "../types";
+import "../css/appendix.css";
 
 const { TextArea } = Input;
 
@@ -166,11 +167,11 @@ export default function ContractAppendixForm() {
       children: (
         <div>
           <Space style={{ marginBottom: 10 }}>
-            <Button type="dashed" icon={<FiPlus />} onClick={() => {
+            <Button className="textSibar" type="dashed" icon={<FiPlus />} onClick={() => {
                 setMaterials([...materials, { id: Date.now(), code: '', name: '' }]);
             }}>Thêm dòng</Button>
-            <Button icon={<FiFileText />}>Nhập Excel NPL</Button>
-            <Button icon={<FiDownload />}>Tải mẫu Excel</Button>
+            <Button className="textSibar" icon={<FiFileText />}>Nhập Excel NPL</Button>
+            <Button className="textSibar" icon={<FiDownload />}>Tải mẫu Excel</Button>
           </Space>
           <Table 
             columns={materialColumns} 
@@ -189,10 +190,10 @@ export default function ContractAppendixForm() {
       children: (
         <div>
             <Space style={{ marginBottom: 10 }}>
-                <Button type="dashed" icon={<FiPlus />} onClick={() => {
+                <Button className="textSibar" type="dashed" icon={<FiPlus />} onClick={() => {
                     setProducts([...products, { id: Date.now(), code: '', name: '' }]);
                 }}>Thêm dòng</Button>
-                <Button icon={<FiFileText />}>Nhập Excel SP</Button>
+                <Button className="textSibar" icon={<FiFileText />}>Nhập Excel SP</Button>
             </Space>
             <Table 
                 columns={productColumns} 
@@ -210,10 +211,10 @@ export default function ContractAppendixForm() {
       children: (
         <div>
              <Space style={{ marginBottom: 10 }}>
-                <Button type="dashed" icon={<FiPlus />} onClick={() => {
+                <Button className="textSibar" type="dashed" icon={<FiPlus />} onClick={() => {
                     setEquipments([...equipments, { id: Date.now(), code: '', name: '' }]);
                 }}>Thêm dòng</Button>
-                 <Button icon={<FiFileText />}>Nhập Excel TB</Button>
+                 <Button className="textSibar" icon={<FiFileText />}>Nhập Excel TB</Button>
             </Space>
             <Table 
                 columns={equipmentColumns} 
@@ -241,14 +242,14 @@ export default function ContractAppendixForm() {
         }}
       >
         <Space>
-          <Button icon={<FiSave />} onClick={handleSubmit(onSave)}>
+          <Button className="textSibar" icon={<FiSave />} onClick={handleSubmit(onSave)}>
             Ghi tạm
           </Button>
           <Button type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
             Khai báo (VNACCS)
           </Button>
           <Divider type="vertical" />
-          <Button>Lấy từ Excel tổng hợp</Button>
+          <Button className="textSibar">Lấy từ Excel tổng hợp</Button>
         </Space>
         <Space>
             <Button danger>Xóa phụ lục</Button>
