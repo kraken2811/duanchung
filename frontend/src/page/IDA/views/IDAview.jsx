@@ -4,7 +4,7 @@ import IDAStepBar from "../components/IDAStepBar";
 
 export default function IDAView() {
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 0 }}>
 
       <Card>
         <IDAForm />

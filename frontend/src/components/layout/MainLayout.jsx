@@ -21,7 +21,7 @@ export default function MainLayout() {
           style={{
             marginLeft: collapsed ? 80 : 260,
             transition: "all .2s",
-            paddingTop: 64,
+            paddingTop: 0,
             height: "calc(100vh - 64px)",
             overflow: "auto",
           }}
