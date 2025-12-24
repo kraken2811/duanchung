@@ -77,7 +77,7 @@ export default function IDAForm() {
           <Button className="textSibar" icon={<FiSave />} onClick={handleSubmit(onSave)}>
             Ghi
           </Button>
-          <Button  type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
+          <Button type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
             Khai báo
           </Button>
           <Button className="textSibar" icon={<FiPrinter />}>In</Button>
