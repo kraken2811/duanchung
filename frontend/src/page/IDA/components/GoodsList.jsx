@@ -192,7 +192,7 @@ export default function GoodsList({ goods, setGoods }) {
             <Space>
                <Button onClick={() => setEditingItem(null)}>Đóng</Button>
                <Button type="primary" icon={<FiSave />} onClick={saveGoodDetail} style={{ minWidth: 120 }}>
-                  Lưu dòng hàng
+                  Lưu
                </Button>
             </Space>
           </Row>
