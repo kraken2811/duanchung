@@ -18,11 +18,7 @@ import LoginView from "@/page/Login/views/LoginView";
 
 
 
-<<<<<<< HEAD
-import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
-=======
 import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
->>>>>>> 4aabc03211034d5d05ec78cb1ad486315c90a84d
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
