@@ -5,6 +5,7 @@ import {
 import { FiSend, FiFileText } from "react-icons/fi";
 import useNotify from "@/components/notification/useNotify";
 import { IDB_DEFAULT } from "../types";
+import "../css/IDB.css";
 
 export default function IDBForm() {
   const notify = useNotify();
@@ -130,7 +131,7 @@ export default function IDBForm() {
 
       {/* 5. Nút bấm Bottom Bar */}
       <div style={{ textAlign: "right", marginTop: 20 }}>
-        <Button size="large" style={{ marginRight: 12 }}>
+        <Button className="textSibar" size="large" style={{ marginRight: 12 }}>
             Quay lại
         </Button>
         <Button 
