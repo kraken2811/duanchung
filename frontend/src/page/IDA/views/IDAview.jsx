@@ -1,6 +1,5 @@
 import { Card } from "antd";
 import IDAForm from "../components/IDAForm";
-import IDAStepBar from "../components/IDAStepBar";
 
 export default function IDAView() {
   return (

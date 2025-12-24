@@ -39,7 +39,6 @@ const menuItems = [
     icon: <FiFolder />,
     children: [
       { key: "/contracts", label: "Hợp đồng" },
-      { key: "/contract-appendix", label: "Phụ lục hợp đồng" },
       { key: "/contract-products", label: "Sản phẩm hợp đồng" },
       { key: "/contract-material", label: "Vật liệu hợp đồng" },
       { key: "/invoice", label: "Hóa đơn" },
