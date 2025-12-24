@@ -60,8 +60,11 @@ const update = (id_container, data) => {
  * Xóa container
  */
 const remove = (id_container) => {
-  return prisma.container.delete({
+  return prisma.container.update({
     where: { id_container },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 

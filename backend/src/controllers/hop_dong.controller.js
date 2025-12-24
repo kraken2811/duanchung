@@ -86,6 +86,7 @@ exports.getById = async (req, res) => {
  * POST /hop_dong
  */
 exports.insert = async (req, res) => {
+  const userId = req.user?.id_nguoi_dung; 
   const payload = normalize(req.body);
 
   // (tuỳ chọn) validate tối thiểu
@@ -93,7 +94,7 @@ exports.insert = async (req, res) => {
   //   return res.status(400).json({ error: "Thiếu so_hop_dong hoặc id_doi_tac" });
 
   try {
-    const created = await HopDong.insert(payload);
+    const created = await HopDong.createFullContract(payload, userId);
     res.status(201).json(created);
   } catch (err) {
     console.error("Lỗi khi thêm hợp đồng:", err);

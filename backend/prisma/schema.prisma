@@ -98,22 +98,21 @@ model nguoi_dung {
   to_khai_tri_gia    to_khai_tri_gia[]
   lich_su_trang_thai lich_su_trang_thai[]
   cau_hinh_he_thong  cau_hinh_he_thong[]
-  tai_lieu_ky        tai_lieu[]           @relation("nguoi_ky")
-  tai_lieu_tai_len   tai_lieu[]           @relation("nguoi_tai_len")
+  tai_lieu_ky        tai_lieu[] @relation("nguoi_ky")
+  tai_lieu_tai_len   tai_lieu[] @relation("nguoi_tai_len")
   loHangs            lo_hang[]
-  refresh_tokens refresh_token[]
+  refresh_tokens     refresh_token[]
 }
 
 model refresh_token {
   id_refresh_token String   @id @default(uuid())
   token            String   @unique
+  id_nguoi_dung    Int
+  nguoi_dung       nguoi_dung @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung], onDelete: Cascade)
 
-  id_nguoi_dung Int
-  nguoi_dung    nguoi_dung @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung], onDelete: Cascade)
-
-  is_revoked  Boolean  @default(false)
-  expires_at  DateTime
-  ngay_tao    DateTime @default(now())
+  is_revoked Boolean  @default(false)
+  expires_at DateTime
+  ngay_tao   DateTime @default(now())
 
   @@index([id_nguoi_dung])
 }
@@ -123,7 +122,7 @@ model refresh_token {
 //////////////////////////////////////////////////////
 
 model doi_tac {
-  id_doi_tac         Int          @id @default(autoincrement())
+  id_doi_tac         Int      @id @default(autoincrement())
   ma_so_thue         String?
   ten_doi_tac        String
   dia_chi            String?
@@ -132,16 +131,16 @@ model doi_tac {
   dien_thoai_lien_he String?
   email_lien_he      String?
   loai_doi_tac       loai_doi_tac
-  ngay_tao           DateTime     @default(now())
+  ngay_tao           DateTime @default(now())
 
   id_cong_ty Int?
   cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
 
   hop_dongs          hop_dong[]
-  lo_hang_dai_ly     lo_hang[]  @relation("dai_ly")
-  lo_hang_van_chuyen lo_hang[]  @relation("van_chuyen")
-  hoa_don_ban        hoa_don[]  @relation("nguoi_ban")
-  hoa_don_mua        hoa_don[]  @relation("nguoi_mua")
+  lo_hang_dai_ly     lo_hang[] @relation("dai_ly")
+  lo_hang_van_chuyen lo_hang[] @relation("van_chuyen")
+  hoa_don_ban        hoa_don[] @relation("nguoi_ban")
+  hoa_don_mua        hoa_don[] @relation("nguoi_mua")
 }
 
 //////////////////////////////////////////////////////
@@ -149,21 +148,23 @@ model doi_tac {
 //////////////////////////////////////////////////////
 
 model hop_dong {
-  id_hop_dong          String    @id @db.Char(36)
-  so_hop_dong          String    @unique
+  id_hop_dong          String   @id @db.Char(36)
+  so_hop_dong          String   @unique
   loai_hop_dong        String
+  trang_thai           String   @default("NHAP")
+
   ngay_ky              DateTime?
   ngay_het_han         DateTime?
   hieu_luc_tu          DateTime?
   hieu_luc_den         DateTime?
-  trang_thai           String?
-  tong_gia_tri         Decimal?  @db.Decimal(18, 2)
-  phi_gia_cong         Decimal?  @db.Decimal(18, 2)
+  tong_gia_tri         Decimal? @db.Decimal(18, 2)
+  phi_gia_cong         Decimal? @db.Decimal(18, 2)
   ma_ngoai_te          String?
   dieu_kien_thanh_toan String?
   ma_cuc_hai_quan      String?
-  ngay_tao             DateTime  @default(now())
-  ngay_cap_nhat        DateTime  @updatedAt
+
+  ngay_tao        DateTime @default(now())
+  ngay_cap_nhat   DateTime @updatedAt
 
   id_cong_ty Int?
   cong_ty    cong_ty? @relation(fields: [id_cong_ty], references: [id_cong_ty])
@@ -186,6 +187,8 @@ model hop_dong {
 model vat_lieu_hop_dong {
   id_vat_lieu  Int      @id @default(autoincrement())
   ma_vat_lieu  String
+  trang_thai   String   @default("NHAP")
+
   ten_vat_lieu String?
   don_vi_tinh  String?
   so_luong     Decimal? @db.Decimal(18, 4)
@@ -204,6 +207,8 @@ model vat_lieu_hop_dong {
 model san_pham_hop_dong {
   id_san_pham  Int      @id @default(autoincrement())
   ma_san_pham  String
+  trang_thai   String   @default("NHAP")
+
   ten_san_pham String?
   don_vi_tinh  String?
   so_luong     Decimal? @db.Decimal(18, 4)
@@ -282,6 +287,7 @@ model loai_van_tai {
 model lo_hang {
   id_lo_hang        Int       @id @default(autoincrement())
   so_lo_hang        String?   @unique
+  trang_thai String  @default("NHAP")
   cang_xep_hang     String?
   cang_do_hang      String?
   ngay_du_kien_xuat DateTime?
@@ -319,6 +325,7 @@ model lo_hang {
 model hoa_don {
   id_hoa_don          Int       @id @default(autoincrement())
   so_hoa_don          String
+  trang_thai String @default("NHAP")
   ngay_hoa_don        DateTime?
   tong_tien           Decimal?  @db.Decimal(18, 2)
   ma_ngoai_te         String?
@@ -338,6 +345,7 @@ model hoa_don {
 model van_don {
   id_van_don   Int      @id @default(autoincrement())
   so_van_don   String
+  trang_thai String @default("NHAP")
   ten_tau      String?
   hanh_trinh   String?
   so_container Int?
@@ -350,6 +358,7 @@ model van_don {
 model container {
   id_container     Int      @id @default(autoincrement())
   so_container     String
+  trang_thai   String @default("NHAP")
   so_chi           String?
   loai_container   String?
   trong_luong_brut Decimal? @db.Decimal(18, 3)

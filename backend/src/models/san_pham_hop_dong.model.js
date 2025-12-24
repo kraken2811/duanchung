@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const getAll = () => {
   return prisma.san_pham_hop_dong.findMany({
     orderBy: {
-      id_san_pham: 'desc',
+      ngay_tao: 'desc',
     },
   });
 };
@@ -81,8 +81,11 @@ const update = (id_san_pham, data) => {
  * Nếu bắt buộc → soft delete / trạng thái
  */
 const remove = (id_san_pham) => {
-  return prisma.san_pham_hop_dong.delete({
+  return prisma.san_pham_hop_dong.update({
     where: { id_san_pham },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 
