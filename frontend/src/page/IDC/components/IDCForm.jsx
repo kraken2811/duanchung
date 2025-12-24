@@ -23,8 +23,9 @@ import {
   FiAlertCircle,
   FiSearch,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import useNotify from "@/components/notification/useNotify";
+import "../css/IDC.css";
 
 const { TextArea } = Input;
 
@@ -84,7 +85,7 @@ export default function IDCForm() {
     return changedFields.has(fieldName);
   };
 
-  // Columns cho bảng hàng hóa với highlight thay đổi
+  // Columns cho bảng hàng hóa
   const goodsColumns = [
     {
       title: "STT",
@@ -187,7 +188,6 @@ export default function IDCForm() {
   ];
 
   const editGoodsItem = (record) => {
-    // Logic mở form chỉnh sửa dòng hàng
     console.log("Chỉnh sửa:", record);
   };
 
@@ -201,7 +201,7 @@ export default function IDCForm() {
     notify.success("Đã gửi tờ khai sửa đổi lên VNACCS");
   };
 
-  // Tab 1: Tìm kiếm và định danh tờ khai gốc
+  // --- TAB RENDER FUNCTIONS ---
   const renderSearchOriginal = () => (
     <div>
       <Alert
@@ -211,7 +211,6 @@ export default function IDCForm() {
         showIcon
         style={{ marginBottom: 16 }}
       />
-
       <Row gutter={16}>
         <Col span={12}>
           <label>
@@ -229,7 +228,6 @@ export default function IDCForm() {
           />
         </Col>
       </Row>
-
       {originalDeclaration && (
         <>
           <Divider />
@@ -256,9 +254,7 @@ export default function IDCForm() {
             type="success"
             showIcon
           />
-
           <Divider />
-
           <h3>Thông tin tờ khai gốc (Chỉ xem - Không thể chỉnh sửa)</h3>
           <Row gutter={16}>
             <Col span={6}>
@@ -286,7 +282,7 @@ export default function IDCForm() {
               />
             </Col>
             <Col span={6}>
-              <label>Ngày đăng ký gốc</label>
+              <label>Ngày  gốc</label>
               <Input
                 disabled
                 value={originalDeclaration.regDate}
@@ -299,32 +295,23 @@ export default function IDCForm() {
     </div>
   );
 
-  // Tab 2: Thông tin sửa đổi (Trọng tâm của IDC)
   const renderModificationInfo = () => (
     <div>
       <Alert
-        message={
-          <span>
-            <FiAlertCircle style={{ marginRight: 8 }} />
-            Khu vực thông tin sửa đổi bổ sung
-          </span>
-        }
+        message="Khu vực thông tin sửa đổi bổ sung"
         description="Đây là phần quan trọng nhất của tờ khai IDC - Vui lòng điền đầy đủ thông tin sửa đổi và lý do"
-        type="warning"
+        type="info"
         showIcon
         style={{ marginBottom: 16 }}
       />
-
       <div
         style={{
-          background: "#fff7e6",
-          border: "2px solid #ffd591",
+          border: "2px solid #dcdbdaff",
           borderRadius: 4,
           padding: 16,
         }}
       >
-        <h3 style={{ color: "#d46b08" }}>Thông tin sửa đổi bổ sung</h3>
-
+        <h3>Thông tin sửa đổi bổ sung</h3>
         <Row gutter={16}>
           <Col span={8}>
             <label>
@@ -356,7 +343,6 @@ export default function IDCForm() {
               </Select.Option>
             </Select>
           </Col>
-
           <Col span={8}>
             <label>
               Ngày yêu cầu sửa đổi <span style={{ color: "red" }}>*</span>
@@ -370,7 +356,6 @@ export default function IDCForm() {
               }}
             />
           </Col>
-
           <Col span={8}>
             <label>Phân loại kiểm tra</label>
             <Select
@@ -384,7 +369,6 @@ export default function IDCForm() {
             </Select>
           </Col>
         </Row>
-
         <Row gutter={16} style={{ marginTop: 16 }}>
           <Col span={24}>
             <label>
@@ -394,10 +378,6 @@ export default function IDCForm() {
             <TextArea
               rows={4}
               placeholder="Nhập chi tiết lý do yêu cầu sửa đổi tờ khai (Tối thiểu 50 ký tự)"
-              style={{
-                border: "2px solid #ffa940",
-                background: "#fffbe6",
-              }}
               onChange={(e) => {
                 setValue("modification.reason", e.target.value);
                 markFieldChanged("modification.reason");
@@ -409,7 +389,6 @@ export default function IDCForm() {
             </div>
           </Col>
         </Row>
-
         <Row gutter={16} style={{ marginTop: 16 }}>
           <Col span={12}>
             <label>Văn bản xin sửa đổi số</label>
@@ -427,9 +406,7 @@ export default function IDCForm() {
           </Col>
         </Row>
       </div>
-
       <Divider />
-
       <h3>So sánh thông tin thay đổi</h3>
       <Row gutter={16}>
         <Col span={12}>
@@ -479,7 +456,6 @@ export default function IDCForm() {
     </div>
   );
 
-  // Tab 3: Thông tin chung 1 (Chỉ những trường được phép sửa)
   const renderGeneralInfo1 = () => (
     <div>
       <Alert
@@ -489,7 +465,6 @@ export default function IDCForm() {
         showIcon
         style={{ marginBottom: 16 }}
       />
-
       <h3>Người nhập khẩu</h3>
       <Row gutter={16}>
         <Col span={8}>
@@ -520,7 +495,6 @@ export default function IDCForm() {
           />
         </Col>
       </Row>
-
       <Row gutter={16} style={{ marginTop: 12 }}>
         <Col span={18}>
           <label>Địa chỉ (Có thể sửa)</label>
@@ -552,9 +526,7 @@ export default function IDCForm() {
           />
         </Col>
       </Row>
-
       <Divider />
-
       <h3>Thông tin Invoice (Các trường quan trọng)</h3>
       <Row gutter={16}>
         <Col span={12}>
@@ -598,7 +570,6 @@ export default function IDCForm() {
     </div>
   );
 
-  // Tab 4: Danh sách hàng hóa (Có highlight thay đổi)
   const renderGoodsList = () => (
     <div>
       <Alert
@@ -608,7 +579,6 @@ export default function IDCForm() {
         showIcon
         style={{ marginBottom: 16 }}
       />
-
       <Table
         columns={goodsColumns}
         dataSource={modifiedGoods}
@@ -620,15 +590,12 @@ export default function IDCForm() {
           record.modified ? "row-modified" : "row-normal"
         }
       />
-
-      <style jsx>{`
+      <style>{`
         .row-modified {
           background-color: #e6f7ff !important;
         }
       `}</style>
-
       <Divider />
-
       <div
         style={{
           background: "#f0f5ff",
@@ -652,7 +619,6 @@ export default function IDCForm() {
             <InputNumber style={{ width: "100%" }} placeholder="0.00" />
           </Col>
         </Row>
-
         <Row gutter={16} style={{ marginTop: 12 }}>
           <Col span={24}>
             <label>Lý do sửa dòng hàng này</label>
@@ -662,7 +628,6 @@ export default function IDCForm() {
             />
           </Col>
         </Row>
-
         <div style={{ marginTop: 12, textAlign: "right" }}>
           <Button type="primary">Cập nhật thay đổi</Button>
         </div>
@@ -670,7 +635,6 @@ export default function IDCForm() {
     </div>
   );
 
-  // Tab 5: Kết quả phản hồi
   const renderResponse = () => (
     <div>
       <h3>Kết quả xử lý từ VNACCS</h3>
@@ -680,9 +644,7 @@ export default function IDCForm() {
         type="info"
         showIcon
       />
-
       <Divider />
-
       <div style={{ color: "#999", fontSize: 13 }}>
         <div>• Chấp nhận: Tờ khai sửa đổi được duyệt</div>
         <div>• Từ chối: Tờ khai sửa đổi bị từ chối (có lý do kèm theo)</div>
@@ -699,25 +661,17 @@ export default function IDCForm() {
     },
     {
       key: "2",
-      label: (
-        <Badge dot={changedFields.size > 0} offset={[5, 0]}>
-          <span style={{ color: "#fa8c16", fontWeight: "bold" }}>
-            Thông tin sửa đổi
-          </span>
-        </Badge>
-      ),
-      children: renderModificationInfo(),
-      disabled: !originalDeclaration,
-    },
-    {
-      key: "3",
       label: "Thông tin chung 1",
       children: renderGeneralInfo1(),
       disabled: !originalDeclaration,
     },
     {
-      key: "4",
-      label: (
+      key: "3",
+      // SỬA ĐỔI: Nếu chưa có tờ khai (disabled) thì chỉ hiện chữ thường
+      // Nếu đã có tờ khai thì mới bọc trong Badge
+      label: !originalDeclaration ? (
+        "Danh sách hàng"
+      ) : (
         <Badge count={modifiedGoods.filter((g) => g.modified).length}>
           Danh sách hàng
         </Badge>
@@ -726,9 +680,23 @@ export default function IDCForm() {
       disabled: !originalDeclaration,
     },
     {
+      key: "4",
+      // SỬA ĐỔI: Tương tự, nếu disabled thì hiện chữ thường để đồng bộ màu xám
+      label: !originalDeclaration ? (
+        "Thông tin sửa đổi"
+      ) : (
+        <Badge dot={changedFields.size > 0} offset={[5, 0]}>
+          Thông tin sửa đổi
+        </Badge>
+      ),
+      children: renderModificationInfo(),
+      disabled: !originalDeclaration,
+    },
+    {
       key: "5",
       label: "Kết quả phản hồi",
       children: renderResponse(),
+      disabled: !originalDeclaration,
     },
   ];
 
@@ -765,7 +733,7 @@ export default function IDCForm() {
           </Button>
           <Divider type="vertical" />
           <Button disabled={!originalDeclaration}>Lấy phản hồi</Button>
-          <Button>Đăng ký mới</Button>
+          <Button className="textSibar" >Đăng ký mới</Button>
         </Space>
 
         <div style={{ marginTop: 8, fontSize: 12, color: "#cf1322" }}>

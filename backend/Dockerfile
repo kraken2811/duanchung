@@ -1,6 +1,5 @@
 # ================= BASE =================
 FROM node:18-alpine AS base
-
 WORKDIR /app
 
 COPY package*.json ./
@@ -8,20 +7,19 @@ RUN npm install
 
 COPY . .
 
-# Prisma client (KHÔNG migrate, chỉ generate)
-RUN npx prisma generate
+# ❌ KHÔNG chạy prisma ở build stage
 
 # ================= DEV =================
 FROM base AS dev
 ENV NODE_ENV=development
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
 
 # ================= UAT =================
 FROM base AS uat
 ENV NODE_ENV=uat
 EXPOSE 3000
-CMD ["node", "app.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node app.js"]
 
 # ================= PROD =================
 FROM node:18-alpine AS prod
@@ -32,7 +30,6 @@ COPY package*.json ./
 RUN npm install --production
 
 COPY . .
-RUN npx prisma generate
 
 EXPOSE 3000
-CMD ["node", "app.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node app.js"]

@@ -5,6 +5,8 @@ const router = express.Router();
 router.use('/auths', require('./auth.route'))
 router.use('/audit_logs', require('./audit_log.route'));
 router.use('/bieu_thues', require('./bieu_thue.route'));
+router.use('/to_khai_idcs', require('./to_khai_idc.route'));
+router.use('/to_khai_ides', require('./to_khai_ide.route'));
 router.use('/cau_hinh_he_thongs', require('./cau_hinh_he_thong.route'));
 router.use('/chi_tiet_dieu_chinh_tri_gias', require('./chi_tiet_dieu_chinh_tri_gia.route'));
 router.use('/chi_tiet_to_khais', require('./chi_tiet_to_khai.route'));

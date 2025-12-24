@@ -9,6 +9,7 @@ import {
   FiSettings,
   FiHelpCircle,
   FiDatabase,
+  FiLogIn,
 } from "react-icons/fi";
 
 export const defaultMenus = [
@@ -85,6 +86,14 @@ export const defaultMenus = [
     name: "Hỗ trợ",
     path: "/help",
     icon: <FiHelpCircle size={18} />,
+    roles: ["Admin", "User"],
+  },
+
+  // TÀI KHOẢN
+  {
+    name: "Tài khoản",
+    path: "/account",
+    icon: <FiLogIn size={18} />,
     roles: ["Admin", "User"],
   },
 ];

@@ -9,16 +9,20 @@ import DeclarationsView from "@/page/Declarations/views/DeclarationsView";
 import IDEView from "@/page/IDE/views/IDEview";
 import ProcessingLogView from "@/page/ProcessingLog/views/ProcessingLogView";
 import CustomsNotificationView from "@/page/CustomsNotification/views/CustomsNotificationView";
-import ContractAppendixView from "@/page/ContractAppendix/views/ContractAppendixView";
 import ContractInvoiceView from "@/page/ContractInvoice/views/ContractInvoiceView"; 
 import MaterialListView from "@/page/MaterialList/views/MaterialListView";
 import ContractView from "@/page/Contract/views/ContractView";
 import ContractProductView  from "@/page/ContractProducts/views/ContractProductsView";
+import LoginView from "@/page/Login/views/LoginView";
 
 
 
 
+<<<<<<< HEAD
 import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
+=======
+import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
+>>>>>>> 4aabc03211034d5d05ec78cb1ad486315c90a84d
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
@@ -59,11 +63,11 @@ const router = createBrowserRouter([
       { path: ideurl, element: <IDEView /> },
       { path: processingLog, element: <ProcessingLogView /> },
       { path: hqNotifyUrl, element: <CustomsNotificationView /> },
-      { path: contractAppendixUrl, element: <ContractAppendixView /> },
       { path: contractInvoiceUrl, element: <ContractInvoiceView /> },
       { path: materialListUrl, element: <MaterialListView /> },
       { path: contractUrl, element: <ContractView /> },
       { path: contractProductsUrl, element: <ContractProductView /> },
+      { path: loginUrl, element: <LoginView /> }
     ],
   },
 

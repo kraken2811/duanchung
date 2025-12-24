@@ -1,76 +1,40 @@
-import { useForm } from "react-hook-form";
-import {
-  Row,
-  Col,
-  Input,
-  DatePicker,
-  Button,
-  Divider,
-  Table,
-  Tabs,
-  Select,
-  InputNumber,
-  Space,
-} from "antd";
-import { FiPlus, FiTrash2, FiUpload, FiSave, FiSend, FiPrinter } from "react-icons/fi";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button, Divider, Tabs, Space } from "antd";
+import { FiSave, FiSend, FiPrinter } from "react-icons/fi";
 import useNotify from "@/components/notification/useNotify";
+<<<<<<< HEAD
+
+// Import các component con đã tách
+import GeneralInfo1 from "./GeneralInfo1";
+import GeneralInfo2 from "./GeneralInfo2";
+import GoodsList from "./GoodsList";
+import Attachments from "./Attachments";
+
+// Import giả định
+import { IDA_DEFAULT } from "../types"; 
+import { formatIDA } from "../utils/status";
+import "../css/IDA.css";
+=======
 import { IDA_DEFAULT } from "../types";
 import { formatIDA } from "../utils/status";
-
+import "../css/IDA.css";
 const { TextArea } = Input;
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
 
 export default function IDAForm() {
   const notify = useNotify();
-  const { register, handleSubmit, setValue, watch } = useForm({
+  const { register, handleSubmit, setValue } = useForm({
     defaultValues: IDA_DEFAULT,
   });
 
+  // State goods vẫn giữ ở Parent để khi Save/Declare có thể gộp dữ liệu
   const [goods, setGoods] = useState([]);
   const [activeTab, setActiveTab] = useState("1");
 
-  // Columns cho bảng hàng hóa
-  const goodsColumns = [
-    { title: "STT", dataIndex: "index", width: 60 },
-    { title: "Tên hàng", dataIndex: "description", width: 200 },
-    { title: "Mã HS", dataIndex: "hsCode", width: 100 },
-    { title: "Xuất xứ", dataIndex: "origin", width: 80 },
-    { title: "Số lượng", dataIndex: "quantity", width: 100 },
-    { title: "Đơn vị", dataIndex: "unit", width: 80 },
-    { title: "Đơn giá", dataIndex: "unitPrice", width: 120 },
-    { title: "Trị giá", dataIndex: "totalValue", width: 120 },
-    {
-      title: "",
-      width: 60,
-      render: (_, record) => (
-        <FiTrash2
-          style={{ cursor: "pointer", color: "red" }}
-          onClick={() => removeGoods(record.id)}
-        />
-      ),
-    },
-  ];
-
-  const addGoods = () => {
-    const newItem = {
-      id: Date.now(),
-      index: goods.length + 1,
-      description: "",
-      hsCode: "",
-      origin: "CN",
-      quantity: 0,
-      unit: "PCE",
-      unitPrice: 0,
-      totalValue: 0,
-    };
-    setGoods([...goods, newItem]);
-  };
-
-  const removeGoods = (id) => {
-    setGoods(goods.filter((g) => g.id !== id));
-  };
-
+  // --- LOGIC CHUNG ---
   const onSave = (data) => {
+    // Ghép dữ liệu từ Form (data) và dữ liệu từ GoodsList (goods)
     const final = formatIDA({ ...data, goods });
     console.log("LƯU IDA:", final);
     notify.success("Đã lưu thông tin tờ khai");
@@ -82,6 +46,8 @@ export default function IDAForm() {
     notify.success("Đã gửi tờ khai lên hệ thống VNACCS");
   };
 
+<<<<<<< HEAD
+=======
   // Tab 1: Thông tin chung 1
   const renderGeneralInfo1 = () => (
     <div>
@@ -393,7 +359,7 @@ export default function IDAForm() {
   const renderGoodsList = () => (
     <div>
       <Space style={{ marginBottom: 16 }}>
-        <Button type="dashed" icon={<FiPlus />} onClick={addGoods}>
+        <Button className="textSibar" type="dashed" icon={<FiPlus />} onClick={addGoods}>
           Thêm hàng hóa
         </Button>
       </Space>
@@ -480,25 +446,25 @@ export default function IDAForm() {
       <h3>Đính kèm chứng từ điện tử</h3>
       <Space direction="vertical" size="middle" style={{ width: "100%" }}>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Hợp đồng</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Hợp đồng</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, Word, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Invoice</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Invoice</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên Packing List</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên Packing List</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, Excel, không quá 5MB)
           </span>
         </div>
         <div>
-          <Button icon={<FiUpload />}>Tải lên C/O (Giấy chứng nhận xuất xứ)</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Tải lên C/O (Giấy chứng nhận xuất xứ)</Button>
           <span style={{ marginLeft: 12, color: "#999" }}>
             (PDF, không quá 5MB)
           </span>
@@ -507,33 +473,34 @@ export default function IDAForm() {
     </div>
   );
 
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
   const tabItems = [
-    {
-      key: "1",
-      label: "Thông tin chung 1",
-      children: renderGeneralInfo1(),
+    { 
+      key: "1", 
+      label: "Thông tin chung 1", 
+      children: <GeneralInfo1 register={register} setValue={setValue} /> 
     },
-    {
-      key: "2",
-      label: "Thông tin chung 2",
-      children: renderGeneralInfo2(),
+    { 
+      key: "2", 
+      label: "Thông tin chung 2", 
+      children: <GeneralInfo2 register={register} setValue={setValue} /> 
     },
-    {
-      key: "3",
-      label: "Danh sách hàng",
-      children: renderGoodsList(),
+    { 
+      key: "3", 
+      label: "Danh sách hàng", 
+      children: <GoodsList goods={goods} setGoods={setGoods} /> 
     },
-    {
-      key: "4",
-      label: "Đính kèm chứng từ",
-      children: renderAttachments(),
+    { 
+      key: "4", 
+      label: "Đính kèm chứng từ", 
+      children: <Attachments /> 
     },
   ];
 
   return (
     <div>
       {/* Thanh công cụ */}
-      <div
+      <div 
         style={{
           background: "#fff",
           padding: "12px 16px",
@@ -542,21 +509,20 @@ export default function IDAForm() {
         }}
       >
         <Space>
-          <Button icon={<FiSave />} onClick={handleSubmit(onSave)}>
+          <Button className="textSibar" icon={<FiSave />} onClick={handleSubmit(onSave)}>
             Ghi
           </Button>
-          <Button type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
+          <Button  type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>
             Khai báo
           </Button>
-          <Button icon={<FiPrinter />}>In</Button>
+          <Button className="textSibar" icon={<FiPrinter />}>In</Button>
           <Divider type="vertical" />
-          <Button>Lấy phản hồi</Button>
-          <Button>Đăng ký mới</Button>
+          <Button className="textSibar">Lấy phản hồi</Button>
+          <Button className="textSibar">Đăng ký mới</Button>
           <Button danger>Xóa</Button>
         </Space>
       </div>
 
-      {/* Nội dung các tab */}
       <Tabs activeKey={activeTab} items={tabItems} onChange={setActiveTab} />
     </div>
   );
