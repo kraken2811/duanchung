@@ -7,7 +7,7 @@ const {
 } = require('../middleware/rate-limit.middleware');
 
 const router = express.Router();
-
+router.post('/check-mst', controller.checkMst); 
 router.post('/login', loginLimiter, controller.login);
 router.post('/refresh', refreshLimiter, controller.refresh);
 router.post('/logout', logoutLimiter, controller.logout);

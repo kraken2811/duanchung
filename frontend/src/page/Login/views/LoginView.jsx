@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Typography, App as AntdApp } from "antd";
 import LoginForm from "../components/LoginForm";
-import { loginApi } from "../api/auth.api";
-import { apiClient } from "@/lib/api";
+import { checkMstApi, loginApi } from "../api/auth.api";
 
 const { Text } = Typography;
 
@@ -10,29 +9,35 @@ export default function LoginView() {
   const { message } = AntdApp.useApp();
 
   const [step, setStep] = useState(1);
-  const [taxCode, setTaxCode] = useState("");
+  const [maSoThue, setMaSoThue] = useState("");
+  const [tenCongTy, setTenCongTy] = useState("");
 
-  const handleNext = (data) => {
-    setTaxCode(data.taxCode);
-    setStep(2);
+  // STEP 1: CHECK MST
+  const handleCheckMst = async (data) => {
+    try {
+      const res = await checkMstApi(data.ma_so_thue);
+
+      setMaSoThue(data.ma_so_thue);
+      setTenCongTy(res.ten_cong_ty);
+      setStep(2);
+    } catch (err) {
+      message.error(
+        err.response?.data?.message || "Mã số thuế không tồn tại"
+      );
+    }
   };
 
+  // STEP 2: LOGIN
   const handleLogin = async (data) => {
     try {
-      // loginApi trả về res.data
       const { accessToken, user } = await loginApi({
+        ma_so_thue: maSoThue,
         ten_dang_nhap: data.username,
         mat_khau: data.password,
-        tax_code: taxCode,
       });
 
-      // lưu local
       localStorage.setItem("access_token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
-
-      // gắn token cho axios
-      apiClient.defaults.headers.Authorization =
-        `Bearer ${accessToken}`;
 
       message.success("Đăng nhập thành công");
       window.location.href = "/";
@@ -63,8 +68,9 @@ export default function LoginView() {
 
         <LoginForm
           step={step}
-          taxCode={taxCode}
-          onNext={handleNext}
+          maSoThue={maSoThue}
+          tenCongTy={tenCongTy}
+          onCheckMst={handleCheckMst}
           onLogin={handleLogin}
           onBack={() => setStep(1)}
         />

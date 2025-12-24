@@ -7,8 +7,6 @@ const prisma = new PrismaClient();
 exports.login = async (req, res) => {
   try {
     const { ma_so_thue, ten_dang_nhap, mat_khau } = req.body;
-
-    // 1️⃣ Kiểm tra công ty theo MST
     const congTy = await prisma.cong_ty.findUnique({
       where: { ma_so_thue },
     });
@@ -18,8 +16,6 @@ exports.login = async (req, res) => {
         message: 'Mã số thuế công ty không tồn tại',
       });
     }
-
-    // 2️⃣ Kiểm tra user thuộc đúng công ty
     const user = await prisma.nguoi_dung.findFirst({
       where: {
         ten_dang_nhap,
@@ -179,8 +175,6 @@ exports.refresh = async (req, res) => {
     res.status(401).json({ message: 'Refresh token hết hạn' });
   }
 };
-
-// LOGOUT
 exports.logout = async (req, res) => {
   const refreshToken = req.cookies.refresh_token;
   if (refreshToken) {
@@ -192,4 +186,22 @@ exports.logout = async (req, res) => {
 
   res.clearCookie('refresh_token');
   res.json({ message: 'Đăng xuất thành công' });
+};
+exports.checkMst = async (req, res) => {
+  const { ma_so_thue } = req.body;
+
+  const congTy = await prisma.cong_ty.findUnique({
+    where: { ma_so_thue },
+    select: { ten_cong_ty: true },
+  });
+
+  if (!congTy) {
+    return res.status(404).json({
+      message: "Mã số thuế công ty không tồn tại",
+    });
+  }
+
+  res.json({
+    ten_cong_ty: congTy.ten_cong_ty,
+  });
 };

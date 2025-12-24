@@ -12,40 +12,42 @@ import AUTH_RULES from "../rule-forms";
 
 const { Text } = Typography;
 
-export default function LoginForm({ step, taxCode, onNext, onLogin, onBack }) {
+export default function LoginForm({
+  step,
+  maSoThue,
+  tenCongTy,
+  onCheckMst,
+  onLogin,
+  onBack,
+}) {
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm();
+
+  // ===== STEP 1: CHECK MST =====
   if (step === 1) {
     return (
-      <form onSubmit={handleSubmit(onNext)}>
+      <form onSubmit={handleSubmit(onCheckMst)}>
         <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-          <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase">
-              Mã số thuế đơn vị
-            </label>
-            <Controller
-              name="taxCode"
-              control={control}
-              rules={AUTH_RULES.taxCode}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  size="large"
-                  prefix={<FiShield />}
-                  placeholder="Ví dụ: 0101234xxx"
-                  status={errors.taxCode ? "error" : ""}
-                />
-              )}
-            />
-            {errors.taxCode && (
-              <Text type="danger" style={{ fontSize: 12 }}>
-                {errors.taxCode.message}
-              </Text>
+          <Controller
+            name="ma_so_thue"
+            control={control}
+            rules={AUTH_RULES.taxCode}
+            render={({ field }) => (
+              <Input
+                {...field}
+                size="large"
+                prefix={<FiShield />}
+                placeholder="Mã số thuế"
+                status={errors.ma_so_thue ? "error" : ""}
+              />
             )}
-          </div>
+          />
+          {errors.ma_so_thue && (
+            <Text type="danger">{errors.ma_so_thue.message}</Text>
+          )}
 
           <Button
             type="primary"
@@ -61,15 +63,14 @@ export default function LoginForm({ step, taxCode, onNext, onLogin, onBack }) {
     );
   }
 
-  // ================= STEP 2 =================
+  // ===== STEP 2: LOGIN =====
   return (
     <form onSubmit={handleSubmit(onLogin)}>
       <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-        {/* MST */}
         <div
           style={{
             background: "#e6f7ff",
-            padding: "8px 12px",
+            padding: 10,
             borderRadius: 4,
             display: "flex",
             justifyContent: "space-between",
@@ -78,11 +79,9 @@ export default function LoginForm({ step, taxCode, onNext, onLogin, onBack }) {
         >
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              MST đơn vị:
+              Công ty
             </Text>
-            <div style={{ fontWeight: "bold", color: "#0050b3" }}>
-              {taxCode}
-            </div>
+            <div style={{ fontWeight: 600 }}>{tenCongTy}</div>
           </div>
           <Button
             type="link"
@@ -118,7 +117,7 @@ export default function LoginForm({ step, taxCode, onNext, onLogin, onBack }) {
               {...field}
               size="large"
               prefix={<FiLock />}
-              placeholder="••••••••"
+              placeholder="Mật khẩu"
               status={errors.password ? "error" : ""}
             />
           )}
@@ -129,10 +128,9 @@ export default function LoginForm({ step, taxCode, onNext, onLogin, onBack }) {
           htmlType="submit"
           block
           size="large"
-          style={{ background: "#003a8c" }}
           icon={<FiCheckCircle />}
         >
-          ĐĂNG NHẬP HỆ THỐNG
+          ĐĂNG NHẬP
         </Button>
       </Space>
     </form>

@@ -14,3 +14,7 @@ export const logoutApi = async () => {
   const res = await apiClient.post("/auths/logout");
   return res.data;
 };
+export const checkMstApi = async (ma_so_thue) => {
+  const res = await apiClient.post("/auths/check-mst", { ma_so_thue });
+  return res.data;
+};
