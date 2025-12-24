@@ -1,4 +1,4 @@
-name: Code Quality - CodeQL + Conflict Check
+name: Code Quality - CodeQL & Conflict Check
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - dev
       - uat
       - prod
-      - "**"           # các nhánh khác
+      - "**"
   pull_request:
     branches:
       - master
@@ -19,7 +19,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze Code with CodeQL & Conflict
+    name: CodeQL + Conflict Guard
     runs-on: ubuntu-latest
 
     permissions:
@@ -31,102 +31,82 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript-typescript ]
+        language: [javascript-typescript]
 
     steps:
-      # ===============================
-      # 1️⃣ Checkout
-      # ===============================
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # ===============================
-      # 2️⃣ Detect conflict markers
-      # ===============================
       - name: Detect merge conflict markers
         run: |
-          echo "🔍 Checking for conflict markers..."
-          if grep -R "<<<<<<< HEAD" .; then
-            echo "❌ Conflict markers found"
-            exit 1
-          fi
-          if grep -R "=======" .; then
-            echo "❌ Conflict markers found"
-            exit 1
-          fi
-          if grep -R ">>>>>>>" .; then
-            echo "❌ Conflict markers found"
-            exit 1
-          fi
-          echo "✅ No conflict markers"
+          echo "🔍 Checking for conflict markers in source code..."
 
-      # ===============================
-      # 3️⃣ Check PR merge conflict (dynamic target)
-      # ===============================
-      - name: Check PR mergeability with target branch
+          EXCLUDES="--exclude-dir=.git \
+                    --exclude-dir=node_modules \
+                    --exclude-dir=dist \
+                    --exclude-dir=build \
+                    --exclude-dir=.github"
+
+          if grep -R $EXCLUDES "<<<<<<< HEAD" .; then
+            echo "❌ Conflict marker <<<<<<< HEAD found"
+            exit 1
+          fi
+
+          if grep -R $EXCLUDES "=======" .; then
+            echo "❌ Conflict marker ======= found"
+            exit 1
+          fi
+
+          if grep -R $EXCLUDES ">>>>>>>" .; then
+            echo "❌ Conflict marker >>>>>>> found"
+            exit 1
+          fi
+
+          echo "✅ No conflict markers detected"
+      - name: Check PR mergeability
         if: github.event_name == 'pull_request'
         run: |
-          TARGET_BRANCH="${{ github.base_ref }}"
-          echo "🔍 Checking merge with target branch: $TARGET_BRANCH"
+          TARGET="${{ github.base_ref }}"
+          echo "🔍 Checking mergeability into: $TARGET"
 
-          git fetch origin "$TARGET_BRANCH"
+          git fetch origin "$TARGET"
 
-          if ! git merge --no-commit --no-ff "origin/$TARGET_BRANCH"; then
-            echo "❌ This PR has merge conflicts with $TARGET_BRANCH"
+          if ! git merge --no-commit --no-ff "origin/$TARGET"; then
+            echo "❌ PR has merge conflicts with $TARGET"
             git merge --abort
             exit 1
           fi
 
           git merge --abort
-          echo "✅ PR can be merged cleanly into $TARGET_BRANCH"
-
-      # ===============================
-      # 4️⃣ Setup Node
-      # ===============================
+          echo "✅ PR can be merged cleanly into $TARGET"
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # ===============================
-      # 5️⃣ Initialize CodeQL
-      # ===============================
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
-
-      # ===============================
-      # 6️⃣ Install Backend deps
-      # ===============================
-      - name: Install Backend dependencies (if exists)
+      - name: Install Backend dependencies
         run: |
           if [ -f backend/package.json ]; then
+            echo "📦 Installing backend dependencies"
             cd backend
             npm ci --ignore-scripts
             cd ..
           else
-            echo "Backend not found, skipping"
+            echo "ℹ️ No backend found"
           fi
-
-      # ===============================
-      # 7️⃣ Install Frontend deps
-      # ===============================
-      - name: Install Frontend dependencies (if exists)
+      - name: Install Frontend dependencies
         run: |
           if [ -f frontend/package.json ]; then
+            echo "📦 Installing frontend dependencies"
             cd frontend
             npm ci --ignore-scripts
             cd ..
           else
-            echo "Frontend not found, skipping"
-          fi
-
-      # ===============================
-      # 8️⃣ Perform CodeQL Analysis
-      # ===============================
+            echo "ℹ️ No frontend found"
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
