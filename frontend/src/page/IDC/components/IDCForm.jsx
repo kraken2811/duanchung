@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 import { useState } from "react";
 import useNotify from "@/components/notification/useNotify";
+import "../css/IDC.css";
 
 const { TextArea } = Input;
 
@@ -281,7 +282,7 @@ export default function IDCForm() {
               />
             </Col>
             <Col span={6}>
-              <label>Ngày đăng ký gốc</label>
+              <label>Ngày  gốc</label>
               <Input
                 disabled
                 value={originalDeclaration.regDate}
@@ -732,7 +733,7 @@ export default function IDCForm() {
           </Button>
           <Divider type="vertical" />
           <Button disabled={!originalDeclaration}>Lấy phản hồi</Button>
-          <Button>Đăng ký mới</Button>
+          <Button className="textSibar" >Đăng ký mới</Button>
         </Space>
 
         <div style={{ marginTop: 8, fontSize: 12, color: "#cf1322" }}>

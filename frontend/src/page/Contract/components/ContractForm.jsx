@@ -8,12 +8,10 @@ import {
   FiSave, FiSend, FiPlus, FiTrash2, FiUpload, FiPrinter, FiDownload, FiLayers, FiPackage
 } from "react-icons/fi";
 import useNotify from "@/components/notification/useNotify";
-
-// Giả lập rule
-const CONTRACT_RULES = {
-  contractNumber: { required: "Vui lòng nhập số HĐ" },
-  signedDate: { required: "Chọn ngày ký" },
-};
+import { CONTRACT_DEFAULT, MATERIAL_DEFAULT, PRODUCT_DEFAULT, EQUIPMENT_DEFAULT } from "../types";
+import { CONTRACT_RULES } from "../api/rule.api";
+import { formatContractPayload } from "../utils/status"; // <--- Import hàm xử lý dữ liệu
+import "../css/contract.css";
 
 const { Option } = Select;
 
@@ -136,11 +134,13 @@ export default function UnifiedContractForm() {
   const renderToolbar = () => (
     <div style={{ background: "#fff", padding: "12px 16px", borderBottom: "1px solid #d9d9d9", marginBottom: 16 }}>
       <Space>
-        <Button icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi</Button>
-        <Button type="primary" icon={<FiSend />} onClick={handleSubmit(onDeclare)}>Khai báo</Button>
-        <Button icon={<FiPrinter />}>In phiếu</Button>
+        {/* Nút Save gọi handleSubmit(onSave) */}
+        <Button type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
+        <Button className="textSibar" type="default" style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>Thêm mới</Button>
+        <Button danger icon={<FiTrash2 />}>Xóa HĐ</Button>
         <Divider type="vertical" />
-        <Button icon={<FiUpload />}>Nhập Excel</Button>
+        <Button className="textSibar" icon={<FiUpload />}>Nhập Excel</Button>
+        <Button className="textSibar" icon={<FiPrinter />}>In phiếu</Button>
       </Space>
     </div>
   );
@@ -155,10 +155,9 @@ export default function UnifiedContractForm() {
         key: "1", label: <span><FiLayers style={{ marginRight: 8 }} />Nguyên phụ liệu</span>,
         children: (
           <div>
-            <Space style={{ marginBottom: 10 }}>
-              <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>Thêm NPL</Button>
-              <Button icon={<FiDownload />}>Tải mẫu</Button>
-            </Space>
+            <div style={{ marginBottom: 8 }}>
+              <Button className="textSibar" size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>Thêm NPL</Button>
+            </div>
             <Table columns={materialColumns} dataSource={materials} rowKey="id" {...tableProps} />
           </div>
         )
@@ -167,9 +166,9 @@ export default function UnifiedContractForm() {
         key: "2", label: <span><FiPackage style={{ marginRight: 8 }} />Sản phẩm</span>,
         children: (
           <div>
-            <Space style={{ marginBottom: 10 }}>
-              <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>Thêm SP</Button>
-            </Space>
+             <div style={{ marginBottom: 8 }}>
+              <Button className="textSibar"  size="small" type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>Thêm SP</Button>
+            </div>
             <Table columns={productColumns} dataSource={products} rowKey="id" {...tableProps} />
           </div>
         )

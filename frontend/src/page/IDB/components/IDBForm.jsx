@@ -15,9 +15,14 @@ import { useState, useEffect, useMemo } from "react";
 import dayjs from "dayjs"; // Cần import dayjs để xử lý DatePicker
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import useNotify from "@/components/notification/useNotify";
+<<<<<<< HEAD
 
 // Kích hoạt plugin để parse định dạng DD/MM/YYYY
 dayjs.extend(customParseFormat);
+=======
+import { IDB_DEFAULT } from "../types";
+import "../css/IDB.css";
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
 
 export default function IDBForm() {
   const notify = useNotify();
@@ -270,8 +275,24 @@ export default function IDBForm() {
 
         <Divider />
 
+<<<<<<< HEAD
         <div style={{ textAlign: "right", marginTop: 20, paddingBottom: 20 }}>
           <Button size="large" className="btn-hover-white" style={{ marginRight: 12 }}>
+=======
+      <Divider />
+
+      {/* 4. Đính kèm (Chỉ hiển thị, không cho sửa) */}
+      <h4 style={{ marginBottom: 16 }}>Đính kèm chứng từ</h4>
+      <div style={{ padding: 12, background: '#fafafa', border: '1px dashed #d9d9d9', textAlign: 'center', color: '#999' }}>
+         Không có tệp đính kèm mới (Sử dụng tệp từ IDA)
+      </div>
+
+      <Divider />
+
+      {/* 5. Nút bấm Bottom Bar */}
+      <div style={{ textAlign: "right", marginTop: 20 }}>
+        <Button className="textSibar" size="large" style={{ marginRight: 12 }}>
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
             Quay lại
           </Button>
           <Button

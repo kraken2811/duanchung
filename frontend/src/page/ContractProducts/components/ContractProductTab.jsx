@@ -5,6 +5,11 @@ import {
 import { 
   FiSave, FiSend, FiPrinter, FiBox, FiPlus, FiTrash2, FiFileText, FiDownload, FiSearch 
 } from "react-icons/fi";
+<<<<<<< HEAD
+=======
+import { UNITS } from "@/page/IDA/api/rule.api"; // Tận dụng lại danh sách ĐVT từ module IDA
+import "../css/product.css";
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
 
 export default function ContractProductPage() {
   const [activeTab, setActiveTab] = useState("1");
@@ -167,6 +172,7 @@ export default function ContractProductPage() {
           alignItems: "center"
         }}
       >
+<<<<<<< HEAD
         <Space>
           <Button icon={<FiSave />}>Ghi lại</Button>
           <Button type="primary" icon={<FiSend />}>Khai báo</Button>
@@ -182,6 +188,19 @@ export default function ContractProductPage() {
         <h2 style={{ textTransform: "uppercase", color: "#0050b3", marginBottom: 16 }}>
           Đăng ký sản phẩm hợp đồng gia công
         </h2>
+=======
+        <Button className="textSibar" icon={<FiPlus />} onClick={handleAddNew}>
+          Thêm mới (F2)
+        </Button>
+        <Button
+          type="primary"
+          icon={<FiSave />}
+          onClick={handleSubmit(onSave)}
+          style={{ background: "#0050b3", borderColor: "#0050b3" }} // Màu xanh đậm kiểu ECUS
+        >
+          Ghi lại (Ctrl+S)
+        </Button>
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
         
         {/* 2. CARD THÔNG TIN CHUNG */}
         <Card 
@@ -190,6 +209,7 @@ export default function ContractProductPage() {
             style={{ marginBottom: 16 }}
             headStyle={{ backgroundColor: '#f5f5f5' }}
         >
+<<<<<<< HEAD
            <Row gutter={16}>
               <Col span={6}>
                   <label style={{fontWeight: 500, display: 'block', marginBottom: 4}}>Số hợp đồng</label>
@@ -199,6 +219,84 @@ export default function ContractProductPage() {
                   <label style={{fontWeight: 500, display: 'block', marginBottom: 4}}>Đối tác thuê gia công</label>
                   <Select defaultValue="SS" style={{width: '100%'}} disabled>
                       <Select.Option value="SS">SAMSUNG ELECTRONICS</Select.Option>
+=======
+          <Button className="textSibar" danger icon={<FiTrash2 />} disabled={!selectedRowId}>
+            Xóa
+          </Button>
+        </Popconfirm>
+
+        <div style={{ width: 1, background: "#ccc", margin: "0 4px" }}></div>
+
+        <Button className="textSibar" icon={<FiUpload />} onClick={handleImportExcel}>
+          Nhập Excel
+        </Button>
+        <Button className="textSibar" icon={<FiDownload />} onClick={handleExportExcel}>
+          Xuất Excel
+        </Button>
+      </div>
+
+      {/* --- 2. DETAIL INPUT AREA (FORM) --- */}
+      <Card
+        size="small"
+        title="Thông tin chi tiết sản phẩm"
+        style={{ marginBottom: 10, borderColor: "#d9d9d9" }}
+        headStyle={{ backgroundColor: "#e6f7ff", fontSize: 14, fontWeight: "bold", borderBottom: "1px solid #bae7ff" }}
+      >
+        <form onSubmit={handleSubmit(onSave)}>
+          <Row gutter={[16, 8]}>
+            {/* Hàng 1 */}
+            <Col span={6}>
+              <label className="ecus-label">Mã sản phẩm <span style={{color: 'red'}}>*</span></label>
+              <Controller
+                name="productCode"
+                control={control}
+                render={({ field }) => (
+                  <Input 
+                    {...field} 
+                    id="input-product-code"
+                    placeholder="Nhập mã quản lý" 
+                    style={{ fontWeight: "bold" }}
+                  />
+                )}
+              />
+            </Col>
+            <Col span={12}>
+              <label className="ecus-label">Tên sản phẩm <span style={{color: 'red'}}>*</span></label>
+              <Controller
+                name="productName"
+                control={control}
+                render={({ field }) => <Input {...field} placeholder="Tên thương mại" />}
+              />
+            </Col>
+            <Col span={6}>
+              <label className="ecus-label">Mã HS <span style={{color: 'red'}}>*</span></label>
+              <Controller
+                name="hsCode"
+                control={control}
+                render={({ field }) => <Input {...field} placeholder="Tra cứu biểu thuế" />}
+              />
+            </Col>
+
+            {/* Hàng 2 */}
+            <Col span={6}>
+              <label className="ecus-label">Đơn vị tính <span style={{color: 'red'}}>*</span></label>
+              <Controller
+                name="unit"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    showSearch
+                    style={{ width: "100%" }}
+                    placeholder="Chọn ĐVT"
+                    optionFilterProp="children"
+                  >
+                    {UNITS.map((u) => (
+                      <Option key={u.value} value={u.value}>
+                        {u.value} - {u.label}
+                      </Option>
+                    ))}
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
                   </Select>
               </Col>
               <Col span={5}>

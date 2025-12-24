@@ -7,7 +7,13 @@ import {
   FiSave, FiSend, FiPlus, FiTrash2, FiFileText, FiDownload, FiLayers, FiPackage 
 } from "react-icons/fi";
 import useNotify from "@/components/notification/useNotify";
+<<<<<<< HEAD
 // import { CONTRACT_APPENDIX_DEFAULT } from "../types"; // Giả định import
+=======
+import { INVOICE_DEFAULT } from "../types";
+import dayjs from "dayjs";
+import "../css/invoice.css";
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
 
 // Mock data default để code chạy được
 const CONTRACT_APPENDIX_DEFAULT = {};
@@ -68,6 +74,7 @@ export default function ContractAppendixPage() {
     },
   ];
 
+<<<<<<< HEAD
   // --- TAB ITEMS ---
   const tabItems = [
     {
@@ -90,6 +97,123 @@ export default function ContractAppendixPage() {
             bordered 
             pagination={{ pageSize: 5 }}
           />
+=======
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      
+      {/* 1. THANH TIÊU ĐỀ & CÔNG CỤ (TOP TOOLBAR) */}
+      <div style={{ background: "#f0f2f5", padding: "8px 16px", borderBottom: "1px solid #d9d9d9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Space size="small">
+            <Typography.Title level={5} style={{ margin: 0, marginRight: 16, color: "#003a8c" }}>
+                <FiEdit style={{ marginRight: 8 }}/> CẬP NHẬT HÓA ĐƠN
+            </Typography.Title>
+            <Button className="textSibar" size="small" icon={<FiPlus />} onClick={() => { /* Logic reset form */ }}>Thêm mới</Button>
+            <Button className="textSibar" size="small" icon={<FiEdit />}>Sửa</Button>
+            <Button size="small" type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
+            <Button size="small" danger icon={<FiTrash2 />}>Xóa</Button>
+            <Divider type="vertical" />
+            <Button className="textSibar" size="small" icon={<FiUpload />}>Nhập từ Excel</Button>
+        </Space>
+        <Button className="textSibar" size="small" icon={<FiX />}>Thoát</Button>
+      </div>
+
+      {/* 2. KHUNG THÔNG TIN CHUNG (GENERAL INFORMATION) */}
+      <div style={{ padding: 12, background: "#fff", flexShrink: 0 }}>
+        <Row gutter={24}>
+            {/* Cột trái: Thông tin HĐ & Invoice */}
+            <Col span={10}>
+                <div style={groupHeaderStyle}>Thông tin Hóa đơn & Hợp đồng</div>
+                <Row gutter={[8, 8]}>
+                    <Col span={12}>
+                        <label style={labelStyle}>Số hợp đồng</label>
+                        <Select 
+                            size="small" 
+                            style={{ width: "100%" }} 
+                            placeholder="-- Chọn hợp đồng --"
+                            onChange={(v) => setValue("contractNumber", v)}
+                            options={[
+                                {value: 'HD001', label: 'HD001 - Gia công ABC'},
+                                {value: 'HD002', label: 'HD002 - SXXK XYZ'},
+                            ]}
+                        />
+                    </Col>
+                    <Col span={12}>
+                        <label style={labelStyle}>Số hóa đơn (*)</label>
+                        <Input size="small" {...register("invoiceNumber", { required: true })} />
+                    </Col>
+                    <Col span={12}>
+                        <label style={labelStyle}>Ngày hóa đơn</label>
+                        <DatePicker size="small" style={{ width: "100%" }} onChange={(d) => setValue("invoiceDate", d)} format="DD/MM/YYYY" />
+                    </Col>
+                    <Col span={12}>
+                        <label style={labelStyle}>Phân loại</label>
+                        <Radio.Group size="small" defaultValue="IMPORT" onChange={(e) => setValue("type", e.target.value)}>
+                            <Radio value="IMPORT">HĐ Nhập khẩu</Radio>
+                            <Radio value="EXPORT">HĐ Xuất khẩu</Radio>
+                        </Radio.Group>
+                    </Col>
+                </Row>
+            </Col>
+
+            {/* Cột phải: Thông tin Đối tác & Thanh toán */}
+            <Col span={14}>
+                <div style={groupHeaderStyle}>Đối tác & Thanh toán</div>
+                <Row gutter={[8, 8]}>
+                    <Col span={6}>
+                        <label style={labelStyle}>Mã đối tác</label>
+                        <Input.Search size="small" placeholder="Mã ĐT" onSearch={() => setValue("partnerName", "CÔNG TY SAMSUNG ELECTRONICS")} />
+                    </Col>
+                    <Col span={18}>
+                        <label style={labelStyle}>Tên đối tác</label>
+                        <Input size="small" readOnly style={{ background: "#f5f5f5" }} {...register("partnerName")} />
+                    </Col>
+                    <Col span={6}>
+                        <label style={labelStyle}>Điều kiện giá</label>
+                        <Select size="small" style={{ width: "100%" }} defaultValue="CIF" onChange={(v) => setValue("incoterm", v)}>
+                            <Select.Option value="CIF">CIF</Select.Option>
+                            <Select.Option value="FOB">FOB</Select.Option>
+                            <Select.Option value="EXW">EXW</Select.Option>
+                        </Select>
+                    </Col>
+                    <Col span={6}>
+                        <label style={labelStyle}>Đồng tiền</label>
+                        <Select size="small" style={{ width: "100%" }} defaultValue="USD" onChange={(v) => setValue("currency", v)}>
+                            <Select.Option value="USD">USD</Select.Option>
+                            <Select.Option value="EUR">EUR</Select.Option>
+                            <Select.Option value="JPY">JPY</Select.Option>
+                        </Select>
+                    </Col>
+                    <Col span={6}>
+                        <label style={labelStyle}>Thanh toán</label>
+                        <Select size="small" style={{ width: "100%" }} defaultValue="TTR" onChange={(v) => setValue("paymentMethod", v)}>
+                            <Select.Option value="TTR">TTR</Select.Option>
+                            <Select.Option value="LC">L/C</Select.Option>
+                            <Select.Option value="KC">KC</Select.Option>
+                        </Select>
+                    </Col>
+                    <Col span={6}>
+                        <label style={labelStyle}>Tổng trị giá</label>
+                        <InputNumber 
+                            size="small" 
+                            style={{ width: "100%", fontWeight: "bold", color: "blue" }} 
+                            readOnly
+                            value={watch("totalAmount")}
+                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        />
+                    </Col>
+                </Row>
+            </Col>
+        </Row>
+      </div>
+
+      <Divider style={{ margin: "0" }} />
+
+      {/* 3. KHUNG CHI TIẾT HÀNG HÓA (PRODUCT DETAILS - DATA GRID) */}
+      <div style={{ flex: 1, padding: 12, background: "#fff", display: "flex", flexDirection: "column" }}>
+        <div style={{ marginBottom: 8 }}>
+            <Button className="textSibar" type="dashed" size="small" icon={<FiPlus />} onClick={addItem}>Thêm dòng hàng</Button>
+            <span style={{ marginLeft: 12, fontStyle: "italic", color: "#888", fontSize: 12 }}>Nhấn 'Thêm dòng hàng' để bắt đầu nhập liệu chi tiết.</span>
+>>>>>>> 9c85ef33442b0295486bafafeb41df96be558f9b
         </div>
       ),
     },
