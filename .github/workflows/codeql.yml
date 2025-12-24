@@ -110,4 +110,4 @@ jobs:
             echo "ℹ️ No frontend found"
           fi
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4 
