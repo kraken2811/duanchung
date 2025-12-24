@@ -1,61 +1,102 @@
-name: Code Quality - CodeQL
+name: Code Quality - CodeQL (PR → master only)
 
 on:
   push:
-    branches: [ master, main, develop, release ]
+    branches:
+      - master
+      - dev
+      - uat
+      - prod
+      - "**"
   pull_request:
-    branches: [ master, main, develop, release ]
+    branches:
+      - master 
   workflow_dispatch:
 
 jobs:
   analyze:
-    name: Analyze Code with CodeQL
+    name: CodeQL + Master Guard
     runs-on: ubuntu-latest
 
     permissions:
       actions: read
       contents: read
       security-events: write
+      pull-requests: read
 
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript-typescript ]
+        language: [javascript-typescript]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect git conflict markers
+        run: |
+          echo "🔍 Checking for git conflict markers..."
 
+          EXCLUDES="--exclude-dir=.git \
+                    --exclude-dir=node_modules \
+                    --exclude-dir=dist \
+                    --exclude-dir=build \
+                    --exclude-dir=.github"
+
+          if grep -R $EXCLUDES "^<<<<<<< " .; then
+            echo "❌ Git conflict marker <<<<<<< found"
+            exit 1
+          fi
+
+          if grep -R $EXCLUDES "^>>>>>>> " .; then
+            echo "❌ Git conflict marker >>>>>>> found"
+            exit 1
+          fi
+
+          echo "✅ No git conflict markers detected"
+      - name: Check PR mergeability with master
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Checking mergeability into master..."
+
+          git fetch origin master
+
+          if ! git merge --no-commit --no-ff origin/master; then
+            echo "❌ PR has merge conflicts with master"
+            git merge --abort
+            exit 1
+          fi
+
+          git merge --abort
+          echo "✅ PR can be merged cleanly into master"
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           trap-caching: false
 
-      - name: Install Backend dependencies (if exists)
+      - name: Install Backend dependencies
         run: |
           if [ -f backend/package.json ]; then
             cd backend
-            npm install --ignore-scripts
+            npm ci --ignore-scripts
             cd ..
           else
-            echo "Backend not found, skipping"
+            echo "ℹ️ No backend found"
           fi
-
-      - name: Install Frontend dependencies (if exists)
+      - name: Install Frontend dependencies
         run: |
           if [ -f frontend/package.json ]; then
             cd frontend
-            npm install --ignore-scripts
+            npm ci --ignore-scripts
             cd ..
           else
-            echo "Frontend not found, skipping"
+            echo "ℹ️ No frontend found"
           fi
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
