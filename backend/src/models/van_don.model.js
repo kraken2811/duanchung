@@ -70,8 +70,11 @@ const update = (id_van_don, data) => {
  * Nếu cần → soft delete / void
  */
 const remove = (id_van_don) => {
-  return prisma.van_don.delete({
+  return prisma.van_don.update({
     where: { id_van_don },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 

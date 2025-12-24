@@ -78,8 +78,11 @@ const update = (id_lo_hang, data) => {
  * ⚠️ Nghiệp vụ logistics thực tế: nên dùng soft delete / trạng thái HỦY
  */
 const remove = (id_lo_hang) => {
-  return prisma.lo_hang.delete({
+  return prisma.lo_hang.update({
     where: { id_lo_hang },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 

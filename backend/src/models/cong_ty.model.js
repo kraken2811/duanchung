@@ -12,6 +12,17 @@ const getAll = () => {
   });
 };
 
+const existsByMaSoThue = (ma_so_thue, excludeId = null) => {
+  return prisma.cong_ty.findFirst({
+    where: {
+      ma_so_thue,
+      ...(excludeId && {
+        id_cong_ty: { not: excludeId },
+      }),
+    },
+  });
+};
+
 /**
  * Lấy công ty theo ID
  */
@@ -62,14 +73,18 @@ const update = (id_cong_ty, data) => {
  * Xóa công ty
  */
 const remove = (id_cong_ty) => {
-  return prisma.cong_ty.delete({
+  return prisma.cong_ty.update({
     where: { id_cong_ty },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 
 module.exports = {
   getAll,
   getById,
+  existsByMaSoThue,
   insert,
   update,
   remove,

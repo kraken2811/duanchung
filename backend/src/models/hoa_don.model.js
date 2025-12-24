@@ -65,8 +65,11 @@ const update = (id_hoa_don, data) => {
  * ⚠️ Nghiệp vụ thực tế: nên dùng soft delete
  */
 const remove = (id_hoa_don) => {
-  return prisma.hoa_don.delete({
+  return prisma.hoa_don.update({
     where: { id_hoa_don },
+    data: {
+      trang_thai: 'HUY',
+    },
   });
 };
 
