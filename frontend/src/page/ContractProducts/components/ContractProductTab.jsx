@@ -1,34 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
-  Table,
-  Input,
-  Button,
-  Row,
-  Col,
-  Space,
-  Select,
-  InputNumber,
-  Card,
-  Modal,
-  message,
-  Popconfirm
+  Table, Input, Button, Row, Col, Select, InputNumber,
+  Card, message, Modal, Space, Divider
 } from "antd";
 import {
-  FiPlus,
-  FiSave,
-  FiTrash2,
-  FiUpload,
-  FiDownload,
-  FiFileText
+  FiPlus, FiSave, FiTrash2, FiUpload, FiDownload, FiPrinter, FiPackage
 } from "react-icons/fi";
-import { UNITS } from "@/page/IDA/api/rule.api"; // Tận dụng lại danh sách ĐVT từ module IDA
-import "../css/product.css";
+import { UNITS } from "@/page/IDA/api/rule.api"; // Giữ nguyên import cũ của bạn
+// Import CSS chung nếu có, hoặc dùng style nội bộ bên dưới
+import "../css/product.css"; 
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Dữ liệu mẫu ban đầu để hiển thị
+// Dữ liệu mẫu
 const MOCK_DATA = [
   {
     id: 1,
@@ -56,8 +42,7 @@ export default function ContractProductTab() {
   const [products, setProducts] = useState(MOCK_DATA);
   const [selectedRowId, setSelectedRowId] = useState(null);
 
-  // React Hook Form
-  const { control, handleSubmit, reset, setValue, getValues } = useForm({
+  const { control, handleSubmit, reset, setValue } = useForm({
     defaultValues: {
       productCode: "",
       productName: "",
@@ -69,9 +54,7 @@ export default function ContractProductTab() {
     },
   });
 
-  // --- ACTION HANDLERS ---
-
-  // 1. Thêm mới (Reset form để nhập liệu mới)
+  // --- HANDLERS ---
   const handleAddNew = () => {
     reset({
       productCode: "",
@@ -83,324 +66,192 @@ export default function ContractProductTab() {
       notes: "",
     });
     setSelectedRowId(null);
-    document.getElementById("input-product-code")?.focus(); // Focus vào ô đầu tiên
   };
 
-  // 2. Ghi / Lưu (Xử lý Thêm mới hoặc Cập nhật)
   const onSave = (data) => {
-    // Validate cơ bản (giả lập)
-    if (!data.productCode || !data.productName || !data.hsCode) {
-      message.error("Vui lòng nhập đầy đủ các trường bắt buộc (*)");
+    if (!data.productCode || !data.productName) {
+      message.error("Vui lòng nhập Mã và Tên sản phẩm!");
       return;
     }
 
     if (selectedRowId) {
-      // Cập nhật dòng hiện tại
-      const updatedProducts = products.map((item) =>
-        item.id === selectedRowId ? { ...data, id: selectedRowId } : item
-      );
-      setProducts(updatedProducts);
-      message.success("Cập nhật sản phẩm thành công!");
+      const updated = products.map((p) => (p.id === selectedRowId ? { ...data, id: selectedRowId } : p));
+      setProducts(updated);
+      message.success("Cập nhật thành công!");
     } else {
-      // Thêm mới vào danh sách
-      // Kiểm tra trùng mã
-      const isExist = products.some((p) => p.productCode === data.productCode);
-      if (isExist) {
+      if (products.some((p) => p.productCode === data.productCode)) {
         message.warning("Mã sản phẩm đã tồn tại!");
         return;
       }
-      const newProduct = { ...data, id: Date.now() };
-      setProducts([...products, newProduct]);
-      message.success("Thêm mới sản phẩm thành công!");
-      handleAddNew(); // Reset form sau khi thêm
+      setProducts([...products, { ...data, id: Date.now() }]);
+      message.success("Thêm mới thành công!");
+      handleAddNew();
     }
   };
 
-  // 3. Xóa dòng
   const handleDelete = () => {
     if (!selectedRowId) {
-      message.warning("Vui lòng chọn một dòng để xóa");
+      message.warning("Vui lòng chọn dòng để xóa");
       return;
     }
-    setProducts(products.filter((item) => item.id !== selectedRowId));
-    handleAddNew();
-    message.success("Đã xóa sản phẩm");
-  };
-
-  // 4. Click vào dòng trong Grid -> Fill dữ liệu lên Form
-  const handleRowClick = (record) => {
-    setSelectedRowId(record.id);
-    // Set value cho từng field
-    Object.keys(record).forEach((key) => {
-      setValue(key, record[key]);
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+      onOk: () => {
+        setProducts(products.filter((p) => p.id !== selectedRowId));
+        handleAddNew();
+        message.success("Đã xóa sản phẩm");
+      }
     });
   };
 
-  // 5. Excel Import/Export (Giả lập)
-  const handleImportExcel = () => message.info("Chức năng Import Excel đang phát triển");
-  const handleExportExcel = () => message.info("Đã xuất file Excel xuống máy");
-
-  // --- DEFINITIONS ---
-
-  const columns = [
-    {
-      title: "STT",
-      dataIndex: "index",
-      key: "index",
-      width: 50,
-      align: "center",
-      render: (_, __, index) => index + 1,
-    },
-    {
-      title: "Mã Sản Phẩm",
-      dataIndex: "productCode",
-      key: "productCode",
-      width: 150,
-      render: (text) => <b style={{ color: "#1890ff" }}>{text}</b>,
-    },
-    {
-      title: "Tên Sản Phẩm",
-      dataIndex: "productName",
-      key: "productName",
-      width: 250,
-      ellipsis: true,
-    },
-    {
-      title: "ĐVT",
-      dataIndex: "unit",
-      key: "unit",
-      width: 80,
-      align: "center",
-    },
-    {
-      title: "Mã HS",
-      dataIndex: "hsCode",
-      key: "hsCode",
-      width: 100,
-      align: "center",
-    },
-    {
-      title: "Đơn giá GC",
-      dataIndex: "unitPrice",
-      key: "unitPrice",
-      width: 100,
-      align: "right",
-      render: (val) => val ? val.toFixed(4) : "0",
-    },
-    {
-      title: "Ghi chú",
-      dataIndex: "notes",
-      key: "notes",
-      ellipsis: true,
-    },
-  ];
-
-  const paginationConfig = {
-    total: products.length,
-    defaultPageSize: 10,
-    showSizeChanger: true,
-    pageSizeOptions: ['10', '20', '50', '100'],
-    
-    // Custom hiển thị tổng số bản ghi giống ảnh
-    showTotal: (total, range) => (
-      <span style={{ fontWeight: 600, color: '#333' }}>
-        Tổng {total} bản ghi
-      </span>
-    ),
+  const handleRowClick = (record) => {
+    setSelectedRowId(record.id);
+    Object.keys(record).forEach((key) => setValue(key, record[key]));
   };
 
+  // --- RENDERERS ---
+
+  // 1. Toolbar: Đồng bộ style nền trắng + icon với UnifiedContractForm
+  const renderToolbar = () => (
+    <div style={{ background: "#fff", padding: "12px 16px", borderBottom: "1px solid #d9d9d9", marginBottom: 16 }}>
+      <Space>
+        <Button type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
+        <Button className="textSibar" onClick={handleAddNew} style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>Thêm mới</Button>
+        <Button danger icon={<FiTrash2 />} onClick={handleDelete} disabled={!selectedRowId}>Xóa dòng</Button>
+        <Divider type="vertical" />
+        <Button className="textSibar" icon={<FiUpload />}>Nhập Excel</Button>
+        <Button className="textSibar" icon={<FiDownload />}>Xuất Excel</Button>
+        <Button className="textSibar" icon={<FiPrinter />}>In phiếu</Button>
+      </Space>
+    </div>
+  );
+
+  // 2. Form: Đồng bộ style Card title + Label fontWeight 500
+  const renderForm = () => (
+    <Card 
+      title={<span><FiPackage style={{ marginRight: 8 }} />Thông tin chi tiết sản phẩm</span>} 
+      size="small" 
+      bordered={false} 
+      className="shadow-sm"
+      style={{ marginBottom: 16 }}
+    >
+      <Row gutter={[16, 12]}>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Mã sản phẩm <span style={{ color: 'red' }}>*</span></label>
+          <Controller
+            name="productCode" control={control}
+            render={({ field }) => <Input {...field} placeholder="Mã quản lý" status={selectedRowId ? "warning" : ""} />}
+          />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Tên sản phẩm <span style={{ color: 'red' }}>*</span></label>
+          <Controller
+            name="productName" control={control}
+            render={({ field }) => <Input {...field} placeholder="Tên thương mại" />}
+          />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Mã HS <span style={{ color: 'red' }}>*</span></label>
+          <Controller
+            name="hsCode" control={control}
+            render={({ field }) => <Input {...field} placeholder="Mã HS" />}
+          />
+        </Col>
+
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Đơn vị tính</label>
+          <Controller
+            name="unit" control={control}
+            render={({ field }) => (
+              <Select {...field} showSearch style={{ width: "100%" }} placeholder="Chọn ĐVT">
+                {UNITS.map((u) => <Option key={u.value} value={u.value}>{u.value} - {u.label}</Option>)}
+              </Select>
+            )}
+          />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Đơn giá GC</label>
+          <Controller
+            name="unitPrice" control={control}
+            render={({ field }) => <InputNumber {...field} style={{ width: "100%" }} min={0} precision={4} />}
+          />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Mã SP đối tác</label>
+          <Controller
+            name="partnerCode" control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+        </Col>
+
+        <Col span={24}>
+          <label style={{ fontWeight: 500 }}>Ghi chú</label>
+          <Controller
+            name="notes" control={control}
+            render={({ field }) => <TextArea {...field} rows={1} placeholder="Ghi chú thêm..." />}
+          />
+        </Col>
+      </Row>
+    </Card>
+  );
+
+  // 3. Table columns: Đồng bộ Header UPPERCASE + Align
+  const columns = [
+    { title: "STT", render: (_, __, i) => <span className="text-gray-500">{i + 1}</span>, width: 50, align: "center" },
+    { title: "MÃ SẢN PHẨM", dataIndex: "productCode", width: 150, render: (t) => <b style={{ color: "#1890ff" }}>{t}</b> },
+    { title: "TÊN SẢN PHẨM", dataIndex: "productName", ellipsis: true },
+    { title: "ĐVT", dataIndex: "unit", width: 80, align: "center" },
+    { title: "MÃ HS", dataIndex: "hsCode", width: 100, align: "center" },
+    { title: "ĐƠN GIÁ", dataIndex: "unitPrice", width: 120, align: "right", render: (v) => v ? v.toFixed(4) : "0" },
+    { title: "GHI CHÚ", dataIndex: "notes", ellipsis: true },
+  ];
+
   return (
-    <div className="ecus-layout">
-      {/* --- 1. ACTION TOOLBAR --- */}
-      <div
-        style={{
-          backgroundColor: "#f0f2f5",
-          padding: "8px 12px",
-          borderBottom: "1px solid #d9d9d9",
-          marginBottom: 10,
-          display: "flex",
-          gap: 8,
-        }}
-      >
-        <Button className="textSibar" icon={<FiPlus />} onClick={handleAddNew}>
-          Thêm mới (F2)
-        </Button>
-        <Button
-          type="primary"
-          icon={<FiSave />}
-          onClick={handleSubmit(onSave)}
-          style={{ background: "#0050b3", borderColor: "#0050b3" }} // Màu xanh đậm kiểu ECUS
-        >
-          Ghi lại (Ctrl+S)
-        </Button>
+    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+      {renderToolbar()}
+      
+      <div style={{ padding: "0 16px 16px" }}>
+        {renderForm()}
         
-        <Popconfirm
-          title="Bạn có chắc muốn xóa dòng này?"
-          onConfirm={handleDelete}
-          okText="Xóa"
-          cancelText="Hủy"
-        >
-          <Button className="textSibar" danger icon={<FiTrash2 />} disabled={!selectedRowId}>
-            Xóa
-          </Button>
-        </Popconfirm>
-
-        <div style={{ width: 1, background: "#ccc", margin: "0 4px" }}></div>
-
-        <Button icon={<FiUpload />} onClick={handleImportExcel}>
-          Nhập Excel
-        </Button>
-        <Button icon={<FiDownload />} onClick={handleExportExcel}>
-          Xuất Excel
-        </Button>
+        {/* Table Wrapper: Style giống renderDetailsTabs */}
+        <Card size="small" bordered={false} bodyStyle={{ padding: 0 }} className="shadow-sm">
+          <Table
+            className="custom-table" // Class từ file CSS contract
+            columns={columns}
+            dataSource={products}
+            rowKey="id"
+            size="middle"
+            pagination={{ pageSize: 10 }}
+            rowClassName={(record) => record.id === selectedRowId ? "ant-table-row-selected" : ""}
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+              style: { cursor: "pointer" }
+            })}
+          />
+        </Card>
       </div>
 
-      {/* --- 2. DETAIL INPUT AREA (FORM) --- */}
-      <Card
-        size="small"
-        title="Thông tin chi tiết sản phẩm"
-        style={{ marginBottom: 10, borderColor: "#d9d9d9" }}
-        headStyle={{ backgroundColor: "#e6f7ff", fontSize: 14, fontWeight: "bold", borderBottom: "1px solid #bae7ff" }}
-      >
-        <form onSubmit={handleSubmit(onSave)}>
-          <Row gutter={[16, 8]}>
-            {/* Hàng 1 */}
-            <Col span={6}>
-              <label className="ecus-label">Mã sản phẩm <span style={{color: 'red'}}>*</span></label>
-              <Controller
-                name="productCode"
-                control={control}
-                render={({ field }) => (
-                  <Input 
-                    {...field} 
-                    id="input-product-code"
-                    placeholder="Nhập mã quản lý" 
-                    style={{ fontWeight: "bold" }}
-                  />
-                )}
-              />
-            </Col>
-            <Col span={12}>
-              <label className="ecus-label">Tên sản phẩm <span style={{color: 'red'}}>*</span></label>
-              <Controller
-                name="productName"
-                control={control}
-                render={({ field }) => <Input {...field} placeholder="Tên thương mại" />}
-              />
-            </Col>
-            <Col span={6}>
-              <label className="ecus-label">Mã HS <span style={{color: 'red'}}>*</span></label>
-              <Controller
-                name="hsCode"
-                control={control}
-                render={({ field }) => <Input {...field} placeholder="Tra cứu biểu thuế" />}
-              />
-            </Col>
-
-            {/* Hàng 2 */}
-            <Col span={6}>
-              <label className="ecus-label">Đơn vị tính <span style={{color: 'red'}}>*</span></label>
-              <Controller
-                name="unit"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    showSearch
-                    style={{ width: "100%" }}
-                    placeholder="Chọn ĐVT"
-                    optionFilterProp="children"
-                  >
-                    {UNITS.map((u) => (
-                      <Option key={u.value} value={u.value}>
-                        {u.value} - {u.label}
-                      </Option>
-                    ))}
-                  </Select>
-                )}
-              />
-            </Col>
-            <Col span={6}>
-              <label className="ecus-label">Đơn giá gia công</label>
-              <Controller
-                name="unitPrice"
-                control={control}
-                render={({ field }) => (
-                  <InputNumber
-                    {...field}
-                    style={{ width: "100%" }}
-                    min={0}
-                    precision={4}
-                  />
-                )}
-              />
-            </Col>
-            <Col span={6}>
-              <label className="ecus-label">Mã SP đối tác</label>
-              <Controller
-                name="partnerCode"
-                control={control}
-                render={({ field }) => <Input {...field} placeholder="Tham chiếu bên nước ngoài" />}
-              />
-            </Col>
-            
-            {/* Hàng 3 - Ghi chú (Full width) */}
-            <Col span={24}>
-              <label className="ecus-label">Ghi chú</label>
-              <Controller
-                name="notes"
-                control={control}
-                render={({ field }) => <TextArea {...field} rows={2} />}
-              />
-            </Col>
-          </Row>
-        </form>
-      </Card>
-
-      {/* --- 3. DATA GRID VIEW --- */}
-      <div className="grid-container">
-        <Table
-          columns={columns}
-          dataSource={products}
-          rowKey="id"
-          size="small"
-          bordered
-          
-          pagination={paginationConfig} 
-
-          scroll={{ y: 300 }}
-          rowClassName={(record) =>
-            record.id === selectedRowId ? "ant-table-row-selected" : ""
-          }
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-          })}
-        />
-      </div>
-
-      <style>{`
-        .ecus-label {
-          display: block;
-          font-weight: 600;
-          font-size: 13px;
-          margin-bottom: 4px;
-          color: #333;
+      <style jsx global>{`
+        /* CSS nội bộ để đảm bảo giống layout UnifiedContractForm */
+        .shadow-sm {
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        .ant-table-row-selected {
+        .ant-table-row-selected > td {
           background-color: #e6f7ff !important;
         }
-        .ant-table-small .ant-table-thead > tr > th {
-          background-color: #fafafa;
-          font-weight: bold;
+        /* Style lại header table cho giống file mẫu */
+        .custom-table .ant-table-thead > tr > th {
+          font-weight: 600;
+          background: #fafafa;
+          text-transform: uppercase;
+          font-size: 13px;
         }
-        .ant-card-small > .ant-card-body {
-          padding: 12px;
+        .textSibar {
+            color: #595959;
         }
-        .ant-pagination-total-text {
-          margin-right: 12px !important; /* Khoảng cách giữa text tổng và nút trang */
-        }
-        .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next {
-          border-radius: 2px !important; /* Bo góc vuông hơn */
+        .textSibar:hover {
+            color: #1890ff;
         }
       `}</style>
     </div>

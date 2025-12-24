@@ -97,10 +97,6 @@ export default function MaterialListView() {
   return (
     <div style={{ padding: 24, height: "100%", display: "flex", flexDirection: "column" }}>
       {/* 1. TIÊU ĐỀ TRANG */}
-      <h2 style={{ marginBottom: 16, textTransform: "uppercase", color: "#1a1a1a" }}>
-        Danh mục Nguyên phụ liệu (NPL)
-      </h2>
-
       <Card
         bordered={false}
         bodyStyle={{ padding: 0 }}

@@ -90,99 +90,81 @@ export default function IDCForm() {
     {
       title: "STT",
       dataIndex: "index",
-      width: 60,
-      render: (text, record) => (
-        <span style={{ fontWeight: record.modified ? "bold" : "normal" }}>
-          {text}
-        </span>
-      ),
+      width: 50,
+      align: "center", // Căn giữa STT
+      render: (text) => <span style={{ color: "#9ca3af" }}>{text}</span>,
     },
     {
-      title: "Tên hàng",
+      title: "MÔ TẢ HÀNG HÓA", // In hoa tiêu đề (CSS đã xử lý, nhưng nên viết hoa cho đồng bộ code)
       dataIndex: "description",
-      width: 200,
+      // Bỏ width cố định hoặc để lớn để nó tự co giãn
       render: (text, record) => (
-        <span
-          style={{
-            color: record.modified ? "#1890ff" : "inherit",
-            fontWeight: record.modified ? "500" : "normal",
-          }}
-        >
+        // Dùng class text-modified thay vì style inline
+        <span className={record.modified ? "text-modified" : ""}>
           {text}
         </span>
       ),
     },
     {
-      title: "Mã HS",
+      title: "MÃ HS",
       dataIndex: "hsCode",
-      width: 100,
+      width: 120,
+      align: "center", // HS Code căn giữa
       render: (text, record) => (
-        <span style={{ color: record.hsCodeModified ? "#f5222d" : "inherit" }}>
+        // Dùng font-mono cho mã số
+        <span className={`font-mono ${record.hsCodeModified ? "text-modified" : ""}`}>
           {text}
         </span>
       ),
     },
     {
-      title: "Số lượng",
+      title: "SỐ LƯỢNG",
       dataIndex: "quantity",
-      width: 100,
+      width: 110,
+      align: "right", // SỐ LIỆU BẮT BUỘC CĂN PHẢI
       render: (text, record) => (
-        <Badge
-          dot={record.quantityModified}
-          status="processing"
-          offset={[-5, 0]}
-        >
-          <span
-            style={{
-              color: record.quantityModified ? "#1890ff" : "inherit",
-              fontWeight: record.quantityModified ? "bold" : "normal",
-            }}
-          >
-            {text}
-          </span>
-        </Badge>
+        <span className={record.quantityModified ? "text-modified" : ""}>
+          {/* Format số có dấu phẩy ngăn cách */}
+          {Number(text).toLocaleString()}
+        </span>
       ),
     },
     {
-      title: "Đơn giá",
+      title: "ĐƠN GIÁ",
       dataIndex: "unitPrice",
-      width: 120,
+      width: 130,
+      align: "right", // CĂN PHẢI
       render: (text, record) => (
-        <span
-          style={{
-            color: record.priceModified ? "#1890ff" : "inherit",
-            fontWeight: record.priceModified ? "bold" : "normal",
-          }}
-        >
-          ${text}
+        <span className={record.priceModified ? "text-modified" : ""}>
+          {Number(text).toLocaleString()}
         </span>
       ),
     },
     {
-      title: "Trị giá",
+      title: "TRỊ GIÁ",
       dataIndex: "totalValue",
-      width: 120,
+      width: 150,
+      align: "right", // CĂN PHẢI
       render: (text, record) => (
-        <span
-          style={{
-            color: record.valueModified ? "#1890ff" : "inherit",
-            fontWeight: record.valueModified ? "bold" : "normal",
-          }}
-        >
-          ${text}
+        <span className={record.valueModified ? "text-modified" : ""}>
+          {Number(text).toLocaleString()}
         </span>
       ),
     },
     {
-      title: "",
+      title: "", // Cột tác vụ
       width: 60,
+      align: "center",
       render: (_, record) => (
-        <Tooltip title="Chỉnh sửa dòng hàng">
-          <FiEdit3
-            style={{ cursor: "pointer", color: "#1890ff" }}
-            onClick={() => editGoodsItem(record)}
-          />
-        </Tooltip>
+          <Tooltip title="Sửa đổi dòng này">
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<FiEdit3 />} 
+              className={record.modified ? "text-blue-500" : "text-gray-400"}
+              onClick={() => editGoodsItem(record)}
+            />
+          </Tooltip>
       ),
     },
   ];
@@ -580,14 +562,15 @@ export default function IDCForm() {
         style={{ marginBottom: 16 }}
       />
       <Table
+        className="custom-table" // <--- THÊM CLASS NÀY
         columns={goodsColumns}
         dataSource={modifiedGoods}
         rowKey="id"
         pagination={false}
-        bordered
-        size="small"
+        bordered={false} // <--- ĐỔI THÀNH FALSE
+        size="middle"    // <--- ĐỔI SIZE CHO THOÁNG
         rowClassName={(record) =>
-          record.modified ? "row-modified" : "row-normal"
+          record.modified ? "row-modified" : ""
         }
       />
       <style>{`
