@@ -46,14 +46,11 @@ const menuItems = [
   },
 
   {
-    key: "goods",
+    key: "/product",
     label: "Hàng hóa",
     icon: <FiTruck />,
     children: [
-      { key: "/cargo", label: "Lô hàng" },
-      { key: "/inventory", label: "Tồn kho" },
-      { key: "/cargo-adjust", label: "Điều chỉnh trị giá" },
-      { key: "/special-type", label: "Loại hình đặc biệt" },
+      { key: "/product", label: "Hàng hóa" },
     ],
   },
 

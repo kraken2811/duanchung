@@ -1,7 +1,11 @@
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
+
+/* ===== Layout ===== */
 import MainLayout from "@/components/layout/MainLayout";
+
+/* ===== Views ===== */
 import IDAView from "@/page/IDA/views/IDAview";
 import IDBView from "@/page/IDB/views/IDBView";
 import IDCView from "@/page/IDC/views/IDCView";
@@ -12,9 +16,30 @@ import CustomsNotificationView from "@/page/CustomsNotification/views/CustomsNot
 import ContractInvoiceView from "@/page/ContractInvoice/views/ContractInvoiceView"; 
 import MaterialListView from "@/page/MaterialList/views/MaterialListView";
 import ContractView from "@/page/Contract/views/ContractView";
-import ContractProductView  from "@/page/ContractProducts/views/ContractProductsView";
+import ContractProductView from "@/page/ContractProducts/views/ContractProductsView";
 import LoginView from "@/page/Login/views/LoginView";
+import ProductView from "@/page/Product/views/product_view";
 
+/* ===== URLs ===== */
+import {
+  layoutUrl,
+  homeUrl,
+  idaurl,
+  idburl,
+  idcurl,
+  declarationsUrl,
+  ideurl,
+  processingLog,
+  hqNotifyUrl,
+  contractAppendixUrl,
+  contractInvoiceUrl,
+  materialListUrl,
+  contractUrl,
+  contractProductsUrl,
+  loginUrl,
+  product,
+  error403Url,
+} from "./urls";
 
 
 
@@ -23,8 +48,10 @@ const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;
 
+/* ===== Auth Mock ===== */
 const adminUser = { username: "admin" };
 
+/* ===== Protected Route ===== */
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const user = adminUser;
@@ -34,14 +61,21 @@ const ProtectedRoute = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading)
-    return <Spin size="large" style={{ display: "block", margin: "50px auto" }} />;
+  if (loading) {
+    return (
+      <Spin
+        size="large"
+        style={{ display: "block", margin: "50px auto" }}
+      />
+    );
+  }
 
   if (!user) return <Navigate to={error403Url} replace />;
 
   return children;
 };
 
+/* ===== Router ===== */
 const router = createBrowserRouter([
   {
     path: layoutUrl,
@@ -51,7 +85,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Home /> },    
+      { index: true, element: <Home /> },
       { path: idaurl, element: <IDAView /> },
       { path: idburl, element: <IDBView /> },
       { path: idcurl, element: <IDCView /> },
@@ -63,10 +97,10 @@ const router = createBrowserRouter([
       { path: materialListUrl, element: <MaterialListView /> },
       { path: contractUrl, element: <ContractView /> },
       { path: contractProductsUrl, element: <ContractProductView /> },
-      { path: loginUrl, element: <LoginView /> }
+      { path: product, element: <ProductView /> },
+      { path: loginUrl, element: <LoginView /> },
     ],
   },
-
   { path: error403Url, element: <Error403 /> },
   { path: "*", element: <NotFound /> },
 ]);
