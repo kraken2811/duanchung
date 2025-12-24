@@ -18,7 +18,7 @@ import ContractProductView  from "@/page/ContractProducts/views/ContractProducts
 
 
 
-import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl} from "./urls";
+import { layoutUrl, homeUrl, idaurl, error403Url ,idburl , idcurl, declarationsUrl , ideurl , processingLog, hqNotifyUrl, contractAppendixUrl, contractInvoiceUrl , materialListUrl ,contractUrl, contractProductsUrl, loginUrl} from "./urls";
 const Home = () => <h2>Home ✅</h2>;
 const Error403 = () => <h1>403 Forbidden</h1>;
 const NotFound = () => <h1>404 Not Found</h1>;

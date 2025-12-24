@@ -27,6 +27,7 @@ import { useState, useEffect } from "react";
 import useNotify from "@/components/notification/useNotify";
 import { INVOICE_DEFAULT } from "../types";
 import dayjs from "dayjs";
+import "../css/invoice.css";
 
 const { Text } = Typography;
 

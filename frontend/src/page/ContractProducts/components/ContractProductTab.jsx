@@ -23,6 +23,7 @@ import {
   FiFileText
 } from "react-icons/fi";
 import { UNITS } from "@/page/IDA/api/rule.api"; // Tận dụng lại danh sách ĐVT từ module IDA
+import "../css/product.css";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -221,7 +222,7 @@ export default function ContractProductTab() {
           gap: 8,
         }}
       >
-        <Button icon={<FiPlus />} onClick={handleAddNew}>
+        <Button className="textSibar" icon={<FiPlus />} onClick={handleAddNew}>
           Thêm mới (F2)
         </Button>
         <Button
@@ -239,7 +240,7 @@ export default function ContractProductTab() {
           okText="Xóa"
           cancelText="Hủy"
         >
-          <Button danger icon={<FiTrash2 />} disabled={!selectedRowId}>
+          <Button className="textSibar" danger icon={<FiTrash2 />} disabled={!selectedRowId}>
             Xóa
           </Button>
         </Popconfirm>
