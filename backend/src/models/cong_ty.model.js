@@ -12,17 +12,6 @@ const getAll = () => {
   });
 };
 
-const existsByMaSoThue = (ma_so_thue, excludeId = null) => {
-  return prisma.cong_ty.findFirst({
-    where: {
-      ma_so_thue,
-      ...(excludeId && {
-        id_cong_ty: { not: excludeId },
-      }),
-    },
-  });
-};
-
 /**
  * Lấy công ty theo ID
  */
@@ -84,7 +73,6 @@ const remove = (id_cong_ty) => {
 module.exports = {
   getAll,
   getById,
-  existsByMaSoThue,
   insert,
   update,
   remove,

@@ -35,31 +35,6 @@ exports.getById = async (req, res) => {
 };
 
 /**
- * GET /cong_tys/check-ma-so-thue?ma_so_thue=xxx&id=optional
- * Kiểm tra riêng mã số thuế
- */
-exports.checkMaSoThue = async (req, res) => {
-  const { ma_so_thue, id } = req.query;
-
-  if (!ma_so_thue) {
-    return res.status(400).json({ error: "Thiếu mã số thuế" });
-  }
-
-  try {
-    const existed = await CongTy.existsByMaSoThue(
-      ma_so_thue,
-      id ? Number(id) : null,
-    );
-
-    res.json({
-      exists: !!existed, // object | null -> boolean
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-/**
  * POST /cong_tys
  * Thêm mới công ty (có check MST)
  */
