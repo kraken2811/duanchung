@@ -281,6 +281,7 @@ export default function UnifiedContractForm() {
     }
   ];
 
+  // Cột Sản phẩm (Có giá tiền)
   const productColumns = [
     { 
       title: "STT", 
