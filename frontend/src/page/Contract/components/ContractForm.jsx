@@ -16,10 +16,25 @@ import "../css/contract.css";
 const { Option } = Select;
 const { TextArea } = Input;
 
+// --- DỮ LIỆU MÃ LOẠI PHỤ KIỆN (Từ hình 4) ---
+const ACCESSORY_TYPES_LIST = [
+  { code: "803", content: "Bổ sung nguyên phụ liệu" },
+  { code: "802", content: "Bổ sung sản phẩm" },
+  { code: "804", content: "Bổ sung thiết bị" },
+  { code: "805", content: "Bổ sung hàng mẫu" },
+  { code: "503", content: "Sửa nguyên phụ liệu" },
+  { code: "502", content: "Sửa sản phẩm" },
+  { code: "504", content: "Sửa thiết bị" },
+  { code: "102", content: "Hủy sản phẩm" },
+  { code: "103", content: "Hủy nguyên phụ liệu" },
+  { code: "201", content: "Gia hạn hợp đồng" },
+];
+
 // Giá trị mặc định cho form
 const DEFAULT_FORM_VALUES = {
   contractNumber: "",
-  appendixNumber: "",
+  accessoryNumber: "",
+  declarationDate: dayjs(),
   signedDate: null,
   expirationDate: null,
   effectiveDate: null,
@@ -33,6 +48,8 @@ const DEFAULT_FORM_VALUES = {
   totalProcessingValue: null,
   notes: "",
   baseContractId: null,
+  baseContractSignedDate: new Date("2019-10-11"), // <--- THÊM: Mặc định hoặc null
+  accessoryNumber: "",
   // Thông tin bên nhận gia công
   processor: {
     taxCode: "",
@@ -58,6 +75,10 @@ export default function UnifiedContractForm() {
   const [products, setProducts] = useState([]);
   const [equipments, setEquipments] = useState([]);
   const [detailsTab, setDetailsTab] = useState("1"); 
+  const [selectedAccessoryTypes, setSelectedAccessoryTypes] = useState([]);
+  const [isTypeModalVisible, setIsTypeModalVisible] = useState(false);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [tempSelectedTypes, setTempSelectedTypes] = useState([]);
 
   // --- 2. KHỞI TẠO FORM ---
   const { control, handleSubmit, reset, getValues } = useForm({
@@ -72,7 +93,7 @@ export default function UnifiedContractForm() {
       products: [],
       equipments: []
     },
-    appendix: {
+    accessory: {
       form: { ...DEFAULT_FORM_VALUES },
       materials: [],
       products: [],
@@ -564,7 +585,7 @@ export default function UnifiedContractForm() {
             name="isProcessingAbroad" 
             control={control} 
             render={({ field }) => (
-              <Checkbox style={{marginTop: 28}} {...field} checked={field.value}>
+              <Checkbox style={{marginTop: 18, marginLeft: 290}} {...field} checked={field.value}>
                 Hình thức gia công ngoài nước
               </Checkbox>
             )}
@@ -685,92 +706,133 @@ export default function UnifiedContractForm() {
     </Card>
   );
 
-  const renderAppendixFields = () => (
-    <Card title="Thông tin chung Phụ lục" size="small" bordered={false} className="shadow-sm">
-      <Row gutter={[16, 12]}>
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Chọn Hợp đồng gốc <span style={{ color: 'red' }}>*</span></label>
-          <Controller
-            name="baseContractId" 
-            control={control}
-            render={({ field }) => (
-              <Select {...field} style={{ width: "100%" }} placeholder="Tìm HĐ gốc..." showSearch>
-                <Option value="HD001">HDGC2019-VNJP (Hong Kong)</Option>
-                <Option value="HD002">2019-HD1910 (Japan)</Option>
-              </Select>
-            )}
-          />
-        </Col>
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Số phụ lục <span style={{ color: 'red' }}>*</span></label>
-          <Controller name="appendixNumber" control={control} render={({ field }) => (
-            <Input {...field} placeholder="VD: PL-01" />
-          )} />
-        </Col>
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày phụ lục</label>
-          <Controller 
-            name="effectiveDate" 
-            control={control} 
-            render={({ field }) => (
-              <DatePicker 
-                {...field}
-                value={field.value ? dayjs(field.value) : null}
-                onChange={(date) => field.onChange(date ? date.toDate() : null)}
-                style={{ width: '100%' }} 
-                format="DD/MM/YYYY" 
-              />
-            )} 
-          />
-        </Col>
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Sáp xếp</label>
-          <Select defaultValue="update" style={{ width: "100%" }}>
-            <Option value="update">Sắp xếp theo mã NPL SP</Option>
-            <Option value="new">Sắp xếp mới</Option>
-          </Select>
-        </Col>
+  // --- LOGIC MỞ MODAL ---
+  const handleOpenTypeModal = () => {
+    setTempSelectedTypes(selectedAccessoryTypes.map(i => i.code));
+    setIsTypeModalVisible(true);
+  };
 
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày ký <span style={{ color: 'red' }}>*</span></label>
-          <Controller 
-            name="signedDate" 
-            control={control} 
-            render={({ field }) => (
-              <DatePicker 
-                {...field}
-                value={field.value ? dayjs(field.value) : null}
-                onChange={(date) => field.onChange(date ? date.toDate() : null)}
-                style={{ width: '100%' }} 
-                format="DD/MM/YYYY" 
-              />
-            )} 
+  const handleConfirmTypeSelection = () => {
+    const newSelected = tempSelectedTypes.map(code => {
+      const found = ACCESSORY_TYPES_LIST.find(t => t.code === code);
+      const existing = selectedAccessoryTypes.find(s => s.code === code);
+      return { ...found, id: code, note: existing ? existing.note : "Đã có nội dung" };
+    });
+    setSelectedAccessoryTypes(newSelected);
+    setIsTypeModalVisible(false);
+  };
+
+  const renderAccessoryFields = () => (
+    <div style={{ padding: "0 16px 16px" }}>
+      {/* KHỐI 1: THÔNG TIN CHUNG (Tab con bên trong) */}
+      <Card size="small" className="shadow-sm" bodyStyle={{padding: 0}}>
+         <Tabs type="card" size="small" tabBarStyle={{margin: 0, background: '#fafafa'}}>
+            <Tabs.TabPane tab="Thông tin chung hợp đồng" key="info">
+                <div style={{padding: 16}}>
+                    <Row gutter={[24, 12]}>
+                        {/* Cột trái: Form nhập liệu */}
+                        <Col span={12}>
+                            <Row gutter={[12, 12]}>
+                                <Col span={24}>
+                                   <label>Số hợp đồng GC:</label>
+                                   <Controller name="baseContractId" control={control} render={({ field }) => (
+                                      <Select {...field} size="small" style={{width:'100%'}} placeholder="Chọn HĐ gốc">
+                                          <Option value="HD001">2019-HD1910</Option>
+                                      </Select>
+                                   )} />
+                                </Col>
+                                <Col span={24}>
+                                  <label style={{ fontWeight: 500 }}>Ngày ký HĐGC:</label>
+                                  <Controller
+                                    name="baseContractSignedDate"
+                                    control={control}
+                                    render={({ field }) => (
+                                      <DatePicker 
+                                        {...field} 
+                                        size="small" 
+                                        style={{ width: '100%' }} // Background xám để thể hiện Read-only logic
+                                        format="DD/MM/YYYY" 
+                                        value={field.value ? dayjs(field.value) : null} 
+                                      />
+                                    )}
+                                  />
+                                </Col>
+                                <Col span={24}>
+                                   <label>Số phụ kiện: <span style={{color:'red'}}>*</span></label>
+                                   <Controller name="accessoryNumber" control={control} render={({ field }) => (
+                                      <Input {...field} size="small" />
+                                   )} />
+                                </Col>
+                                <Col span={24}>
+                                   <label>Ngày khai báo: <span style={{color:'red'}}>*</span></label>
+                                   <Controller name="declarationDate" control={control} render={({ field }) => (
+                                      <DatePicker {...field} size="small" style={{width:'100%'}} format="DD/MM/YYYY" 
+                                        value={field.value ? dayjs(field.value) : null} 
+                                        onChange={d => field.onChange(d)}
+                                      />
+                                   )} />
+                                </Col>
+                                <Col span={24}>
+                                   <label>Ghi chú:</label>
+                                   <Controller name="notes" control={control} render={({ field }) => (
+                                      <Input {...field} size="small" />
+                                   )} />
+                                </Col>
+                            </Row>
+                        </Col>
+                        {/* Cột phải: Thông tin trạng thái (Read-only) */}
+                        <Col span={12} style={{borderLeft: '1px solid #f0f0f0'}}>
+                            <div style={{textAlign: 'right'}}>
+                                <span style={{color: '#1890ff', fontWeight: 'bold', fontSize: 16}}>Đang nhập mới phụ kiện</span>
+                                <Divider style={{margin: '12px 0'}} />
+                                <Space direction="vertical" align="end" style={{width: '100%'}}>
+                                    <Space><span>Số TN:</span> <Input size="small" disabled style={{width: 120}} /></Space>
+                                    <Space><span>Ngày TN:</span> <Input size="small" disabled style={{width: 120}} value="11/10/2019" /></Space>
+                                    <Space><span>Số tham chiếu:</span> <Input size="small" disabled style={{width: 200}} /></Space>
+                                </Space>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Kết quả giao dịch" key="result">
+                <div style={{padding: 20, textAlign: 'center', color: '#999'}}>Chưa có thông tin</div>
+            </Tabs.TabPane>
+         </Tabs>
+      </Card>
+
+      {/* KHỐI 2: BẢNG DANH SÁCH LOẠI PHỤ KIỆN (Hình 2 & 3) */}
+      <div style={{ marginTop: 16 }}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 8}}>
+             <span style={{fontWeight: 600, color: '#1890ff'}}>Loại phụ kiện hợp đồng</span>
+             <Space>
+                 <Button type="primary" ghost size="small" icon={<FiPlus />} onClick={handleOpenTypeModal}>Thêm mới Phụ kiện</Button>
+                 <Button danger size="small" icon={<FiTrash2 />} onClick={() => setSelectedAccessoryTypes([])}>Xóa tất cả</Button>
+             </Space>
+          </div>
+          
+          <Table 
+            bordered 
+            size="small" 
+            dataSource={selectedAccessoryTypes} 
+            rowKey="code" 
+            pagination={false}
+            columns={[
+                { title: 'STT', render: (_,__,i) => i+1, width: 50, align: 'center' },
+                { title: 'Mã', dataIndex: 'code', width: 80, align: 'center' },
+                { title: 'Nội dung', dataIndex: 'content' },
+                { title: 'Ghi chú', dataIndex: 'note', render: (t) => <Input size="small" defaultValue={t} bordered={false} /> }
+            ]}
           />
-        </Col>
-        <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày hết hạn <span style={{ color: 'red' }}>*</span></label>
-          <Controller 
-            name="expirationDate" 
-            control={control} 
-            render={({ field }) => (
-              <DatePicker 
-                {...field}
-                value={field.value ? dayjs(field.value) : null}
-                onChange={(date) => field.onChange(date ? date.toDate() : null)}
-                style={{ width: '100%' }} 
-                format="DD/MM/YYYY" 
-              />
-            )} 
-          />
-        </Col>
-        <Col span={12}>
-          <label style={{ fontWeight: 500 }}>Nội dung điều chỉnh</label>
-          <Controller name="notes" control={control} render={({ field }) => (
-            <TextArea rows={2} {...field} placeholder="Mô tả nội dung thay đổi của phụ lục..." />
-          )} />
-        </Col>
-      </Row>
-    </Card>
+
+          {/* Nút mở chi tiết */}
+          <div style={{marginTop: 16, textAlign: 'right'}}>
+             <Button type="primary" icon={<FiLayers />} onClick={() => setIsDetailModalVisible(true)}>
+                Chi tiết Phụ kiện...
+             </Button>
+          </div>
+      </div>
+    </div>
   );
 
   const mainTabItems = [
@@ -785,14 +847,9 @@ export default function UnifiedContractForm() {
       ),
     },
     {
-      key: "appendix",
-      label: "Phụ lục hợp đồng",
-      children: (
-        <div style={{ padding: "0 16px 16px" }}>
-          {renderAppendixFields()}
-          {renderDetailsTabs()}
-        </div>
-      ),
+      key: "accessory",
+      label: "Phụ kiện hợp đồng",
+      children: renderAccessoryFields(), // Chỉ render giao diện Master, chi tiết ẩn trong Modal
     },
   ];
 
@@ -808,6 +865,54 @@ export default function UnifiedContractForm() {
         style={{ background: "#f5f5f5" }}
         tabBarStyle={{ paddingLeft: 16, background: "#fff", marginBottom: 0 }}
       />
+
+      {/* --- MODAL 1: CHỌN LOẠI PHỤ KIỆN (Hình 4) --- */}
+      <Modal
+        title="Chọn loại phụ kiện"
+        open={isTypeModalVisible}
+        onOk={handleConfirmTypeSelection}
+        onCancel={() => setIsTypeModalVisible(false)}
+        width={600}
+      >
+        <Table
+            dataSource={ACCESSORY_TYPES_LIST}
+            rowKey="code"
+            size="small"
+            pagination={false}
+            scroll={{ y: 300 }}
+            columns={[
+                { 
+                    title: "Chọn", width: 50, align: 'center',
+                    render: (_, r) => (
+                        <Checkbox 
+                            checked={tempSelectedTypes.includes(r.code)}
+                            onChange={(e) => {
+                                if(e.target.checked) setTempSelectedTypes([...tempSelectedTypes, r.code]);
+                                else setTempSelectedTypes(tempSelectedTypes.filter(c => c !== r.code));
+                            }}
+                        />
+                    )
+                },
+                { title: "Mã", dataIndex: "code", width: 80 },
+                { title: "Nội dung", dataIndex: "content" },
+            ]}
+        />
+      </Modal>
+
+      {/* --- MODAL 2: CHI TIẾT NPL/SP (Hình 1) --- */}
+      <Modal
+        title="Danh mục NPL/SP bổ sung"
+        open={isDetailModalVisible}
+        onCancel={() => setIsDetailModalVisible(false)}
+        width={1000} // Rộng hơn để chứa bảng
+        footer={null} // Tự custom footer nếu cần
+        style={{top: 20}}
+      >
+         {/* Tái sử dụng hàm render bảng của bạn, nhưng bọc trong Modal */}
+         <div className="custom-modal-detail">
+            {renderDetailsTabs()}
+         </div>
+      </Modal>
     </div>
   );
 }
