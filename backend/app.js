@@ -3,6 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const routes = require('./src/routes');
+BigInt.prototype.toJSON = function () {
+  return this.toString();
+};
 
 const app = express();
 const PORT = process.env.PORT || 3000;
