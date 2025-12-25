@@ -1,56 +1,89 @@
 import { useState } from "react";
-import { Card, Typography } from "antd";
+import { Typography, App as AntdApp } from "antd";
 import LoginForm from "../components/LoginForm";
+import { checkMstApi, loginApi } from "../api/auth.api";
 
 const { Text } = Typography;
 
 export default function LoginView() {
-  const [step, setStep] = useState(1); 
-  const [taxCode, setTaxCode] = useState("");
+  const { message } = AntdApp.useApp();
 
-  const handleNext = (data) => {
-    setTaxCode(data.taxCode);
-    setStep(2);
-    console.log("MST đã nhập:", data.taxCode);
+  const [step, setStep] = useState(1);
+  const [maSoThue, setMaSoThue] = useState("");
+  const [tenCongTy, setTenCongTy] = useState("");
+
+  // STEP 1: CHECK MST
+  const handleCheckMst = async (data) => {
+    try {
+      const res = await checkMstApi(data.ma_so_thue);
+
+      setMaSoThue(data.ma_so_thue);
+      setTenCongTy(res.ten_cong_ty);
+      setStep(2);
+    } catch (err) {
+      message.error(
+        err.response?.data?.message || "Mã số thuế không tồn tại"
+      );
+    }
   };
 
-  const handleLogin = (data) => {
-    const payload = { ...data, taxCode };
-    console.log(">>> Payload đăng nhập:", payload);
-    alert("Đăng nhập thành công!");
+  // STEP 2: LOGIN
+  const handleLogin = async (data) => {
+    try {
+      const { accessToken, user } = await loginApi({
+        ma_so_thue: maSoThue,
+        ten_dang_nhap: data.username,
+        mat_khau: data.password,
+      });
+
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      message.success("Đăng nhập thành công");
+      window.location.href = "/";
+    } catch (err) {
+      message.error(
+        err.response?.data?.message || "Đăng nhập thất bại"
+      );
+    }
   };
 
   return (
-    <div style={{ 
-      minHeight: "100vh", 
-      display: "flex", 
-      flexDirection: "column",
-      alignItems: "center", 
-      justifyContent: "center",
-      background: "#fff", // 1. Đổi màu nền từ #f0f2f5 sang #fff (Trắng)
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#fff",
+      }}
+    >
       <div style={{ width: 400 }}>
-        {/* Logo hoặc Tên phần mềm */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ color: "#003a8c", margin: 0, fontSize: 28, fontWeight: "bold", letterSpacing: '-0.5px' }}>
+          <h1 style={{ color: "#003a8c", margin: 0 }}>
             ECUS5-VNACCS
           </h1>
-          <Text type="secondary" style={{ fontSize: 14 }}>Phần mềm Hải quan điện tử</Text>
+          <Text type="secondary">Phần mềm Hải quan điện tử</Text>
         </div>
 
-        {/* 2. Loại bỏ boxShadow và background của Card để nó hòa làm một với nền trắng */}
-        <div style={{ padding: "0 20px" }}> 
-          <LoginForm 
-            step={step} 
-            taxCode={taxCode}
-            onNext={handleNext} 
-            onLogin={handleLogin}
-            onBack={() => setStep(1)} 
-          />
-        </div>
+        <LoginForm
+          step={step}
+          maSoThue={maSoThue}
+          tenCongTy={tenCongTy}
+          onCheckMst={handleCheckMst}
+          onLogin={handleLogin}
+          onBack={() => setStep(1)}
+        />
 
-        <div style={{ textAlign: "center", marginTop: 40, color: "#bfbfbf", fontSize: 12 }}>
-          <p>© 2024 Bản quyền thuộc về QuangPhuc</p>
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: 40,
+            fontSize: 12,
+            color: "#bfbfbf",
+          }}
+        >
+          © 2024 QuangPhuc
         </div>
       </div>
     </div>

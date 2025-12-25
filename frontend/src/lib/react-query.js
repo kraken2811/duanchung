@@ -1,44 +1,52 @@
-// import { AxiosError } from 'axios';
-// import {
-//   QueryClient,
-//   type DefaultOptions,
-//   type UseMutationOptions,
-//   type UseQueryOptions,
-// } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 
-// const queryConfig: DefaultOptions = {
-//   queries: {
-//     ...({
-//       useErrorBoundary: true,
-//     } as any),
-//     refetchOnWindowFocus: true,
-//     retry: 1,
-//   },
-// };
+const queryConfig = {
+  queries: {
+    useErrorBoundary: true,
+    refetchOnWindowFocus: true,
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
+  },
+  mutations: {
+    useErrorBoundary: true,
+  },
+};
 
-// export const queryClient = new QueryClient({ defaultOptions: queryConfig });
+export const queryClient = new QueryClient({
+  defaultOptions: queryConfig,
+});
 
-// export type PromiseValue<PromiseType, Otherwise = PromiseType> =
-//   PromiseType extends Promise<infer Value>
-//     ? {
-//         0: PromiseValue<Value>;
-//         1: Value;
-//       }[PromiseType extends Promise<unknown> ? 0 : 1]
-//     : Otherwise;
+export const getPromiseValue = promise =>
+  promise && typeof promise.then === 'function'
+    ? promise.then(res => res)
+    : promise;
 
-// export type ExtractFnReturnType<FnType extends (...args: any) => any> = PromiseValue<
-//   ReturnType<FnType>
-// >;
+export const getErrorMessage = error => {
+  if (error?.custom) {
+    return error.message;
+  }
 
-// export type QueryConfig<
-//   QueryFnType extends (...args: any) => any,
-//   TError = unknown,
-//   TData = ExtractFnReturnType<QueryFnType>,
-//   TQueryKey extends unknown[] = any[],
-// > = Omit<UseQueryOptions<TData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'>;
+  if (error instanceof AxiosError) {
+    return (
+      error.response?.data?.message ||
+      error.message ||
+      'Unknown Axios Error'
+    );
+  }
 
-// export type MutationConfig<MutationFnType extends (...args: any) => any> = UseMutationOptions<
-//   ExtractFnReturnType<MutationFnType>,
-//   AxiosError<any>,
-//   Parameters<MutationFnType>[0]
-// >;
+  return 'Unknown Error';
+};
+
+export const createQueryConfig = config => {
+  return {
+    enabled: true,
+    ...config,
+  };
+};
+
+export const createMutationConfig = config => {
+  return {
+    ...config,
+  };
+};

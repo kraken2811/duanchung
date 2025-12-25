@@ -1,36 +1,78 @@
-import { BASE_URL } from '@/constant/config';
 import axios from 'axios';
+
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 1000 * 60 * 30 * 3, // 90 minutes
+  timeout: 1000 * 60 * 30 * 3,
   withCredentials: true,
 });
 
-// REQUEST INTERCEPTOR
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(p => {
+    if (error) {
+      p.reject(error);
+    } else {
+      p.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 apiClient.interceptors.request.use(
-  function (config) {
+  config => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  function (error) {
-    return Promise.reject(error);
-  },
+  error => Promise.reject(error),
 );
 
-// RESPONSE INTERCEPTOR
 apiClient.interceptors.response.use(
-  function (response) {
-    return response;
-  },
-  async function (error) {
+  response => response,
+  async error => {
+    const originalRequest = error.config;
     const status = error?.response?.status;
 
-    if (status === 401) {
-      return Promise.reject({
-        message: 'Unauthorized: Invalid or expired token',
-        code: 401,
-        custom: true,
-      });
+    if (status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await apiClient.post('/auths/refresh');
+        const newToken = res.data.accessToken;
+
+        localStorage.setItem('access_token', newToken);
+        apiClient.defaults.headers.common.Authorization =
+          `Bearer ${newToken}`;
+
+        processQueue(null, newToken);
+        return apiClient(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        localStorage.removeItem('access_token');
+        return Promise.reject({
+          message: 'Unauthorized: Invalid or expired token',
+          code: 401,
+          custom: true,
+        });
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     if (status === 403) {
