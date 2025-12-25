@@ -99,7 +99,7 @@ export default function IDBForm() {
       title: "Số tờ khai", 
       dataIndex: "no", 
       width: 150, 
-      render: (text) => <span style={{ fontWeight: "bold", color: "#1677ff" }}>{text}</span> 
+      render: (text) => <span style={{ fontWeight: "bold", color: "#1677ff", textAlign: "center" }}>{text}</span> 
     },
     { title: "Ngày đăng ký", dataIndex: "date", width: 120 },
     { title: "Loại hình", dataIndex: "type" },

@@ -1,3 +1,50 @@
 .textSibar:hover{
     color: #ffff !important;
 }
+
+/* 1. Container bảng */
+.custom-table .ant-table {
+  background: transparent;
+}
+
+/* 2. Header: In hoa, nền xám, chữ đậm */
+.custom-table .ant-table-thead > tr > th {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase; /* Chuẩn mực header */
+  font-size: 11px;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: none !important; /* Bỏ kẻ dọc header */
+  padding: 10px 16px !important;
+}
+
+/* 3. Cell: Bỏ kẻ dọc, thêm padding thoáng */
+.custom-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+  border-right: none !important; /* Bỏ kẻ dọc body */
+  padding: 12px 16px !important;
+  vertical-align: middle;
+}
+
+/* 4. Dòng bị sửa đổi (QUAN TRỌNG VỚI IDC) */
+/* Màu nền xanh cực nhạt để làm nổi bật dòng có thay đổi */
+.custom-table .row-modified > td {
+  background-color: #f0f9ff !important; /* Xanh dương rất nhạt */
+}
+
+/* Khi hover vào dòng sửa đổi thì đậm hơn chút */
+.custom-table .row-modified:hover > td {
+  background-color: #e6f7ff !important;
+}
+
+/* 5. Tiện ích Typography */
+.font-mono {
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  letter-spacing: -0.5px;
+}
+
+.text-modified {
+  color: #096dd9; /* Màu xanh đậm cho dữ liệu bị sửa */
+  font-weight: 600;
+}
