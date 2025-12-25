@@ -15,3 +15,4 @@ export const error403Url = '/403';
 export const error404Url = '/404';
 export const loginUrl = '/account';
 export const product ='/product';
+export const vandon ='/vandon';

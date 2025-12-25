@@ -46,7 +46,7 @@ const menuItems = [
   },
 
   {
-    key: "/product",
+    key: "/Product",
     label: "Hàng hóa",
     icon: <FiTruck />,
     children: [
@@ -55,12 +55,11 @@ const menuItems = [
   },
 
   {
-    key: "transport",
+    key: "/vandon-list",
     label: "Vận tải",
     icon: <FiSend />,
     children: [
-      { key: "/container", label: "Container" },
-      { key: "/bill-of-lading", label: "Vận đơn" },
+      { key: "/vandon", label: "Vận Đơn" },
     ],
   },
 
