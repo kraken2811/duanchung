@@ -51,10 +51,26 @@ function normalize(body = {}) {
 /**
  * GET /lo_hang/all
  */
-exports.getAll = async (_req, res) => {
+exports.getAll = async (req, res) => {
   try {
-    const rows = await LoHang.getAll();
-    res.json(rows);
+    const {
+      page = 1,
+      size = 10,
+      so_lo_hang,
+      trang_thai
+    } = req.query;
+
+    const skip = (Number(page) - 1) * Number(size);
+    const take = Number(size);
+
+    const result = await LoHang.getAll({
+      skip,
+      take,
+      so_lo_hang,
+      trang_thai
+    });
+
+    res.json(result);
   } catch (err) {
     console.error("Lỗi khi lấy danh sách lô hàng:", err);
     res.status(500).json({ error: err.message });
