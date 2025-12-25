@@ -1,17 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   Row, Col, Input, DatePicker, Button, Table, Tabs, Select,
-  Space, Card, Divider, Modal
+  Space, Card, Divider, Modal, InputNumber, Checkbox
 } from "antd";
 import {
-  FiSave, FiPlus, FiTrash2, FiUpload, FiPrinter, FiLayers, FiPackage
+  FiSave, FiPlus, FiTrash2, FiUpload, FiPrinter, FiLayers, 
+  FiPackage, FiSearch, FiFileText, FiMessageSquare
 } from "react-icons/fi";
+import dayjs from "dayjs";
 import useNotify from "@/components/notification/useNotify";
 import { CONTRACT_RULES } from "../api/rule.api";
 import "../css/contract.css";
 
 const { Option } = Select;
+const { TextArea } = Input;
 
 // Giá trị mặc định cho form
 const DEFAULT_FORM_VALUES = {
@@ -20,10 +23,30 @@ const DEFAULT_FORM_VALUES = {
   signedDate: null,
   expirationDate: null,
   effectiveDate: null,
-  partner: { name: "", address: "", countryCode: "" },
+  validFrom: null,
+  validTo: null,
+  customsOfficeCode: "",
   currency: "USD",
+  paymentTerms: "",
+  processingFee: null,
+  totalProductValue: null,
+  totalProcessingValue: null,
   notes: "",
-  baseContractId: null
+  baseContractId: null,
+  // Thông tin bên nhận gia công
+  processor: {
+    taxCode: "",
+    name: "",
+    address: "",
+  },
+  // Thông tin bên thuê gia công
+  client: {
+    taxCode: "",
+    name: "",
+    address: "",
+  },
+  // Checkbox hình thức gia công
+  isProcessingAbroad: false,
 };
 
 export default function UnifiedContractForm() {
@@ -41,8 +64,7 @@ export default function UnifiedContractForm() {
     defaultValues: DEFAULT_FORM_VALUES,
   });
 
-  // --- 3. CƠ CHẾ CACHE (LƯU TRỮ TẠM THỜI) ---
-  // Dùng useRef để lưu dữ liệu của từng tab mà không gây re-render
+  // --- 3. CƠ CHẾ CACHE ---
   const dataCache = useRef({
     contract: {
       form: { ...DEFAULT_FORM_VALUES },
@@ -58,11 +80,9 @@ export default function UnifiedContractForm() {
     }
   });
 
-  // Hàm xử lý khi chuyển Tab (Quan trọng: Lưu dữ liệu cũ -> Load dữ liệu mới)
   const handleModeChange = (newMode) => {
     if (newMode === mode) return;
 
-    // BƯỚC 1: Lưu dữ liệu hiện tại vào Cache của mode cũ
     const currentFormValues = getValues();
     dataCache.current[mode] = {
       form: currentFormValues,
@@ -71,20 +91,28 @@ export default function UnifiedContractForm() {
       equipments: [...equipments]
     };
 
-    // BƯỚC 2: Lấy dữ liệu từ Cache của mode mới ra
     const nextData = dataCache.current[newMode];
-
-    // BƯỚC 3: Cập nhật UI
-    setMode(newMode); // Đổi tab
-    reset(nextData.form); // Fill lại form
-    setMaterials(nextData.materials); // Fill lại bảng
+    setMode(newMode);
+    reset(nextData.form);
+    setMaterials(nextData.materials);
     setProducts(nextData.products);
     setEquipments(nextData.equipments);
   };
 
   // --- 4. HÀM XỬ LÝ DỮ LIỆU LƯỚI (CRUD) ---
   const addItem = (type) => {
-    const newItem = { id: Date.now(), code: "", name: "", hsCode: "", unit: "", origin: "", price: 0 };
+    const newItem = { 
+      id: Date.now(), 
+      code: "", 
+      name: "", 
+      hsCode: "", 
+      unit: "", 
+      quantity: 0,
+      origin: "", 
+      price: 0,
+      totalValue: 0,
+      processingPrice: 0
+    };
     if (type === 'material') setMaterials([...materials, newItem]);
     if (type === 'product') setProducts([...products, newItem]);
     if (type === 'equipment') setEquipments([...equipments, newItem]);
@@ -104,17 +132,37 @@ export default function UnifiedContractForm() {
 
   const commonRenderInput = (text, record, field, listSetter, list, textAlign = "left") => (
     <Input
-      className="table-input" // Class CSS mới
+      className="table-input"
       value={text}
       size="small"
-      placeholder="..." // Placeholder nhẹ
+      placeholder="..."
       style={{ 
-        textAlign: textAlign, // Căn chỉnh text bên trong input (quan trọng cho số tiền)
+        textAlign: textAlign,
         width: "100%",
         fontSize: "14px"
       }}
       onChange={e => {
-        const newData = list.map(item => item.id === record.id ? { ...item, [field]: e.target.value } : item);
+        const newData = list.map(item => 
+          item.id === record.id ? { ...item, [field]: e.target.value } : item
+        );
+        listSetter(newData);
+      }}
+    />
+  );
+
+  const commonRenderNumber = (value, record, field, listSetter, list) => (
+    <InputNumber
+      className="table-input"
+      value={value}
+      size="small"
+      min={0}
+      style={{ width: "100%", textAlign: "right" }}
+      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+      onChange={val => {
+        const newData = list.map(item => 
+          item.id === record.id ? { ...item, [field]: val || 0 } : item
+        );
         listSetter(newData);
       }}
     />
@@ -122,10 +170,9 @@ export default function UnifiedContractForm() {
 
   // --- 5. ACTION BUTTONS ---
   const onSave = (data) => {
-    // Lưu ý: Cập nhật lại cache hiện tại để đảm bảo dữ liệu mới nhất nếu user tiếp tục switch
     dataCache.current[mode] = {
-        form: data,
-        materials, products, equipments
+      form: data,
+      materials, products, equipments
     };
 
     const payload = {
@@ -137,8 +184,24 @@ export default function UnifiedContractForm() {
     notify.success(`Đã lưu ${mode === 'contract' ? 'Hợp đồng' : 'Phụ lục'} thành công!`);
   };
 
+  const handleImportExcel = () => {
+    notify.info("Chức năng nhập từ Excel đang phát triển");
+  };
+
+  const handlePrint = () => {
+    notify.info("Chức năng in phiếu đang phát triển");
+  };
+
+  const handleGetFeedback = () => {
+    notify.info("Chức năng lấy phản hồi từ hải quan");
+  };
+
+  const handleDeclare = () => {
+    notify.info("Chức năng khai báo hải quan");
+  };
+
   // --- 6. CẤU HÌNH CỘT ---
-  const sharedColumns = (listSetter, list) => [
+  const materialColumns = [
     { 
       title: "STT", 
       render: (_, __, i) => <span className="text-gray-500">{i + 1}</span>, 
@@ -146,43 +209,41 @@ export default function UnifiedContractForm() {
       align: "center" 
     },
     { 
-      title: "MÃ HÀNG", // Uppercase header
+      title: "MÃ NPL", 
       dataIndex: "code", 
       width: 140, 
-      align: 'left', 
-      render: (t, r) => commonRenderInput(t, r, 'code', listSetter, list, 'left') 
+      render: (t, r) => commonRenderInput(t, r, 'code', setMaterials, materials, 'left') 
     },
     { 
-      title: "TÊN HÀNG HÓA", 
+      title: "TÊN NPL", 
       dataIndex: "name", 
-      // width: để auto hoặc set lớn để chiếm phần còn lại
-      align: 'left', 
-      render: (t, r) => commonRenderInput(t, r, 'name', listSetter, list, 'left') 
+      render: (t, r) => commonRenderInput(t, r, 'name', setMaterials, materials, 'left') 
     },
     { 
-      title: "HS CODE", 
+      title: "ĐƠN VỊ TÍNH", 
+      dataIndex: "unit", 
+      width: 100, 
+      align: 'center', 
+      render: (t, r) => commonRenderInput(t, r, 'unit', setMaterials, materials, 'center') 
+    },
+    { 
+      title: "MÃ HS", 
       dataIndex: "hsCode", 
       width: 100, 
-      align: 'center', // HS Code nên căn giữa
-      render: (t, r) => commonRenderInput(t, r, 'hsCode', listSetter, list, 'center') 
-    },
-    { 
-      title: "ĐVT", 
-      dataIndex: "unit", 
-      width: 80, 
       align: 'center', 
-      render: (t, r) => commonRenderInput(t, r, 'unit', listSetter, list, 'center') 
+      render: (t, r) => commonRenderInput(t, r, 'hsCode', setMaterials, materials, 'center') 
     },
-  ];
-
-  // Cột Nguyên phụ liệu
-  const materialColumns = [
-    ...sharedColumns(setMaterials, materials),
     { 
-      title: "XUẤT XỨ", 
+      title: "SỐ LƯỢNG ĐK", 
+      dataIndex: "quantity", 
+      width: 120, 
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'quantity', setMaterials, materials) 
+    },
+    { 
+      title: "NGUỒN NGUYÊN LIỆU", 
       dataIndex: "origin", 
-      width: 100, 
-      align: 'left', 
+      width: 140, 
       render: (t, r) => commonRenderInput(t, r, 'origin', setMaterials, materials, 'left') 
     },
     { 
@@ -199,15 +260,45 @@ export default function UnifiedContractForm() {
     }
   ];
 
-  // Cột Sản phẩm (Có giá tiền)
   const productColumns = [
-    ...sharedColumns(setProducts, products),
     { 
-      title: "ĐƠN GIÁ GC", 
-      dataIndex: "price", 
+      title: "STT", 
+      render: (_, __, i) => <span className="text-gray-500">{i + 1}</span>, 
+      width: 50, 
+      align: "center" 
+    },
+    { 
+      title: "LOẠI SP GIA CÔNG", 
+      dataIndex: "name", 
+      render: (t, r) => commonRenderInput(t, r, 'name', setProducts, products, 'left') 
+    },
+    { 
+      title: "SỐ LƯỢNG", 
+      dataIndex: "quantity", 
+      width: 120, 
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'quantity', setProducts, products) 
+    },
+    { 
+      title: "TRỊ GIÁ SẢN PHẨM", 
+      dataIndex: "totalValue", 
       width: 140, 
-      align: 'right', // Header căn phải
-      render: (t, r) => commonRenderInput(t, r, 'price', setProducts, products, 'right') // Text trong input căn phải
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'totalValue', setProducts, products) 
+    },
+    { 
+      title: "TRỊ GIÁ TIỀN CÔNG", 
+      dataIndex: "processingPrice", 
+      width: 140, 
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'processingPrice', setProducts, products) 
+    },
+    { 
+      title: "GIÁ GC", 
+      dataIndex: "price", 
+      width: 120, 
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'price', setProducts, products) 
     },
     { 
       title: "TÁC VỤ", 
@@ -223,50 +314,120 @@ export default function UnifiedContractForm() {
     }
   ];
 
-  // --- 7. RENDER SECTIONS ---
+  const equipmentColumns = [
+    { 
+      title: "STT", 
+      render: (_, __, i) => <span className="text-gray-500">{i + 1}</span>, 
+      width: 50, 
+      align: "center" 
+    },
+    { 
+      title: "MÃ THIẾT BỊ", 
+      dataIndex: "code", 
+      width: 140, 
+      render: (t, r) => commonRenderInput(t, r, 'code', setEquipments, equipments, 'left') 
+    },
+    { 
+      title: "TÊN THIẾT BỊ", 
+      dataIndex: "name", 
+      render: (t, r) => commonRenderInput(t, r, 'name', setEquipments, equipments, 'left') 
+    },
+    { 
+      title: "ĐƠN VỊ TÍNH", 
+      dataIndex: "unit", 
+      width: 100, 
+      align: 'center', 
+      render: (t, r) => commonRenderInput(t, r, 'unit', setEquipments, equipments, 'center') 
+    },
+    { 
+      title: "SỐ LƯỢNG", 
+      dataIndex: "quantity", 
+      width: 100, 
+      align: 'right', 
+      render: (v, r) => commonRenderNumber(v, r, 'quantity', setEquipments, equipments) 
+    },
+    { 
+      title: "TÁC VỤ", 
+      width: 70, 
+      align: 'center', 
+      render: (_, r) => (
+        <FiTrash2 
+          className="text-red-500 cursor-pointer hover:text-red-700 transition-colors" 
+          size={16}
+          onClick={() => removeItem(r.id, 'equipment')} 
+        />
+      ) 
+    }
+  ];
 
+  // --- 7. RENDER SECTIONS ---
   const renderToolbar = () => (
     <div style={{ background: "#fff", padding: "12px 16px", borderBottom: "1px solid #d9d9d9", marginBottom: 16 }}>
       <Space>
         <Button type="primary" icon={<FiSave />} onClick={handleSubmit(onSave)}>Ghi lại</Button>
-        <Button className="textSibar" type="default" style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>Thêm mới</Button>
-        <Button danger icon={<FiTrash2 />}>Xóa HĐ</Button>
+        <Button className="textSibar" type="default" style={{ borderColor: "#1890ff", color: "#1890ff" }} icon={<FiPlus />}>
+          Thêm mới
+        </Button>
+        <Button danger icon={<FiTrash2 />}>Xóa</Button>
         <Divider type="vertical" />
-        <Button className="textSibar" icon={<FiUpload />}>Nhập Excel</Button>
-        <Button className="textSibar" icon={<FiPrinter />}>In phiếu</Button>
+        <Button className="textSibar" icon={<FiUpload />} onClick={handleImportExcel}>Nhập Excel</Button>
+        <Button className="textSibar" icon={<FiPrinter />} onClick={handlePrint}>In HĐ</Button>
+        <Button className="textSibar" icon={<FiSearch />}>Tìm HĐ</Button>
+        <Divider type="vertical" />
+        <Button className="textSibar" icon={<FiMessageSquare />} onClick={handleGetFeedback}>Lấy phản hồi</Button>
+        <Button className="textSibar" icon={<FiFileText />} onClick={handleDeclare}>Khai báo</Button>
       </Space>
     </div>
   );
 
   const renderDetailsTabs = () => {
     const tableProps = { 
-      size: "middle", // Đổi size small -> middle cho thoáng hơn chút (hoặc giữ small nếu dữ liệu quá nhiều)
-      bordered: false, // TẮT border mặc định
+      size: "middle",
+      bordered: false,
       pagination: { pageSize: 5 },
-      className: "custom-table" // ÁP DỤNG CSS MỚI
+      className: "custom-table"
     };
     
     const items = [
       {
-        key: "1", label: <span><FiLayers style={{ marginRight: 8 }} />Nguyên phụ liệu</span>,
+        key: "1", 
+        label: <span><FiLayers style={{ marginRight: 8 }} />Nguyên phụ liệu</span>,
         children: (
           <div>
-            <div style={{ marginBottom: 12, display: 'flex' }}>
-               {/* Nút thêm mới nên để bên phải hoặc đầu bảng, ở đây để phải cho gọn header */}
-               <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>Thêm</Button>
+            <div style={{ marginBottom: 12 }}>
+               <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('material')}>
+                 Thêm NPL
+               </Button>
             </div>
             <Table columns={materialColumns} dataSource={materials} rowKey="id" {...tableProps} />
           </div>
         )
       },
       {
-        key: "2", label: <span><FiPackage style={{ marginRight: 8 }} />Sản phẩm</span>,
+        key: "2", 
+        label: <span><FiPackage style={{ marginRight: 8 }} />Sản phẩm</span>,
         children: (
           <div>
-              <div style={{ marginBottom: 12, display: 'flex' }}>
-               <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>Thêm</Button>
+            <div style={{ marginBottom: 12 }}>
+               <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('product')}>
+                 Thêm sản phẩm
+               </Button>
             </div>
             <Table columns={productColumns} dataSource={products} rowKey="id" {...tableProps} />
+          </div>
+        )
+      },
+      {
+        key: "3", 
+        label: <span><FiLayers style={{ marginRight: 8 }} />Thiết bị</span>,
+        children: (
+          <div>
+            <div style={{ marginBottom: 12 }}>
+               <Button type="dashed" icon={<FiPlus />} onClick={() => addItem('equipment')}>
+                 Thêm thiết bị
+               </Button>
+            </div>
+            <Table columns={equipmentColumns} dataSource={equipments} rowKey="id" {...tableProps} />
           </div>
         )
       },
@@ -288,46 +449,236 @@ export default function UnifiedContractForm() {
   const renderContractFields = () => (
     <Card title="Thông tin chung Hợp đồng" size="small" bordered={false} className="shadow-sm">
       <Row gutter={[16, 12]}>
+        {/* Dòng 1 */}
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Số hợp đồng <span style={{ color: 'red' }}>*</span></label>
+          <label style={{ fontWeight: 500 }}>Chi cục Hải quan ĐT <span style={{ color: 'red' }}>*</span></label>
           <Controller
-            name="contractNumber" control={control} rules={CONTRACT_RULES.contractNumber}
-            render={({ field, fieldState }) => (
-              <Input {...field} status={fieldState.error ? "error" : ""} placeholder="VD: HD-2023-001" />
+            name="customsOfficeCode" 
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="VD: 28NU" />
             )}
           />
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Đối tác thuê GC</label>
-          <Controller name="partner.name" control={control} render={({ field }) => <Input {...field} placeholder="Tên đối tác" />} />
+          <label style={{ fontWeight: 500 }}>Chi cục HQ KCN Hóa Khánh - Liên Chiểu</label>
+          <Input disabled value="Chi cục HQ KCN Hóa Khánh - Liên Chiểu" />
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Mã nước</label>
-          <Controller name="partner.countryCode" control={control} render={({ field }) => <Input {...field} placeholder="VD: KR" />} />
+          <label style={{ fontWeight: 500 }}>Trạng thái</label>
+          <Select defaultValue="NHAP" style={{ width: "100%" }}>
+            <Option value="NHAP">Chưa khai báo</Option>
+            <Option value="DA_GUI">Đã gửi</Option>
+            <Option value="DA_DUYET">Đã được duyệt</Option>
+          </Select>
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Tiền tệ</label>
+          <label style={{ fontWeight: 500 }}>Ngày TN</label>
+          <Controller 
+            name="signedDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
+        </Col>
+
+        {/* Dòng 2 */}
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Nước thuê gia công <span style={{ color: 'red' }}>*</span></label>
+          <Controller name="client.countryCode" control={control} render={({ field }) => (
+            <Select {...field} style={{ width: "100%" }} placeholder="Chọn quốc gia">
+              <Option value="HK">HG KONG</Option>
+              <Option value="JP">JAPAN</Option>
+              <Option value="KR">KOREA</Option>
+              <Option value="US">USA</Option>
+            </Select>
+          )} />
+        </Col>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Số hợp đồng <span style={{ color: 'red' }}>*</span></label>
           <Controller
-            name="currency" control={control}
+            name="contractNumber" 
+            control={control} 
+            rules={CONTRACT_RULES.contractNumber}
+            render={({ field, fieldState }) => (
+              <Input {...field} status={fieldState.error ? "error" : ""} placeholder="VD: HDGC2019-VNJP" />
+            )}
+          />
+        </Col>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Số TN</label>
+          <Controller name="referenceNumber" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Số tiếp nhận" />
+          )} />
+        </Col>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Số tham chiếu</label>
+          <Controller name="internalReference" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Mã tham chiếu nội bộ" />
+          )} />
+        </Col>
+
+        {/* Dòng 3 */}
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Ngày ký HĐ <span style={{ color: 'red' }}>*</span></label>
+          <Controller 
+            name="signedDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
+        </Col>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Ngày hết hạn HĐ <span style={{ color: 'red' }}>*</span></label>
+          <Controller 
+            name="expirationDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
+        </Col>
+        <Col span={12}>
+          <Controller 
+            name="isProcessingAbroad" 
+            control={control} 
+            render={({ field }) => (
+              <Checkbox style={{marginTop: 28}} {...field} checked={field.value}>
+                Hình thức gia công ngoài nước
+              </Checkbox>
+            )}
+          />
+        </Col>
+
+        {/* Dòng 4 */}
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Đồng tiền thanh toán <span style={{ color: 'red' }}>*</span></label>
+          <Controller
+            name="currency" 
+            control={control}
             render={({ field }) => (
               <Select {...field} style={{ width: "100%" }}>
-                <Option value="USD">USD</Option>
-                <Option value="VND">VND</Option>
+                <Option value="USD">USD - Đô la Mỹ</Option>
+                <Option value="VND">VND - Đồng Việt Nam</Option>
+                <Option value="EUR">EUR - Euro</Option>
+                <Option value="JPY">JPY - Yên Nhật</Option>
               </Select>
             )}
           />
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày ký <span style={{ color: 'red' }}>*</span></label>
-          <Controller name="signedDate" control={control} render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} format="DD/MM/YYYY" />} />
+          <label style={{ fontWeight: 500 }}>Phương thức thanh toán</label>
+          <Controller name="paymentTerms" control={control} render={({ field }) => (
+            <Input {...field} placeholder="VD: DA, TT, L/C" />
+          )} />
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày hết hạn</label>
-          <Controller name="expirationDate" control={control} render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} format="DD/MM/YYYY" />} />
+          <label style={{ fontWeight: 500 }}>Tổng trị giá sản phẩm</label>
+          <Controller name="totalProductValue" control={control} render={({ field }) => (
+            <InputNumber 
+              {...field} 
+              style={{ width: '100%' }} 
+              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => value.replace(/\$\s?|(,*)/g, '')}
+            />
+          )} />
         </Col>
-        <Col span={12}>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Tổng trị giá tiền công</label>
+          <Controller name="totalProcessingValue" control={control} render={({ field }) => (
+            <InputNumber 
+              {...field} 
+              style={{ width: '100%' }} 
+              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => value.replace(/\$\s?|(,*)/g, '')}
+            />
+          )} />
+        </Col>
+      </Row>
+
+      <Divider orientation="left" style={{ fontSize: 14, fontWeight: 600, marginTop: 24 }}>
+        Thông tin bên nhận gia công
+      </Divider>
+      <Row gutter={[16, 12]}>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Mã bên gia công</label>
+          <Controller name="processor.taxCode" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Mã số thuế" />
+          )} />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Tên bên gia công</label>
+          <Controller name="processor.name" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Tên công ty nhận gia công" />
+          )} />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Địa chỉ bên gia công</label>
+          <Controller name="processor.address" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Địa chỉ đầy đủ" />
+          )} />
+        </Col>
+      </Row>
+
+      <Divider orientation="left" style={{ fontSize: 14, fontWeight: 600, marginTop: 24 }}>
+        Thông tin bên thuê gia công
+      </Divider>
+      <Row gutter={[16, 12]}>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Mã bên thuê GC</label>
+          <Controller name="client.taxCode" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Mã số thuế" />
+          )} />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Tên bên thuê GC <span style={{ color: 'red' }}>*</span></label>
+          <Controller name="client.name" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Tên công ty thuê gia công" />
+          )} />
+        </Col>
+        <Col span={8}>
+          <label style={{ fontWeight: 500 }}>Địa chỉ bên thuê GC <span style={{ color: 'red' }}>*</span></label>
+          <Controller name="client.address" control={control} render={({ field }) => (
+            <Input {...field} placeholder="Địa chỉ đầy đủ" />
+          )} />
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 12]} style={{ marginTop: 16 }}>
+        <Col span={24}>
+          <label style={{ fontWeight: 500 }}>Đính kèm nội bộ</label>
+          <div style={{ marginTop: 8 }}>
+            <Space>
+              <Button size="small" icon={<FiUpload />}>Thêm file đính kèm</Button>
+              <Button size="small" icon={<FiFileText />}>Xem file</Button>
+            </Space>
+          </div>
+        </Col>
+        <Col span={24}>
           <label style={{ fontWeight: 500 }}>Ghi chú</label>
-          <Controller name="notes" control={control} render={({ field }) => <Input {...field} placeholder="Ghi chú thêm..." />} />
+          <Controller name="notes" control={control} render={({ field }) => (
+            <TextArea {...field} rows={2} placeholder="Ghi chú thêm..." />
+          )} />
         </Col>
       </Row>
     </Card>
@@ -339,34 +690,83 @@ export default function UnifiedContractForm() {
         <Col span={6}>
           <label style={{ fontWeight: 500 }}>Chọn Hợp đồng gốc <span style={{ color: 'red' }}>*</span></label>
           <Controller
-            name="baseContractId" control={control}
+            name="baseContractId" 
+            control={control}
             render={({ field }) => (
-              <Select {...field} style={{ width: "100%" }} placeholder="Tìm HĐ gốc...">
-                <Option value="HD001">HD-2023-001 (Samsung)</Option>
-                <Option value="HD002">HD-2023-002 (LG)</Option>
+              <Select {...field} style={{ width: "100%" }} placeholder="Tìm HĐ gốc..." showSearch>
+                <Option value="HD001">HDGC2019-VNJP (Hong Kong)</Option>
+                <Option value="HD002">2019-HD1910 (Japan)</Option>
               </Select>
             )}
           />
         </Col>
         <Col span={6}>
           <label style={{ fontWeight: 500 }}>Số phụ lục <span style={{ color: 'red' }}>*</span></label>
-          <Controller name="appendixNumber" control={control} render={({ field }) => <Input {...field} placeholder="VD: PL-01" />} />
+          <Controller name="appendixNumber" control={control} render={({ field }) => (
+            <Input {...field} placeholder="VD: PL-01" />
+          )} />
         </Col>
         <Col span={6}>
-          <label style={{ fontWeight: 500 }}>Ngày hiệu lực</label>
-          <Controller name="effectiveDate" control={control} render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} />} />
+          <label style={{ fontWeight: 500 }}>Ngày phụ lục</label>
+          <Controller 
+            name="effectiveDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
         </Col>
+        <Col span={6}>
+          <label style={{ fontWeight: 500 }}>Sáp xếp</label>
+          <Select defaultValue="update" style={{ width: "100%" }}>
+            <Option value="update">Sắp xếp theo mã NPL SP</Option>
+            <Option value="new">Sắp xếp mới</Option>
+          </Select>
+        </Col>
+
         <Col span={6}>
           <label style={{ fontWeight: 500 }}>Ngày ký <span style={{ color: 'red' }}>*</span></label>
-          <Controller name="signedDate" control={control} render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} format="DD/MM/YYYY" />} />
+          <Controller 
+            name="signedDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
         </Col>
         <Col span={6}>
           <label style={{ fontWeight: 500 }}>Ngày hết hạn <span style={{ color: 'red' }}>*</span></label>
-          <Controller name="expirationDate" control={control} render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} format="DD/MM/YYYY" />} />
+          <Controller 
+            name="expirationDate" 
+            control={control} 
+            render={({ field }) => (
+              <DatePicker 
+                {...field}
+                value={field.value ? dayjs(field.value) : null}
+                onChange={(date) => field.onChange(date ? date.toDate() : null)}
+                style={{ width: '100%' }} 
+                format="DD/MM/YYYY" 
+              />
+            )} 
+          />
         </Col>
-        <Col span={18}>
+        <Col span={12}>
           <label style={{ fontWeight: 500 }}>Nội dung điều chỉnh</label>
-          <Controller name="notes" control={control} render={({ field }) => <Input.TextArea rows={1} {...field} placeholder="Nội dung thay đổi của phụ lục..." />} />
+          <Controller name="notes" control={control} render={({ field }) => (
+            <TextArea rows={2} {...field} placeholder="Mô tả nội dung thay đổi của phụ lục..." />
+          )} />
         </Col>
       </Row>
     </Card>
@@ -399,7 +799,6 @@ export default function UnifiedContractForm() {
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
       {renderToolbar()}
       
-      {/* Sửa onChange để dùng hàm handleModeChange */}
       <Tabs 
         activeKey={mode} 
         onChange={handleModeChange} 
