@@ -46,24 +46,20 @@ const menuItems = [
   },
 
   {
-    key: "goods",
+    key: "/Product",
     label: "Hàng hóa",
     icon: <FiTruck />,
     children: [
-      { key: "/cargo", label: "Lô hàng" },
-      { key: "/inventory", label: "Tồn kho" },
-      { key: "/cargo-adjust", label: "Điều chỉnh trị giá" },
-      { key: "/special-type", label: "Loại hình đặc biệt" },
+      { key: "/product", label: "Hàng hóa" },
     ],
   },
 
   {
-    key: "transport",
+    key: "/vandon-list",
     label: "Vận tải",
     icon: <FiSend />,
     children: [
-      { key: "/container", label: "Container" },
-      { key: "/bill-of-lading", label: "Vận đơn" },
+      { key: "/vandon", label: "Vận Đơn" },
     ],
   },
 

@@ -4,11 +4,17 @@ const prisma = new PrismaClient();
 /**
  * Lấy tất cả lô hàng
  */
-const getAll = () => {
+const getAll = ({ skip, take, so_lo_hang, trang_thai }) => {
   return prisma.lo_hang.findMany({
-    orderBy: {
-      id_lo_hang: 'desc',
+    where: {
+      ...(so_lo_hang && {
+        so_lo_hang: { contains: so_lo_hang }
+      }),
+      ...(trang_thai && { trang_thai })
     },
+    orderBy: { id_lo_hang: 'desc' },
+    skip,
+    take
   });
 };
 
