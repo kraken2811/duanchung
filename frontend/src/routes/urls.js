@@ -1,6 +1,7 @@
 export const homeUrl = '/';
 export const layoutUrl = '/';
 export const idaurl = '/ida';
+export const edaurl = '/eda';
 export const idburl = '/idb';
 export const idcurl = '/idc';
 export const declarationsUrl = '/declarations';

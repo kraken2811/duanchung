@@ -8,6 +8,7 @@ import LoginView from "@/page/Login/views/LoginView";
 
 // ===== PAGES =====
 import IDAView from "@/page/IDA/views/IDAview";
+import EDAView from "@/page/EDA/views/EDAview";
 import IDBView from "@/page/IDB/views/IDBView";
 import IDCView from "@/page/IDC/views/IDCView";
 import IDEView from "@/page/IDE/views/IDEview";
@@ -23,6 +24,7 @@ import ContractProductView from "@/page/ContractProducts/views/ContractProductsV
 import {
   homeUrl,
   idaurl,
+  edaurl,
   idburl,
   idcurl,
   ideurl,
@@ -63,6 +65,7 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
 
       { path: idaurl, element: <IDAView /> },
+      { path: edaurl, element: <EDAView /> },
       { path: idburl, element: <IDBView /> },
       { path: idcurl, element: <IDCView /> },
       { path: ideurl, element: <IDEView /> },

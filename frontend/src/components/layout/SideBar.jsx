@@ -24,6 +24,7 @@ const menuItems = [
     icon: <FiFileText />,
     children: [
       { key: "/ida", label: "Đăng ký tờ khai (IDA)" },
+      { key: "/eda", label: "Đăng ký tờ khai (EDA)" },
       { key: "/idb", label: "Truyền tờ khai (IDB)" },
       { key: "/idc", label: "Sửa đổi bổ sung (IDC)" },
       { key: "/ide", label: "Hủy tờ khai (IDE)" },
