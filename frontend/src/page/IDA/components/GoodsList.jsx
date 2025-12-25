@@ -28,7 +28,6 @@ export default function GoodsList({ goods, setGoods }) {
    const addGoods = () => {
     const newItem = {
       id: Date.now(),
-      index: goods.length + 1,
       description: "",
       hsCode: "",
       origin: "CN",
@@ -36,11 +35,8 @@ export default function GoodsList({ goods, setGoods }) {
       unit: "PCE",
       unitPrice: 0,
       totalValue: 0,
-      taxRate: 0,
-      vatRate: 0,
     };
     setGoods([...goods, newItem]);
-    setEditingItem(newItem);
   };
 
   const removeGoods = (id, e) => {
