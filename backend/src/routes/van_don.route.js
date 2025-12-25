@@ -1,4 +1,3 @@
-// routes/van_don.route.js
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/van_don.controller");

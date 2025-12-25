@@ -19,7 +19,8 @@ import ContractInvoiceView from "@/page/ContractInvoice/views/ContractInvoiceVie
 import MaterialListView from "@/page/MaterialList/views/MaterialListView";
 import ContractView from "@/page/Contract/views/ContractView";
 import ContractProductView from "@/page/ContractProducts/views/ContractProductsView";
-
+import ProductView from "@/page/Product/views/product_view";
+import Vandonview from "@/page/Transport/views/Vandonview";
 // ===== URLS =====
 import {
   homeUrl,
@@ -36,6 +37,9 @@ import {
   contractUrl,
   contractProductsUrl,
   loginUrl,
+  product,
+  error403Url,
+  vandon,
 } from "./urls";
 
 const ProtectedRoute = ({ children }) => {
@@ -78,6 +82,9 @@ const router = createBrowserRouter([
       { path: materialListUrl, element: <MaterialListView /> },
       { path: contractUrl, element: <ContractView /> },
       { path: contractProductsUrl, element: <ContractProductView /> },
+      { path: product, element: <ProductView /> },
+      { path: vandon, element: <Vandonview /> },
+
     ],
   },
   {
