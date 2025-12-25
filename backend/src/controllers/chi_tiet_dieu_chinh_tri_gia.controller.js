@@ -1,4 +1,3 @@
-// controllers/chi_tiet_dieu_chinh_tri_gia.controller.js
 const ChiTietDieuChinhTriGia = require(
   "../models/chi_tiet_dieu_chinh_tri_gia.model"
 );
@@ -15,7 +14,6 @@ function normalize(body = {}) {
   data.id_khoan_dieu_chinh = toNumOrNull(data.id_khoan_dieu_chinh);
   data.phi = toNumOrNull(data.phi);
 
-  // string fields
   ["ma_loai", "ma_tien_te", "so_dang_ky", "mo_ta"].forEach((k) => {
     if (typeof data[k] === "string") data[k] = data[k].trim();
   });
@@ -25,61 +23,58 @@ function normalize(body = {}) {
   return data;
 }
 
-// GET /chi_tiet_dieu_chinh_tri_gia
-exports.getAll = (_req, res) => {
-  ChiTietDieuChinhTriGia.getAll((err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
+/* ================= GET ALL ================= */
+exports.getAll = async (_req, res) => {
+  try {
+    const rows = await ChiTietDieuChinhTriGia.getAll();
     res.json(rows);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// GET /chi_tiet_dieu_chinh_tri_gia/:id
-exports.getById = (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
-
-  ChiTietDieuChinhTriGia.getById(id, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!rows || rows.length === 0)
-      return res.status(404).json({ error: "Không tìm thấy" });
-
-    res.json(rows[0]);
-  });
+/* ================= GET BY ID ================= */
+exports.getById = async (req, res) => {
+  const id = BigInt(req.params.id);
+  try {
+    const row = await ChiTietDieuChinhTriGia.getById(id);
+    if (!row) return res.status(404).json({ error: "Không tìm thấy" });
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// POST /chi_tiet_dieu_chinh_tri_gia
-exports.insert = (req, res) => {
-  const payload = normalize(req.body);
-
-  ChiTietDieuChinhTriGia.insert(payload, (err, created) => {
-    if (err) return res.status(500).json({ error: err.message });
+/* ================= INSERT ================= */
+exports.insert = async (req, res) => {
+  try {
+    const payload = normalize(req.body);
+    const created = await ChiTietDieuChinhTriGia.insert(payload);
     res.status(201).json(created);
-  });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
-// PUT /chi_tiet_dieu_chinh_tri_gia/:id
-exports.update = (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
-
-  const payload = normalize(req.body);
-
-  ChiTietDieuChinhTriGia.update(payload, id, (err, msg) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: msg });
-  });
+/* ================= UPDATE ================= */
+exports.update = async (req, res) => {
+  const id = BigInt(req.params.id);
+  try {
+    const payload = normalize(req.body);
+    await ChiTietDieuChinhTriGia.update(id, payload);
+    res.json({ message: "Cập nhật thành công" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
-// DELETE /chi_tiet_dieu_chinh_tri_gia/:id
-exports.delete = (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
-
-  ChiTietDieuChinhTriGia.remove(id, (err, msg) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: msg });
-  });
+/* ================= DELETE ================= */
+exports.delete = async (req, res) => {
+  const id = BigInt(req.params.id);
+  try {
+    await ChiTietDieuChinhTriGia.remove(id);
+    res.json({ message: "Xóa thành công" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
