@@ -21,6 +21,9 @@ import ContractView from "@/page/Contract/views/ContractView";
 import ContractProductView from "@/page/ContractProducts/views/ContractProductsView";
 import ProductView from "@/page/Product/views/product_view";
 import Vandonview from "@/page/Transport/views/Vandonview";
+import DanhMucView from "@/page/category/view/danhmuc_view";
+import BankView from "@/page/bank/view/bank_view";
+import ChungTuView from "@/page/tailieu/view/ChungTuView";
 // ===== URLS =====
 import {
   homeUrl,
@@ -40,6 +43,9 @@ import {
   product,
   error403Url,
   vandon,
+  danhmuc,
+  nganHang,
+  chungTu,
 } from "./urls";
 
 const ProtectedRoute = ({ children }) => {
@@ -84,6 +90,9 @@ const router = createBrowserRouter([
       { path: contractProductsUrl, element: <ContractProductView /> },
       { path: product, element: <ProductView /> },
       { path: vandon, element: <Vandonview /> },
+      { path: danhmuc, element: <DanhMucView /> },
+      {path: nganHang, element: <BankView />},
+      { path: chungTu, element: <ChungTuView /> },
 
     ],
   },
