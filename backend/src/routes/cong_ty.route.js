@@ -4,7 +4,6 @@ const router = express.Router();
 const ctrl = require("../controllers/cong_ty.controller");
 
 router.get("/", ctrl.getAll);
-router.get("/all", ctrl.getAll);
 router.get("/:id", ctrl.getById);
 router.post("/", ctrl.insert);
 router.put("/:id", ctrl.update);

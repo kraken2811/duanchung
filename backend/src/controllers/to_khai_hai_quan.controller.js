@@ -17,6 +17,18 @@ exports.getAll = async (_req, res) => {
   }
 };
 
+exports.getStatus = async (_req, res) => {
+  try {
+    const data = await ToKhai.findTrangthai();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy dang sách tờ khai hải quan",
+      error: error.message,
+    })
+  }
+}
+
 /**
  * GET /to-khai/:id
  * Lấy tờ khai theo ID
@@ -70,6 +82,53 @@ exports.getIDB = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Lỗi lấy dữ liệu IDB",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * POST /to-khai/idb/submit
+ * Gửi tờ khai IDB (chuyển trạng thái)
+ */
+exports.submitIDB = async (req, res) => {
+  try {
+    const { so_to_khai } = req.body;
+
+    if (!so_to_khai || typeof so_to_khai !== "string") {
+      return res.status(400).json({
+        message: "so_to_khai không hợp lệ",
+      });
+    }
+
+    const result = await ToKhai.submitIDB(so_to_khai);
+
+    res.status(200).json({
+      message: "Gửi tờ khai IDB thành công",
+      data: {
+        so_to_khai: result.so_to_khai,
+        trang_thai_gui: result.trang_thai_gui,
+      },
+    });
+  } catch (error) {
+    console.error("submitIDB error:", error);
+
+    // Tờ khai không tồn tại
+    if (error.code === "NOT_FOUND") {
+      return res.status(404).json({
+        message: "Không tìm thấy tờ khai để gửi IDB",
+      });
+    }
+
+    // Đã gửi IDB rồi
+    if (error.code === "ALREADY_SUBMITTED") {
+      return res.status(400).json({
+        message: "Tờ khai đã được gửi IDB trước đó",
+      });
+    }
+
+    res.status(500).json({
+      message: "Lỗi khi gửi tờ khai IDB",
       error: error.message,
     });
   }
