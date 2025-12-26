@@ -70,9 +70,6 @@ const menuItems = [
     icon: <FiFolder />,
     children: [
       { key: "/documents", label: "Quản lý chứng từ" },
-      { key: "/attachment", label: "Đính kèm hồ sơ điện tử" },
-      { key: "/documents-files", label: "Tài liệu" },
-      { key: "/co", label: "C/O Form" },
     ],
   },
 
@@ -80,7 +77,7 @@ const menuItems = [
     key: "bank",
     label: "Giao dịch ngân hàng",
     icon: <FiCreditCard />,
-    children: [{ key: "/bank-transactions", label: "Giao dịch ngân hàng" }],
+    children: [{ key: "/ngan-hang", label: "Giao dịch ngân hàng" }],
   },
 
   {
@@ -88,11 +85,8 @@ const menuItems = [
     label: "Danh mục",
     icon: <FiList />,
     children: [
-      { key: "/partners", label: "Đối tác" },
-      { key: "/warehouse", label: "Kho bãi" },
-      { key: "/countries", label: "Quốc gia" },
-      { key: "/hs-code", label: "Mã HS" },
-      { key: "/transport-type", label: "Loại vận tải" },
+      { key: "/danhmuc", label: "Danh mục" },
+      
     ],
   },
 
