@@ -26,7 +26,6 @@ enum trang_thai_nhap {
 }
 
 enum TrangThaiToKhai {
-  NHAP
   CHO_GUI
   DA_GUI
   TU_CHOI
@@ -419,7 +418,7 @@ model to_khai_hai_quan {
   id_to_khai           Int       @id @default(autoincrement())
   so_to_khai           String?   @unique
   loai_to_khai         String
-  trang_thai_gui       TrangThaiToKhai @default(NHAP)
+  trang_thai_gui       TrangThaiToKhai @default(CHO_GUI)
   ma_thong_diep_vnacss String?
   so_tiep_nhan_vnacss  String?
   mau_kenh             String?
