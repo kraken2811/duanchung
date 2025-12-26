@@ -1,20 +1,22 @@
+
 import { Button as AntdButton } from "antd";
 
 export default function AppButton({
-  children,
   type = "default",
-  loading,
+  children,
   icon,
-  danger,
+  loading = false,
+  danger = false,
   onClick,
 }) {
   return (
     <AntdButton
       type={type}
-      loading={loading}
       icon={icon}
+      loading={loading}
       danger={danger}
       onClick={onClick}
+      size="middle"
       style={{ borderRadius: 6 }}
     >
       {children}

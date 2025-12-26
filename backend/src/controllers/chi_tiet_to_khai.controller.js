@@ -79,13 +79,85 @@ exports.update = async (req, res) => {
   }
 };
 
-/* ================= DELETE ================= */
-exports.delete = async (req, res) => {
-  const id = BigInt(req.params.id);
+exports.remove = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "id không hợp lệ" });
+  }
+
   try {
     await ChiTietToKhai.remove(id);
     res.json({ message: "Xóa thành công" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/* ================= 🔥 CALC TAX BY MA HS ================= */
+exports.calcTaxByMaHS = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { ma_hs, tong_gia_tri } = req.body;
+
+    if (!Number.isInteger(id))
+      return res.status(400).json({ error: "id không hợp lệ" });
+
+    if (!ma_hs || tong_gia_tri == null)
+      return res
+        .status(400)
+        .json({ error: "Thiếu ma_hs hoặc tong_gia_tri" });
+
+    /** 1️⃣ Kiểm tra mã HS */
+    const hs = await prisma.ma_hs.findUnique({
+      where: { ma_hs },
+    });
+    if (!hs)
+      return res.status(404).json({ error: "Không tồn tại mã HS" });
+
+    /** 2️⃣ Biểu thuế hiệu lực mới nhất */
+    const bieuThue = await prisma.bieu_thue.findFirst({
+      where: {
+        ma_hs,
+        OR: [{ hieu_luc_den: null }, { hieu_luc_den: { gte: new Date() } }],
+      },
+      orderBy: { hieu_luc_tu: "desc" },
+    });
+
+    if (!bieuThue)
+      return res.status(404).json({ error: "Không có biểu thuế" });
+
+    /** 3️⃣ TÍNH THUẾ (CHUẨN HQ) */
+    const giaTri = Number(tong_gia_tri);
+
+    const thueNhapKhau =
+      (giaTri * Number(bieuThue.thue_suat || 0)) / 100;
+
+    const thueVAT =
+      ((giaTri + thueNhapKhau) *
+        Number(bieuThue.thue_vat || 0)) / 100;
+
+    /** 4️⃣ UPDATE DB */
+    const updated = await prisma.chi_tiet_to_khai.update({
+      where: { id_chi_tiet: id },
+      data: {
+        ma_hs,
+        id_bieu_thue: bieuThue.id_bieu_thue,
+        tien_thue: thueNhapKhau,
+        tien_vat: thueVAT,
+      },
+    });
+
+    res.json({
+      message: "Tính thuế thành công",
+      data: {
+        chi_tiet: updated,
+        thue_nhap_khau: thueNhapKhau,
+        thue_vat: thueVAT,
+      },
+    });
+  } catch (err) {
+    console.error("calcTaxByMaHS:", err);
+    res.status(500).json({ error: err.message });
   }
 };

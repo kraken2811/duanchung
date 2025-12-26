@@ -1,65 +1,75 @@
-// controllers/to_khai_hai_quan.controller.js
 const ToKhai = require("../models/to_khai_hai_quan.model");
 
-/**
- * GET /to-khai
- * Lấy tất cả tờ khai hải quan
- */
-exports.getAll = async (_req, res) => {
+/* ================= GET ALL ================= */
+exports.getAll = async (req, res) => {
   try {
     const data = await ToKhai.getAll();
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi khi lấy danh sách tờ khai hải quan",
-      error: error.message,
-    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-exports.getStatus = async (_req, res) => {
-  try {
-    const data = await ToKhai.findTrangthai();
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi khi lấy dang sách tờ khai hải quan",
-      error: error.message,
-    })
-  }
-}
-
-/**
- * GET /to-khai/:id
- * Lấy tờ khai theo ID
- */
+/* ================= GET BY ID ================= */
 exports.getById = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id)) {
-      return res.status(400).json({ message: "id_to_khai không hợp lệ" });
-    }
-
     const data = await ToKhai.getById(id);
-    if (!data) {
-      return res.status(404).json({
-        message: "Không tìm thấy tờ khai hải quan",
-      });
-    }
+    if (!data) return res.status(404).json({ message: "Không tìm thấy" });
 
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi khi lấy thông tin tờ khai hải quan",
-      error: error.message,
-    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-/**
- * GET /api/to_khai_hai_quans/:ma/idb
- * Lấy dữ liệu hiển thị màn IDB
- */
+/* ================= CREATE ================= */
+exports.insert = async (req, res) => {
+  try {
+    const data = await ToKhai.insert(req.body);
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= UPDATE ================= */
+exports.update = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
+  try {
+    const data = await ToKhai.update(id, req.body);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= DELETE ================= */
+exports.remove = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
+  try {
+    await ToKhai.remove(id);
+    res.json({ message: "Đã huỷ tờ khai" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.getIDB = async (req, res) => {
   try {
     const ma = req.params.ma;
@@ -253,11 +263,6 @@ exports.updateVNACCS = async (req, res) => {
     });
   }
 };
-
-/**
- * ❌ KHÔNG DELETE CỨNG TỜ KHAI
- * Endpoint này chỉ để DEV / test
- */
 exports.delete = async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -279,7 +284,7 @@ exports.delete = async (req, res) => {
 };
 
 exports.getList = async (req, res) => {
-  try{
+  try {
     const results = await ToKhai.getList(req.query);
     res.json(results);
   } catch (err) {
@@ -300,3 +305,158 @@ exports.statistics = async (req, res) => {
     });
   }
 };
+exports.saveGen1 = async (req, res) => {
+  try {
+    const {
+      loai_to_khai,
+      phan_loai,
+      ma_cuc_hai_quan,
+      ngay_khai_bao,
+      id_cong_ty,
+      id_loai_hinh,
+      nguoi_tao,
+    } = req.body;
+
+    if (!loai_to_khai || !id_cong_ty) {
+      return res.status(400).json({
+        message: "Thiếu loai_to_khai hoặc id_cong_ty",
+      });
+    }
+
+    const data = await prisma.to_khai_hai_quan.create({
+      data: {
+        loai_to_khai,
+        phan_loai,
+        ma_cuc_hai_quan,
+        ngay_khai_bao,
+        id_cong_ty,
+        id_loai_hinh,
+        nguoi_tao,
+        trang_thai_gui: "CHO_GUI",
+      },
+    });
+
+    res.json({
+      message: "Tạo Gen 1 thành công",
+      data,
+    });
+  } catch (err) {
+    console.error("GEN1 ERROR:", err);
+    res.status(500).json({
+      message: "Lỗi ghi Gen 1 IDA",
+      error: err.message,
+    });
+  }
+};
+exports.saveGen2 = async (req, res) => {
+  try {
+    const idToKhai = Number(req.params.id);
+    const {
+      invoice,
+      customsValue,
+      taxesAndGuarantees,
+      otherInformation,
+      notes,
+    } = req.body;
+
+    if (!idToKhai) {
+      return res.status(400).json({ message: "Thiếu id tờ khai" });
+    }
+
+    // 1. Lấy tờ khai để biết id_lo_hang
+    const toKhai = await prisma.to_khai_hai_quan.findUnique({
+      where: { id_to_khai: idToKhai },
+    });
+
+    if (!toKhai?.id_lo_hang) {
+      return res.status(400).json({
+        message: "Tờ khai chưa gắn lô hàng",
+      });
+    }
+
+    // 2. Lưu hóa đơn
+    if (invoice) {
+      await prisma.hoa_don.upsert({
+        where: {
+          id_lo_hang: toKhai.id_lo_hang, // ✅ ĐÚNG
+        },
+        update: {
+          so_hoa_don: invoice.number,
+          ngay_hoa_don: invoice.date,
+          tong_tien: invoice.totalValue,
+          ma_ngoai_te: invoice.currency,
+          dieu_kien_giao_hang: invoice.incoterms,
+        },
+        create: {
+          so_hoa_don: invoice.number,
+          ngay_hoa_don: invoice.date,
+          tong_tien: invoice.totalValue,
+          ma_ngoai_te: invoice.currency,
+          dieu_kien_giao_hang: invoice.incoterms,
+          id_lo_hang: toKhai.id_lo_hang,
+        },
+      });
+    }
+
+    // 3. Lưu trị giá
+    if (customsValue) {
+      await prisma.to_khai_tri_gia.upsert({
+        where: {
+          id_to_khai_hai_quan: idToKhai,
+        },
+        update: {
+          ma_phan_loai_khai_tri_gia: customsValue.method,
+          gia_co_so_hieu_chinh: customsValue.freight,
+        },
+        create: {
+          id_to_khai_hai_quan: idToKhai,
+          ma_phan_loai_khai_tri_gia: customsValue.method,
+          gia_co_so_hieu_chinh: customsValue.freight,
+        },
+      });
+    }
+
+    res.json({
+      message: "Lưu GEN 2 thành công",
+    });
+  } catch (err) {
+    console.error("GEN2 ERROR:", err);
+    res.status(500).json({
+      message: "Lỗi lưu GEN 2",
+      error: err.message,
+    });
+  }
+};
+
+exports.declareIDA = async (req, res) => {
+  try {
+    const id_to_khai = Number(req.params.id);
+    const { id_lo_hang } = req.body;
+
+    if (!Number.isInteger(id_to_khai)) {
+      return res.status(400).json({ message: "id_to_khai không hợp lệ" });
+    }
+
+    if (!id_lo_hang) {
+      return res.status(400).json({ message: "Chưa chọn lô hàng" });
+    }
+
+    const updated = await ToKhai.update(id_to_khai, {
+      id_lo_hang,
+      trang_thai_gui: "CHO_GUI",
+    });
+
+    res.status(200).json({
+      message: "Khai báo IDA thành công",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("declareIDA:", error);
+    res.status(500).json({
+      message: "Lỗi khai báo IDA",
+      error: error.message,
+    });
+  }
+};
+
+

@@ -1,38 +1,38 @@
 import { apiClient } from "@/lib/api";
 
+export const createIDA = (payload) =>
+  apiClient
+    .post("/to_khai_hai_quans/ida/gen1", payload)
+    .then((r) => r.data);
+export const updateGen2 = (id, payload) =>
+  apiClient.put(`/to_khai_hai_quans/ida/gen2/${id}`, payload)
+    .then(res => res.data);
+export const createIDAGoods = (payload) =>
+  apiClient
+    .post("/chi_tiet_to_khais", payload)
+    .then((r) => r.data);
+export const createLoHang = (payload) =>
+  apiClient
+    .post("/lo_hangs", payload)
+    .then((r) => r.data);
+export const createInvoice = (payload) =>
+  apiClient
+    .post("/hoa_dons", payload)
+    .then((r) => r.data);
+export const createBillOfLading = (payload) =>
+  apiClient
+    .post("/van_dons", payload)
+    .then((r) => r.data);
+export const declareIDA = (id) =>
+  apiClient
+    .post(`/to_khai_hai_quans/ida/declare/${id}`)
+    .then((r) => r.data);
+export const getToKhaiList = (params) =>
+  apiClient
+    .get("/to_khai_hai_quans/list", { params })
+    .then((r) => r.data);
 
-export const createIDA = async (payload) => {
-  const res = await apiClient.post("/to_khai_hai_quans", payload);
-  return res.data;
-};
-
-export const updateIDA = async (id, payload) => {
-  const res = await apiClient.put(`/to_khai_hai_quans/${id}`, payload);
-  return res.data;
-};
-
-export const getIDAById = async (id) => {
-  const res = await apiClient.get(`/to_khai_hai_quans/${id}`);
-  return res.data;
-};
-
-export const submitIDA = async (id) => {
-  const res = await apiClient.post(`/to_khai_hai_quans/${id}/submit`);
-  return res.data;
-};
-
-export const createIDAGoods = async (payload) => {
-  const res = await apiClient.post("/chi_tiet_to_khais", payload);
-  return res.data;
-};
-
-
-export const createInvoice = async (payload) => {
-  const res = await apiClient.post("/hoa_dons", payload);
-  return res.data;
-};
-
-export const createBillOfLading = async (payload) => {
-  const res = await apiClient.post("/van_dons", payload);
-  return res.data;
-};
+export const getToKhaiById = (id) =>
+  apiClient
+    .get(`/to_khai_hai_quans/${id}`)
+    .then((r) => r.data);

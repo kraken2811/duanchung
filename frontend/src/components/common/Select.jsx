@@ -1,11 +1,13 @@
-import { Input as AntdInput } from "antd";
+import { Select as AntdSelect } from "antd";
 
-export default function Input({
+export default function Select({
   label,
   value,
   onChange,
+  options = [],
   placeholder,
   required,
+  showSearch = false,
   disabled,
 }) {
   return (
@@ -16,7 +18,7 @@ export default function Input({
             fontSize: 13,
             fontWeight: 500,
             marginBottom: 6,
-            height: 20,          // 🔒 cố định label
+            height: 20,
           }}
         >
           {label}
@@ -24,15 +26,15 @@ export default function Input({
         </div>
       )}
 
-      <AntdInput
+      <AntdSelect
         value={value}
         onChange={onChange}
+        options={options}
         placeholder={placeholder}
+        showSearch={showSearch}
         disabled={disabled}
-        style={{
-          width: "100%",
-          borderRadius: 6,
-        }}
+        style={{ width: "100%" }}
+        optionFilterProp="label"
       />
     </div>
   );

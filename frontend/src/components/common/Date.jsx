@@ -1,10 +1,9 @@
-import { Input as AntdInput } from "antd";
+import { DatePicker } from "antd";
 
-export default function Input({
+export default function Date({
   label,
   value,
   onChange,
-  placeholder,
   required,
   disabled,
 }) {
@@ -16,7 +15,7 @@ export default function Input({
             fontSize: 13,
             fontWeight: 500,
             marginBottom: 6,
-            height: 20,          // 🔒 cố định label
+            height: 20,
           }}
         >
           {label}
@@ -24,15 +23,11 @@ export default function Input({
         </div>
       )}
 
-      <AntdInput
+      <DatePicker
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
         disabled={disabled}
-        style={{
-          width: "100%",
-          borderRadius: 6,
-        }}
+        style={{ width: "100%" }}
       />
     </div>
   );

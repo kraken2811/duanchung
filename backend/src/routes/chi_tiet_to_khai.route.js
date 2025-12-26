@@ -1,9 +1,16 @@
-var express = require('express');
-var router = express.Router();
-const chi_tiet_to_khaiController = require("../controllers/chi_tiet_to_khai.controller");
-router.get('/', chi_tiet_to_khaiController.getAll);
-router.get('/:id',  chi_tiet_to_khaiController.getById);
-router.post('/',  chi_tiet_to_khaiController.insert);
-router.put('/:id',  chi_tiet_to_khaiController.update);
-router.delete('/:id', chi_tiet_to_khaiController.delete);
+const express = require("express");
+const router = express.Router();
+
+const controller = require("../controllers/chi_tiet_to_khai.controller");
+
+// CRUD
+router.get("/", controller.getAll);
+router.get("/:id", controller.getById);
+router.post("/", controller.insert);
+router.put("/:id", controller.update);
+router.delete("/:id", controller.remove);
+
+// 🔥 TÍNH THUẾ THEO MÃ HS
+router.post("/:id/calc-tax", controller.calcTaxByMaHS);
+
 module.exports = router;
