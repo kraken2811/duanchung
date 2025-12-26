@@ -22,37 +22,48 @@ const getById = (id_to_khai) => {
 };
 
 /**
+ * lấy tờ khai theo trạng thái
+ */
+const findTrangthai = () => {
+    return prisma.to_khai_hai_quan.findMany({
+        where: { trang_thai_gui: "CHO_GUI"},
+        orderBy: {
+            ngay_tao: 'desc',
+        },
+        include: {
+            cong_ty: {
+                select: {
+                    ten_cong_ty: true,
+                }
+            },
+            nguoi_dung: {
+                select : {
+                    ho_ten: true,
+                }
+            }
+        }
+    })
+}
+
+/**
  * Lấy dữ liệu hiển thị màn IDB (Khai chính thức)
  * @param {string} so_to_khai
  */
 const getIDBData = async (so_to_khai) => {
-  const toKhai = await prisma.to_khai_hai_quan.findUnique({
-    where: { so_to_khai },
-    select: { id_to_khai: true },
-  });
-
-  if (!toKhai) return null;
-
   return prisma.to_khai_hai_quan.findUnique({
-    where: { id_to_khai: toKhai.id_to_khai },
+    where: { so_to_khai },
     select: {
+      // ===== Thông tin chung =====
       id_to_khai: true,
       so_to_khai: true,
       loai_to_khai: true,
-      phan_loai: true,
-      mau_kenh: true,
-      trang_thai_gui: true,
-      so_tien_thue: true,
       ngay_khai_bao: true,
+      trang_thai_gui: true,
 
-      to_khai_tri_gia: {
-        select: {
-          gia_co_so_hieu_chinh: true,
-          tong_he_so_phan_bo: true,
-          nguoi_nop_thue: true,
-        },
-      },
+      // ===== Tổng thuế (đã chốt) =====
+      so_tien_thue: true,
 
+      // ===== Danh sách hàng hóa & thuế =====
       chi_tiet_to_khai: {
         orderBy: { so_dong: "asc" },
         select: {
@@ -61,18 +72,11 @@ const getIDBData = async (so_to_khai) => {
           mo_ta_hang_hoa: true,
           so_luong: true,
           don_vi_tinh: true,
-          don_gia: true,
-          tong_gia_tri: true,
+
+          // KẾT QUẢ THUẾ (đã tính)
           tien_thue: true,
           tien_vat: true,
           thue_bo_sung: true,
-        },
-      },
-
-      taiLieus: {
-        select: {
-          ten_file: true,
-          duong_dan: true,
         },
       },
     },
@@ -203,13 +207,29 @@ const updateVNACCS = (id_to_khai, vnaccsData) => {
 };
 
 /**
+ * Chuyển đổi tờ khai sang đã gửi
+ */
+const submitIDB = (so_to_khai) => {
+  return prisma.to_khai_hai_quan.update({
+    where: { so_to_khai },
+    data: {
+      trang_thai_gui: "DA_GUI",
+      ngay_khai_bao: new Date(),
+    },
+  });
+};
+
+/**
  * ❌ TUYỆT ĐỐI KHÔNG DELETE TỜ KHAI
  * Nếu cần → HỦY / VOID
  */
 const remove = (id_to_khai) => {
-  return prisma.to_khai_hai_quan.delete({
-    where: { id_to_khai },
-  });
+  return prisma.to_khai_hai_quan.update({
+      where: { id_to_khai },
+      data: {
+        trang_thai_gui: 'HUY',
+      },
+    });
 };
 
 const getList = async (query) => {
@@ -317,4 +337,6 @@ module.exports = {
   remove,
   getList,
   statistics,
+  findTrangthai,
+  submitIDB,
 };

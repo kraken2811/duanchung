@@ -9,81 +9,163 @@ import {
   Table,
   Statistic,
   Tag,
+  Alert,
+  notification,
 } from "antd";
 import { FiSend, FiFileText, FiList } from "react-icons/fi";
 import { useState, useEffect, useMemo } from "react"; 
 import dayjs from "dayjs"; // Cần import dayjs để xử lý DatePicker
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import useNotify from "@/components/notification/useNotify";
+import { getTrangThai, getMaIDB, submitIDB } from "@/page/IDB/api/idb.api"
 
 // Kích hoạt plugin để parse định dạng DD/MM/YYYY
 dayjs.extend(customParseFormat);
 
 export default function IDBForm() {
-  const notify = useNotify();
+  const [declarationList, setDeclarationList] = useState([]);
+  const [goods, setGoods] = useState([]);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // --- 1. DỮ LIỆU GIẢ LẬP ---
-  // Dùng useMemo để giữ danh sách cố định, tránh tạo lại mỗi lần render
-  const declarationList = useMemo(() => {
-    return Array.from({ length: 18 }).map((_, index) => {
-      const i = index + 1;
-      const statusTypes = ["success", "pending", "error"];
-      const statusTexts = ["Đã thông quan", "Chờ khai IDB", "Bị từ chối"];
-      const rand = i % 3;
-
-      return {
-        key: i,
-        stt: i,
-        no: `102742${8000 + i}`,
-        // Giả lập ngày khác nhau để thấy sự thay đổi
-        date: `${10 + (i % 15)}/11/2025`, 
-        type: i % 2 === 0 ? "A11 - Nhập kinh doanh" : "A12 - Nhập SXXK",
-        status: statusTypes[rand],
-        statusText: statusTexts[rand],
-        // Giả lập tiền thuế thay đổi theo từng tờ khai
-        taxTotal: 154000000 + (i * 1000000), 
-      };
-    });
-  }, []);
-
-  // --- 2. STATE QUẢN LÝ DÒNG ĐANG CHỌN ---
-  // Mặc định chọn dòng đầu tiên của danh sách
-  const [selectedRecord, setSelectedRecord] = useState(declarationList[0]);
-
-  // --- 3. CONFIG FORM ---
-  // Khởi tạo form
   const { register, handleSubmit, reset, setValue } = useForm({
     defaultValues: {
-        declarationNumber: selectedRecord.no,
-        typeName: selectedRecord.type,
-        regDate: selectedRecord.date,
-        taxTotal: selectedRecord.taxTotal,
-        goods: [] // Giữ nguyên mảng hàng hóa giả định
+      declarationNumber: "",
+      typeName: "",
+      regDate: null,
+      taxTotal: 0,
+      goods: [],
     },
   });
 
-  // --- 4. HIỆU ỨNG TỰ ĐỘNG CẬP NHẬT FORM KHI CHỌN DÒNG MỚI ---
   useEffect(() => {
-    if (selectedRecord) {
-      // Hàm reset sẽ cập nhật lại toàn bộ giá trị của form khớp với dòng đã chọn
-      // Giúp việc submit sau này lấy đúng dữ liệu mới
+    const fetchList = async () => {
+      try {
+        const res = await getTrangThai();
+        const rawList = res;
+
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+          setDeclarationList([]);
+          setSelectedRecord(null);
+          return;
+        }
+
+        const mappedList = rawList.map((raw, index) => {
+          const statusMap = {
+            CHO_GUI: { status: "pending", text: "Chờ gửi IDB" },
+          };
+
+          const st = statusMap[raw.trang_thai_gui] || {
+            status: "default",
+            text: raw.trang_thai_gui,
+          };
+
+          return {
+            key: String(raw.id_to_khai),
+            stt: index + 1,
+            no: raw.so_to_khai,
+            tencongty: raw.cong_ty.ten_cong_ty,
+            date: raw.ngay_tao
+              ? dayjs(raw.ngay_tao).format("DD/MM/YYYY")
+              : "",
+            type: raw.loai_to_khai,
+            ngt: raw.nguoi_dung.ho_ten,
+            status: st.status,
+            statusText: st.text,
+            taxTotal: Number(raw.so_tien_thue || 0),
+          };
+        });
+
+        setDeclarationList(mappedList);
+        setSelectedRecord(null);
+      } catch (err) {
+        console.error("fetchList error:", err);
+        notification.error("Không lấy được danh sách tờ khai IDB");
+      }
+    };
+
+    fetchList();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRecord) {
+      reset();
+      setGoods([]);
+    }
+  }, [selectedRecord]);
+
+  const fetchIDBDetail = async (so_to_khai) => {
+    try {
+      const data = await getMaIDB(so_to_khai);
+      console.log("IDB DETAIL:", data);
+
       reset({
-        declarationNumber: selectedRecord.no,
-        typeName: selectedRecord.type,
-        regDate: selectedRecord.date, // Lưu dạng string hoặc dayjs object tùy logic submit
-        taxTotal: selectedRecord.taxTotal,
-        goods: [
-           // Giả lập hàng hóa thay đổi chút ít theo ID để demo
-           { id: 1, code: 'HS-001', desc: `Linh kiện điện tử (Lô ${selectedRecord.stt})`, qty: 1000, taxRate: 10, taxVal: 5000000 },
-           { id: 2, code: 'HS-002', desc: 'Vỏ nhựa cao cấp', qty: 500, taxRate: 8, taxVal: 2000000 },
-        ] 
+        declarationNumber: data.so_to_khai,
+        typeName: data.loai_to_khai,
+        regDate: data.ngay_khai_bao
+          ? dayjs(data.ngay_khai_bao).format("DD/MM/YYYY")
+          : null,
+        taxTotal: Number(data.so_tien_thue || 0),
+      });
+
+      setGoods(
+        (data.chi_tiet_to_khai || []).map((item, index) => ({
+          id: index + 1,
+          code: item.ma_hs,
+          desc: item.mo_ta_hang_hoa || "",
+          qty: item.so_luong ?? "",
+          taxRate: "",
+          taxVal: Number(item.tien_thue || 0)
+        }))
+      );
+    } catch (err) {
+      console.error("getMaIDB error:", err);
+      notification.error("Không lấy được chi tiết IDB");
+    }
+  };
+
+  const onSubmit = async () => {
+    if (!selectedRecord?.no) {
+      notification.warning("Vui lòng chọn tờ khai trước khi gửi IDB");
+      return;
+    }
+
+    try {
+      await submitIDB(selectedRecord.no);
+
+      notification.success({
+        message: "Gửi IDB thành công",
+        description: `Tờ khai ${selectedRecord.no} đã được gửi`,
+      });
+
+      const res = await getTrangThai();
+
+      const mappedList = res.map((raw, index) => ({
+        key: String(raw.id_to_khai),
+        stt: index + 1,
+        no: raw.so_to_khai,
+        tencongty: raw.cong_ty.ten_cong_ty,
+        date: raw.ngay_tao
+          ? dayjs(raw.ngay_tao).format("DD/MM/YYYY")
+          : "",
+        type: raw.loai_to_khai,
+        ngt: raw.nguoi_dung.ho_ten,
+        status: "pending",
+        statusText: "CHO_GUI",
+        taxTotal: Number(raw.so_tien_thue || 0),
+      }));
+
+      setDeclarationList(mappedList);
+      setSelectedRecord(null);
+      setGoods([]);
+      reset();
+    } catch (err) {
+      notification.error({
+        message: "Không thể gửi IDB",
+        description:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Gửi IDB thất bại",
       });
     }
-  }, [selectedRecord, reset]);
-
-  const onSubmit = (data) => {
-    console.log("IDB SUBMIT DATA:", data);
-    notify.success(`Đã gửi tờ khai IDB: ${data.declarationNumber} thành công!`);
   };
 
   const paginationConfig = {
@@ -101,11 +183,14 @@ export default function IDBForm() {
       width: 150, 
       render: (text) => <span style={{ fontWeight: "bold", color: "#1677ff", textAlign: "center" }}>{text}</span> 
     },
-    { title: "Ngày đăng ký", dataIndex: "date", width: 120 },
-    { title: "Loại hình", dataIndex: "type" },
+    {title: "Tên công ty", dataIndex: "tencongty", width: 300},
+    { title: "Ngày đăng ký", dataIndex: "date", width: 120, align: "center"},
+    { title: "Loại tờ khai", dataIndex: "type", align: "center"  },
+    { title: "Tên người tạo", dataIndex: "ngt"},
     { 
       title: "Trạng thái", 
       dataIndex: "status", 
+      align: "center",
       width: 150,
       render: (_, record) => {
         let color = "default";
@@ -119,9 +204,9 @@ export default function IDBForm() {
 
   const detailColumns = [
     { title: "Mã hàng", dataIndex: "code", width: 120 },
-    { title: "Mô tả", dataIndex: "desc" },
-    { title: "Số lượng", dataIndex: "qty", width: 100, align: "right" },
-    { title: "Thuế suất (%)", dataIndex: "taxRate", width: 120, align: "center" },
+    { title: "Mô tả", dataIndex: "desc", width: 300, align: "center" },
+    { title: "Số lượng", dataIndex: "qty", width: 130, align: "center" },
+    { title: "Thuế suất (%)", dataIndex: "taxRate", width: 230, align: "center" },
     {
       title: "Tiền thuế (VND)",
       dataIndex: "taxVal",
@@ -130,13 +215,16 @@ export default function IDBForm() {
     },
   ];
 
-  // Lấy danh sách hàng hóa hiện tại từ form để render bảng chi tiết
-  // (Do dùng reset() nên cần watch hoặc lấy từ state local, ở đây lấy cứng từ biến render để đơn giản hóa display, 
-  // nhưng chuẩn nhất là dùng useWatch hoặc control, tuy nhiên để demo ta dùng biến goods giả lập trong useEffect)
-  const currentGoods = [
-      { id: 1, code: 'HS-001', desc: `Linh kiện điện tử (Lô ${selectedRecord.stt})`, qty: 1000, taxRate: 10, taxVal: 5000000 },
-      { id: 2, code: 'HS-002', desc: 'Vỏ nhựa cao cấp', qty: 500, taxRate: 8, taxVal: 2000000 },
-  ];
+  const totalTaxFromTable = useMemo(() => {
+    return goods.reduce((sum, item) => {
+      return (
+        sum +
+        (item.taxVal || 0) +
+        (item.vatVal || 0) +
+        (item.extraTaxVal || 0)
+      );
+    }, 0);
+  }, [goods]);
 
   return (
     <div style={{ padding: "0 12px" }}>
@@ -158,29 +246,27 @@ export default function IDBForm() {
         }
       `}</style>
 
-      {/* Danh sách tờ khai */}
       <h4 style={{ marginBottom: 12, display: 'flex', alignItems: 'center' }}>
         <FiList style={{ marginRight: 8 }} /> Danh sách tờ khai đã đăng ký
       </h4>
       
       <Table 
-        columns={listColumns} 
+        rowKey="key"
+        columns={listColumns}
         dataSource={declarationList} 
         pagination={paginationConfig} 
         size="small" 
         bordered
         style={{ marginBottom: 32, border: "1px solid #f0f0f0", borderRadius: 8 }}
-        
-        // --- LOGIC CLICK CHỌN DÒNG ---
+
         onRow={(record) => ({
           onClick: () => {
-            // Cập nhật state selectedRecord
             setSelectedRecord(record);
+            fetchIDBDetail(record.no);
           },
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
         
-        // Highlight dòng đang chọn dựa trên so sánh mã tờ khai
         rowClassName={(record) => 
           record.no === selectedRecord?.no ? "selected-row" : ""
         }
@@ -192,98 +278,109 @@ export default function IDBForm() {
         </span>
       </Divider>
       
-      {/* Form chi tiết */}
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <h4 style={{ marginBottom: 16, marginTop: 0, display: 'flex', alignItems: 'center' }}>
-          <FiFileText style={{ marginRight: 8 }} />
-          Thông tin tờ khai
-        </h4>
+      {!selectedRecord ? (
+        <Alert
+          type="info"
+          showIcon
+          description="Vui lòng chọn một tờ khai trong danh sách để xem chi tiết IDB."
+        />
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <h4 style={{ marginBottom: 16, marginTop: 0, display: 'flex', alignItems: 'center' }}>
+            <FiFileText style={{ marginRight: 8 }} />
+            Thông tin tờ khai
+          </h4>
 
-        <Row gutter={24}>
-          <Col span={8}>
-            <label style={{ display: 'block', marginBottom: 4 }}>Số tờ khai</label>
-            <Input
-              disabled
-              // --- BINDING DATA ---
-              value={selectedRecord?.no} 
-              style={{ backgroundColor: '#f5f5f5', color: '#000', fontWeight: 'bold' }}
-            />
-          </Col>
-
-          <Col span={8}>
-            <label style={{ display: 'block', marginBottom: 4 }}>Ngày đăng ký</label>
-            {/* Sử dụng dayjs để parse chuỗi "dd/mm/yyyy" thành object ngày */}
-            <DatePicker
-              style={{ width: "100%", backgroundColor: '#f5f5f5' }}
-              disabled
-              format="DD/MM/YYYY"
-              value={selectedRecord?.date ? dayjs(selectedRecord.date, "DD/MM/YYYY") : null}
-            />
-          </Col>
-
-          <Col span={8}>
-            <label style={{ display: 'block', marginBottom: 4 }}>Loại hình</label>
-            <Input
-              disabled
-              // --- BINDING DATA ---
-              value={selectedRecord?.type}
-              style={{ backgroundColor: '#f5f5f5' }}
-            />
-          </Col>
-        </Row>
-
-        <div style={{ marginTop: 24, padding: '16px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 8 }}>
-          <Row gutter={24} align="middle">
-            <Col span={12}>
-              <span style={{ fontWeight: 500, color: '#389e0d' }}>
-                Thông tin thuế (Hệ thống tính toán từ IDA):
-              </span>
-              <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                Vui lòng kiểm tra kỹ số tiền thuế trước khi gửi khai báo chính thức.
-              </div>
+          <Row gutter={24}>
+            <Col span={8}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Số tờ khai</label>
+              <Input
+                disabled
+                value={selectedRecord?.no} 
+                style={{ backgroundColor: '#f5f5f5', color: '#000', fontWeight: 'bold' }}
+              />
             </Col>
-            <Col span={12} style={{ textAlign: 'right' }}>
-              <Statistic
-                title="Tổng thuế phải nộp"
-                // --- BINDING DATA ---
-                value={selectedRecord?.taxTotal}
-                precision={0}
-                valueStyle={{ color: '#cf1322', fontWeight: 'bold', fontSize: 24 }}
-                suffix="VND"
+
+            <Col span={8}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Ngày đăng ký</label>
+              <DatePicker
+                style={{ width: "100%", backgroundColor: '#f5f5f5' }}
+                disabled
+                format="DD/MM/YYYY"
+                value={selectedRecord?.date ? dayjs(selectedRecord.date, "DD/MM/YYYY") : null}
+              />
+            </Col>
+
+            <Col span={8}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Loại hình</label>
+              <Input
+                disabled
+                value={selectedRecord?.type}
+                style={{ backgroundColor: '#f5f5f5' }}
               />
             </Col>
           </Row>
-        </div>
 
-        <Divider />
+          <div style={{ marginTop: 24, padding: '16px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 8 }}>
+            <Row gutter={24} align="middle">
+              <Col span={12}>
+                <span style={{ fontWeight: 500, color: '#389e0d' }}>
+                  Thông tin thuế (Hệ thống tính toán từ IDA):
+                </span>
+                <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                  Vui lòng kiểm tra kỹ số tiền thuế trước khi gửi khai báo chính thức.
+                </div>
+              </Col>
+              <Col span={12} style={{ textAlign: 'right' }}>
+                <Statistic
+                  title="Tổng thuế phải nộp"
+                  value={totalTaxFromTable}
+                  precision={0}
+                  valueStyle={{ color: '#cf1322', fontWeight: 'bold', fontSize: 24 }}
+                  suffix="VND"
+                />
+              </Col>
+            </Row>
+          </div>
 
-        <h4 style={{ marginBottom: 16 }}>Danh sách hàng hóa & Thuế chi tiết</h4>
-        <Table
-          columns={detailColumns}
-          // Sử dụng dữ liệu mẫu (hoặc dữ liệu thực tế từ state nếu có)
-          dataSource={currentGoods}
-          rowKey="id"
-          pagination={false}
-          bordered
-          size="middle"
-        />
+          <Divider />
 
-        <Divider />
+          <h4 style={{ marginBottom: 16 }}>Danh sách hàng hóa & Thuế chi tiết</h4>
+          <Table
+            columns={detailColumns}
+            dataSource={goods}
+            rowKey="id"
+            pagination={false}
+            bordered
+            size="middle"
+          />
 
-        <div style={{ textAlign: "right", marginTop: 20, paddingBottom: 20 }}>
-          <Button size="large" className="btn-hover-white" style={{ marginRight: 12 }}>
-            Quay lại
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
-            icon={<FiSend />}
-          >
-            Gửi IDB
-          </Button>
-        </div>
-      </form>
+          <Divider />
+
+          <div style={{ textAlign: "right", marginTop: 20, paddingBottom: 20 }}>
+            <Button
+              size="large"
+              className="btn-hover-white"
+              style={{ marginRight: 12 }}
+              onClick={() => {
+                setSelectedRecord(null);
+                setGoods([]);
+                reset();
+              }}
+            >
+              Quay lại
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              htmlType="submit"
+              icon={<FiSend />}
+            >
+              Gửi IDB
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
