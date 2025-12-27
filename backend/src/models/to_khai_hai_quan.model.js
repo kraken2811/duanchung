@@ -325,6 +325,36 @@ const statistics = async () => {
   };
 }
 
+const saveGen1 = async (payload) => {
+  const {
+    loai_to_khai,
+    phan_loai,
+    ma_cuc_hai_quan,
+    ngay_khai_bao,
+    id_cong_ty,
+    id_nguoi_tao,
+    id_loai_hinh,
+  } = payload;
+
+  return prisma.to_khai_hai_quan.create({
+    data: {
+      loai_to_khai,
+      phan_loai,
+      ma_cuc_hai_quan,
+      ngay_khai_bao: ngay_khai_bao
+        ? new Date(ngay_khai_bao)
+        : null,
+
+      id_cong_ty,
+      id_loai_hinh,
+      nguoi_tao: id_nguoi_tao,
+
+      trang_thai_gui: "NHAP",
+    },
+  });
+};
+
+
 module.exports = {
   getAll,
   getById,

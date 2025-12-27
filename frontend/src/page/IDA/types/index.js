@@ -1,134 +1,82 @@
-export const IDA_DEFAULT = {
-  // Thông tin đầu tờ khai
-  declarationNumber: "",
-  type: "",
-  customsOffice: "",
-  department: "",
+
+
+export const emptyGen1 = {
+  declarationNumber: null,
+  typeCode: null,
+  customsOffice: null,
   regDate: null,
 
-  // Người nhập khẩu
   importer: {
-    taxCode: "",
-    name: "",
-    address: "",
-    postalCode: "",
-    phone: "",
+    companyId: null,
+    taxCode: null,
+    name: null,
+    address: null,
+    phone: null,
   },
 
-  // Người xuất khẩu
   exporter: {
-    code: "",
-    name: "",
-    address: "",
-    postalCode: "",
-    countryCode: "",
+    doiTacId: null,
+    name: null,
+    address: null,
+    countryCode: null,
+    phone: null,
+    email: null,
   },
+};
 
-  // Đại lý hải quan (nếu có)
-  agent: {
-    taxCode: "",
-    name: "",
-  },
 
-  // Vận đơn
-  billOfLading: {
-    number: "",
-    date: null,
-    packages: 0,
-    packageType: "",
-    grossWeight: 0,
-  },
+export const emptyGoodsItem = {
+  hsCode: null,
+  description: null,
+  quantity: 0,
+  unit: null,
+  unitPrice: 0,
+  totalValue: 0,
+  origin: null,
+};
 
-  // Phương tiện vận chuyển
-  transport: {
-    method: "",
-    vehicle: "",
-    voyageNumber: "",
-    arrivalDate: null,
-    portOfLoading: "",
-    portOfDischarge: "",
-  },
-
-  // Kho bãi
-  warehouse: {
-    code: "",
-    name: "",
-  },
-
-  // Hóa đơn thương mại
-  invoice: {
-    type: "A",
-    number: "",
-    date: null,
-    paymentMethod: "",
-    incoterms: "",
-    currency: "USD",
-    totalValue: 0,
-  },
-
-  // Trị giá tính thuế
-  customsValue: {
-    method: "1",
-    freight: 0,
-    insurance: 0,
-    adjustments: 0,
-  },
-
-  // Thuế
-  tax: {
-    payer: "1",
-    paymentDeadline: "",
-    guarantee: {
-      bankCode: "",
-      year: "",
-      symbol: "",
-      number: "",
-    },
-  },
-
-  // Hợp đồng
-  contract: {
-    number: "",
-    date: null,
-  },
-
-  // Ghi chú
-  notes: "",
-
-  // Danh sách hàng hóa
+export const emptyGen2 = {
   goods: [],
 };
 
-// Cấu trúc một dòng hàng hóa
-export const GOODS_ITEM_DEFAULT = {
-  id: null,
-  index: 0,
-  description: "",
-  hsCode: "",
-  managementCode: "",
-  origin: "",
-  quantity: 0,
-  unit: "",
-  unitPrice: 0,
-  totalValue: 0,
-  
-  // Thuế
-  importDuty: {
-    schedule: "",
-    rate: 0,
-    amount: 0,
-    exemptionCode: "",
-  },
-  vat: {
-    rate: 0,
-    amount: 0,
-  },
-  exciseTax: {
-    rate: 0,
-    amount: 0,
-  },
-  environmentTax: {
-    rate: 0,
-    amount: 0,
-  },
-};
+const toISO = (d) => (d ? new Date(d).toISOString() : null);
+
+export const formatGen1 = (form) => ({
+  so_to_khai: form.declarationNumber ?? null,
+  loai_to_khai: form.typeCode ?? null,
+  id_loai_hinh: form.typeCode ?? null,
+  ma_cuc_hai_quan: form.customsOffice ?? null,
+  ngay_khai_bao: toISO(form.regDate),
+  phan_loai: "IDA",
+  trang_thai_gui: "NHAP",
+});
+
+
+export const formatGen2 = (form) => {
+  return {
+    hoa_don: {
+      so_hoa_don: form.invoice?.number,
+      ngay_hoa_don: form.invoice?.date,
+      tong_tien: form.invoice?.totalValue,
+      ma_ngoai_te: form.invoice?.currency,
+      dieu_kien_giao_hang: form.invoice?.incoterms,
+    },
+
+    tri_gia: {
+      phuong_phap: form.customsValue?.method,
+      phi_van_chuyen: form.customsValue?.freight || 0,
+      phi_bao_hiem: form.customsValue?.insurance || 0,
+    },
+
+    thue: {
+      nguoi_nop_thue: form.taxesAndGuarantees?.taxPayer,
+      hinh_thuc_nop: form.taxesAndGuarantees?.taxDeadline,
+    },
+
+    thong_tin_khac: {
+      so_hop_dong: form.otherInformation?.contractNumber,
+      ngay_hop_dong: form.otherInformation?.contractDate,
+      ghi_chu: form.notes,
+    },
+  };
+}; 
