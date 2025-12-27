@@ -1,269 +1,298 @@
-import React, { useState } from "react";
-import { Row, Col, Input, Button, Table, Select, InputNumber, Space, message, Tag, Typography, Card } from "antd";
-import { FiPlus, FiTrash2, FiSave, FiEdit, FiBox } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  message,
+  Popconfirm,
+  Space,
+} from "antd";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
+import DataTable from "@/components/common/DataTable";
+import {
+  getByToKhaiId,
+  createChiTietToKhai,
+  deleteChiTietToKhai,
+} from "../api/chiTietToKhai.api";
+import { getMaHs } from "../api/chiTietToKhai.api"; 
+import '../css/IDA.css';
 
 const { TextArea } = Input;
-const { Text } = Typography;
 
-const COUNTRY_OPTIONS = [
-  { value: "VN", label: "Việt Nam (VN)" },
-  { value: "CN", label: "Trung Quốc (CN)" },
-  { value: "US", label: "Hoa Kỳ (US)" },
-  { value: "JP", label: "Nhật Bản (JP)" },
-  { value: "KR", label: "Hàn Quốc (KR)" },
-  { value: "TW", label: "Đài Loan (TW)" },
-  // ... thêm các nước khác
-];
+export default function GoodsList({ idToKhai }) {
+  const [data, setData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [form] = Form.useForm();
+  const [maHsList, setMaHsList] = useState([]);
 
-// Hàm format tiền tệ tái sử dụng
-const formatCurrency = (value) => {
-  if (!value) return "0";
-  return new Intl.NumberFormat('en-US').format(value);
-};
+  // Load danh sách mã HS
+  useEffect(() => {
+    getMaHs()
+      .then(setMaHsList)
+      .catch(() => message.error("Không tải được danh sách mã HS"));
+  }, []);
 
-export default function GoodsList({ goods, setGoods }) {
-  const [editingItem, setEditingItem] = useState(null);
-
-  // ... (Giữ nguyên các hàm logic: addGoods, removeGoods, handleDetailChange, saveGoodDetail)
-   const addGoods = () => {
-    const newItem = {
-      id: Date.now(),
-      index: goods.length + 1,
-      description: "",
-      hsCode: "",
-      origin: "CN",
-      quantity: 0,
-      unit: "PCE",
-      unitPrice: 0,
-      totalValue: 0,
-      taxRate: 0,
-      vatRate: 0,
-    };
-    setGoods([...goods, newItem]);
-    setEditingItem(newItem);
-  };
-
-  const removeGoods = (id, e) => {
-    e.stopPropagation();
-    const newGoods = goods.filter((g) => g.id !== id);
-    setGoods(newGoods);
-    if (editingItem && editingItem.id === id) {
-      setEditingItem(null);
+  // Load chi tiết hàng hóa theo tờ khai
+  const fetchData = async () => {
+    if (!idToKhai) {
+      setData([]);
+      return;
+    }
+    try {
+      const res = await getByToKhaiId(idToKhai);
+      setData(res || []);
+    } catch {
+      message.error("Lỗi tải danh sách hàng hóa");
+      setData([]);
     }
   };
 
-  const onEditGood = (record) => {
-    setEditingItem({ ...record });
+  useEffect(() => {
+    fetchData();
+  }, [idToKhai]);
+
+  // Tự động điền mô tả khi chọn mã HS
+  const handleMaHsChange = (ma_hs) => {
+    const hs = maHsList.find((h) => h.ma_hs === ma_hs);
+    if (hs) {
+      form.setFieldsValue({
+        mo_ta_hang_hoa: hs.mo_ta || "",
+      });
+    }
   };
 
-  const handleDetailChange = (field, value) => {
-    setEditingItem((prev) => {
-      const updated = { ...prev, [field]: value };
-      if (field === "quantity" || field === "unitPrice") {
-        updated.totalValue = (updated.quantity || 0) * (updated.unitPrice || 0);
-      }
-      return updated;
-    });
+  // Lưu hàng hóa
+  const handleSave = async () => {
+    if (!idToKhai) {
+      message.error("Chưa tạo tờ khai, không thể thêm hàng hóa!");
+      setOpen(false);
+      return;
+    }
+
+    try {
+      const values = await form.validateFields();
+
+      const maHS = values.ma_hs;
+      const soLuong = Number(values.so_luong);
+      const tongGiaTri = Number(values.tong_gia_tri);
+
+      if (soLuong <= 0) return message.error("Số lượng phải lớn hơn 0");
+      if (tongGiaTri <= 0) return message.error("Trị giá phải lớn hơn 0");
+
+      const payload = {
+        id_to_khai: idToKhai,
+        ma_hs: maHS,
+        mo_ta_hang_hoa: values.mo_ta_hang_hoa?.trim() || null,
+        so_luong: soLuong,
+        don_vi_tinh: values.don_vi_tinh || null,
+        tong_gia_tri: tongGiaTri,
+        ma_ngoai_te: values.ma_ngoai_te || "USD",
+        ma_quoc_gia: values.ma_quoc_gia || null,
+      };
+
+      await createChiTietToKhai(payload);
+
+      message.success("Thêm hàng hóa thành công!");
+      setOpen(false);
+      form.resetFields();
+      fetchData();
+    } catch (err) {
+      if (err.errorFields) return; // lỗi validate form
+      const msg = err.response?.data?.message || "Thêm hàng hóa thất bại";
+      message.error(msg);
+    }
   };
 
-  const saveGoodDetail = () => {
-    if (!editingItem) return;
-    const updatedGoods = goods.map((item) =>
-      item.id === editingItem.id ? editingItem : item
-    );
-    setGoods(updatedGoods);
-    message.success("Đã cập nhật chi tiết hàng hóa");
-    // Có thể setEditingItem(null) nếu muốn đóng form sau khi lưu
+  // Xóa hàng hóa
+  const handleDelete = async (id) => {
+    try {
+      await deleteChiTietToKhai(id);
+      message.success("Xóa thành công");
+      fetchData();
+    } catch {
+      message.error("Xóa thất bại");
+    }
   };
-
-
-  // --- CẤU HÌNH CỘT CHUẨN MỰC ---
-  const goodsColumns = [
-    { 
-      title: "STT", 
-      dataIndex: "index", 
-      width: 60, 
-      align: "center",
-      render: (val) => <span style={{ color: "#9ca3af" }}>{val}</span> 
-    },
-    { 
-      title: "MÔ TẢ HÀNG HÓA", // Uppercase Header
-      dataIndex: "description", 
-      ellipsis: true,
-      render: (text) => (
-        <span style={{ fontWeight: 500, color: "#1f2937" }}>
-            {text || <i style={{color:'#d1d5db'}}>Chưa nhập tên hàng...</i>}
-        </span>
-      )
-    },
-    { 
-      title: "HS CODE", 
-      dataIndex: "hsCode", 
-      width: 120,
-      align: "center",
-      render: (code) => code ? <Tag color="blue" style={{ fontFamily: 'monospace' }}>{code}</Tag> : "-"
-    },
-    { 
-      title: "XUẤT XỨ", 
-      dataIndex: "origin", 
-      width: 100, 
-      align: "center",
-      render: (origin) => origin ? <Tag bordered={false}>{origin}</Tag> : "-"
-    },
-    { 
-      title: "SỐ LƯỢNG", 
-      dataIndex: "quantity", 
-      width: 120, 
-      align: "right", // Số lượng căn phải
-      render: (val) => formatCurrency(val)
-    },
-    { 
-      title: "ĐVT", 
-      dataIndex: "unit", 
-      width: 80, 
-      align: "center" 
-    },
-    { 
-      title: "ĐƠN GIÁ", 
-      dataIndex: "unitPrice", 
-      width: 140, 
-      align: "right", 
-      render: (val) => <span style={{ color: "#6b7280" }}>{formatCurrency(val)}</span> // Màu nhạt hơn chút
-    },
-    { 
-      title: "TRỊ GIÁ", 
-      dataIndex: "totalValue", 
-      width: 150, 
-      align: "right", 
-      render: (val) => <Text strong>{formatCurrency(val)}</Text> // In đậm vì là tổng tiền
-    },
-    {
-      title: "TÁC VỤ",
-      width: 100,
-      align: "center",
-      render: (_, record) => (
-        <Space size="small">
-            {/* Nút sửa icon nhỏ gọn */}
-          <Button 
-            type="text" 
-            size="small" 
-            icon={<FiEdit size={16} />} 
-            className="text-blue-600"
-            onClick={(e) => { e.stopPropagation(); onEditGood(record); }} 
-          />
-          <Button 
-            type="text" 
-            size="small" 
-            danger 
-            icon={<FiTrash2 size={16} />} 
-            onClick={(e) => removeGoods(record.id, e)} 
-          />
-        </Space>
-      ),
-    },
-  ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', marginBottom: 16 }}>
-        <Button type="primary" ghost icon={<FiPlus />} onClick={addGoods}>
-          Thêm
-        </Button>
+    <>
+      {/* Nút thêm hàng hóa */}
+      <Button
+        type="primary"
+        icon={<FiPlus />}
+        className="textSibar"
+        onClick={() => {
+          if (!idToKhai) {
+            message.warning("Vui lòng tạo tờ khai trước khi thêm hàng hóa");
+            return;
+          }
+          setOpen(true);
+        }}
+        disabled={!idToKhai}
+      >
+        Thêm hàng hóa
+      </Button>
+
+      {/* Bảng danh sách hàng hóa */}
+      <div style={{ marginTop: 16 }}>
+        <DataTable
+          rowKey="id_chi_tiet"
+          data={data}
+          columns={[
+            { title: "STT", dataIndex: "so_dong", width: 80, align: "center" },
+            { title: "Mã HS", dataIndex: "ma_hs", width: 130 },
+            { title: "Mô tả hàng hóa", dataIndex: "mo_ta_hang_hoa" },
+            { title: "SL", dataIndex: "so_luong", width: 100, align: "center" },
+            { title: "ĐVT", dataIndex: "don_vi_tinh", width: 100, align: "center" },
+            { title: "Trị giá", dataIndex: "tong_gia_tri", width: 150 },
+            { title: "Ngoại tệ", dataIndex: "ma_ngoai_te", width: 100, align: "center" },
+            { title: "Thuế NK", dataIndex: "tien_thue", width: 130 },
+            { title: "VAT", dataIndex: "tien_vat", width: 130 },
+            {
+              title: "Thao tác",
+              width: 100,
+              align: "center",
+              render: (_, record) => (
+                <Popconfirm
+                  title="Xác nhận xóa?"
+                  description="Xóa dòng hàng hóa này?"
+                  onConfirm={() => handleDelete(record.id_chi_tiet)}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                >
+                  <Button danger size="small" icon={<FiTrash2 />} />
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
       </div>
 
-      <Table
-        className="custom-table" // Áp dụng CSS
-        columns={goodsColumns}
-        dataSource={goods}
-        rowKey="id"
-        pagination={false}
-        bordered={false} // Tắt border mặc định
-        size="middle"
-        // Logic để highlight dòng đang chọn
-        rowClassName={(record) => (editingItem?.id === record.id ? "ant-table-row-selected" : "")}
-        onRow={(record) => ({
-          onClick: () => onEditGood(record),
-          style: { cursor: "pointer" }
-        })}
-      />
+      {/* Modal thêm hàng hóa */}
+      <Modal
+        title="Thêm dòng hàng hóa"
+        open={open}
+        onOk={handleSave}
+        onCancel={() => {
+          setOpen(false);
+          form.resetFields();
+        }}
+        okText="Lưu"
+        cancelText="Hủy"
+        width={1000}
+      >
+        <Form form={form} layout="vertical">
+          {/* MÃ HS - SELECT CÓ SEARCH */}
+          <Form.Item
+            name="ma_hs"
+            label="Mã HS"
+            rules={[{ required: true, message: "Vui lòng chọn mã HS!" }]}
+          >
+            <Select
+              showSearch
+              placeholder="Tìm hoặc chọn mã HS..."
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={handleMaHsChange}
+            >
+              {maHsList.map((hs) => (
+                <Select.Option key={hs.ma_hs} value={hs.ma_hs}>
+                  {hs.ma_hs} {hs.mo_ta ? `- ${hs.mo_ta}` : ""}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-      {/* FORM SỬA CHI TIẾT */}
-      {editingItem && (
-        <Card 
-            title={<span><FiEdit style={{ marginRight: 8 }}/> Chi tiết: {editingItem.description || "Hàng mới"}</span>}
-            size="small"
-            style={{ marginTop: 24, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
-            bodyStyle={{ padding: 24 }}
-            bordered={false}
-        >
-          <Row gutter={[24, 16]}> {/* Tăng gutter để thoáng form */}
-            <Col span={8}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Mã HS Code <span style={{color:'red'}}>*</span></label>
-              <Input value={editingItem.hsCode} onChange={(e) => handleDetailChange("hsCode", e.target.value)} placeholder="Nhập mã HS..." />
-            </Col>
-            <Col span={8}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Xuất xứ <span style={{color:'red'}}>*</span></label>
-              <Select
-                style={{ width: "100%" }}
-                placeholder="Chọn nước"
-                value={editingItem.origin}
-                onChange={(value) => handleDetailChange("origin", value)}
-                showSearch
-                options={COUNTRY_OPTIONS}
-              />
-            </Col>
-            <Col span={8}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Mã quản lý riêng</label>
-              <Input placeholder="-- Không có --" />
-            </Col>
+          {/* HIỂN THỊ THUẾ SUẤT THAM KHẢO */}
+          {form.getFieldValue("ma_hs") && (
+            <div style={{ marginBottom: 16, padding: 12, background: "#f0f8ff", borderRadius: 6 }}>
+              <Space>
+                <strong>Thuế suất:</strong>
+                <span>
+                  Thuế NK:{" "}
+                  <strong>
+                    {maHsList.find((h) => h.ma_hs === form.getFieldValue("ma_hs"))?.thue_nhap_khau ?? "N/A"}%
+                  </strong>
+                </span>
+                <span>
+                  VAT:{" "}
+                  <strong>
+                    {maHsList.find((h) => h.ma_hs === form.getFieldValue("ma_hs"))?.thue_vat ?? "10"}%
+                  </strong>
+                </span>
+              </Space>
+            </div>
+          )}
 
-            <Col span={24}><div style={{borderBottom: '1px dashed #e5e7eb', margin: '8px 0'}}></div></Col>
+          <Form.Item name="mo_ta_hang_hoa" label="Mô tả hàng hóa">
+            <TextArea rows={3} placeholder="Có thể chỉnh sửa mô tả tự động từ mã HS" />
+          </Form.Item>
 
-            <Col span={6}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Số lượng <span style={{color:'red'}}>*</span></label>
-              <InputNumber style={{ width: "100%" }} value={editingItem.quantity} onChange={(v) => handleDetailChange("quantity", v)} />
-            </Col>
-            <Col span={6}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Đơn vị tính</label>
-              <Select style={{ width: "100%" }} value={editingItem.unit} onChange={(v) => handleDetailChange("unit", v)}>
-                <Select.Option value="PCE">Cái (PCE)</Select.Option>
-                <Select.Option value="KGM">Kg (KGM)</Select.Option>
-                <Select.Option value="SET">Bộ (SET)</Select.Option>
-              </Select>
-            </Col>
-            <Col span={6}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Đơn giá hóa đơn</label>
-              <InputNumber 
-                style={{ width: "100%" }} 
-                value={editingItem.unitPrice} 
-                onChange={(v) => handleDetailChange("unitPrice", v)}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              />
-            </Col>
-            <Col span={6}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Thành tiền (Auto)</label>
-              <InputNumber 
-                style={{ width: "100%", background: "#f3f4f6", color: "#111" }} 
-                disabled 
-                value={editingItem.totalValue} 
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} 
-              />
-            </Col>
+          <Form.Item
+            name="so_luong"
+            label="Số lượng"
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
+          >
+            <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+          </Form.Item>
 
-            <Col span={24}>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Mô tả hàng hóa <span style={{color:'red'}}>*</span></label>
-              <TextArea rows={3} value={editingItem.description} onChange={(e) => handleDetailChange("description", e.target.value)} placeholder="Mô tả chi tiết..." />
-            </Col>
-          </Row>
+          <Form.Item name="don_vi_tinh" label="Đơn vị tính">
+            <Select allowClear placeholder="Chọn đơn vị">
+              <Select.Option value="Cái">Cái</Select.Option>
+              <Select.Option value="Chiếc">Chiếc</Select.Option>
+              <Select.Option value="Bộ">Bộ</Select.Option>
+              <Select.Option value="Kg">Kg</Select.Option>
+              <Select.Option value="Tấn">Tấn</Select.Option>
+              <Select.Option value="Mét">Mét</Select.Option>
+              <Select.Option value="Thùng">Thùng</Select.Option>
+              <Select.Option value="Lít">Lít</Select.Option>
+            </Select>
+          </Form.Item>
 
-          <Row justify="end" style={{ marginTop: 24, gap: 12 }}>
-                <Button onClick={() => setEditingItem(null)}>Đóng</Button>
-                <Button type="primary" icon={<FiSave />} onClick={saveGoodDetail}>
-                  Lưu thay đổi
-                </Button>
-          </Row>
-        </Card>
-      )}
-    </div>
+          <Form.Item
+            name="tong_gia_tri"
+            label="Tổng trị giá"
+            rules={[{ required: true, message: "Vui lòng nhập trị giá!" }]}
+          >
+            <InputNumber
+              min={0.01}
+              step={0.01}
+              style={{ width: "100%" }}
+              formatter={(value) => (value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "")}
+              parser={(value) => value.replace(/,/g, "")}
+            />
+          </Form.Item>
+
+          <Form.Item name="ma_ngoai_te" label="Ngoại tệ" initialValue="USD">
+            <Select>
+              <Select.Option value="USD">USD</Select.Option>
+              <Select.Option value="EUR">EUR</Select.Option>
+              <Select.Option value="JPY">JPY</Select.Option>
+              <Select.Option value="VND">VND</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="ma_quoc_gia" label="Xuất xứ (mã quốc gia)">
+            <Select allowClear showSearch placeholder="Chọn quốc gia">
+              <Select.Option value="CN">Trung Quốc (CN)</Select.Option>
+              <Select.Option value="KR">Hàn Quốc (KR)</Select.Option>
+              <Select.Option value="JP">Nhật Bản (JP)</Select.Option>
+              <Select.Option value="US">Hoa Kỳ (US)</Select.Option>
+              <Select.Option value="TW">Đài Loan (TW)</Select.Option>
+              <Select.Option value="TH">Thái Lan (TH)</Select.Option>
+              <Select.Option value="DE">Đức (DE)</Select.Option>
+              <Select.Option value="FR">Pháp (FR)</Select.Option>
+              <Select.Option value="IT">Ý (IT)</Select.Option>
+              <Select.Option value="VN">Việt Nam (VN)</Select.Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }

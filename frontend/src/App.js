@@ -1,13 +1,13 @@
-import { App as AntdApp } from "antd";
+import NotifyProvider from "./components/notification/NotifyProvider";
 import ThemeProvider from "./theme";
 import AppRouter from "./routes";
 
 export default function App() {
   return (
-    <AntdApp>
+    <NotifyProvider>
       <ThemeProvider>
         <AppRouter />
       </ThemeProvider>
-    </AntdApp>
+    </NotifyProvider>
   );
 }

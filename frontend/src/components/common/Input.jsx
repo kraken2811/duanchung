@@ -1,4 +1,4 @@
-import { Input } from "antd";
+import { Input as AntdInput } from "antd";
 
 export default function Input({
   label,
@@ -6,24 +6,33 @@ export default function Input({
   onChange,
   placeholder,
   required,
-  type = "text",
   disabled,
 }) {
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 12 }}>
       {label && (
-        <label style={{ fontWeight: 500 }}>
-          {label} {required && <span style={{ color: "red" }}>*</span>}
-        </label>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            marginBottom: 6,
+            height: 20,          // 🔒 cố định label
+          }}
+        >
+          {label}
+          {required && <span style={{ color: "red" }}> *</span>}
+        </div>
       )}
 
-      <Input
-        type={type}
+      <AntdInput
         value={value}
+        onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
-        onChange={onChange}
-        style={{ marginTop: 6, borderRadius: 6 }}
+        style={{
+          width: "100%",
+          borderRadius: 6,
+        }}
       />
     </div>
   );

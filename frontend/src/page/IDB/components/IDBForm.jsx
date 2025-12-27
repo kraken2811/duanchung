@@ -368,7 +368,7 @@ export default function IDBForm() {
                 reset();
               }}
             >
-              Quay lại
+              Đóng
             </Button>
             <Button
               type="primary"

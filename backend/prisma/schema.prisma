@@ -451,6 +451,8 @@ model to_khai_hai_quan {
   thanh_toan_thue    thanh_toan_thue[]
   lich_su_trang_thai lich_su_trang_thai[]
   taiLieus           tai_lieu[]
+  sua_doi   sua_doi[]
+  snapshot  snapshot[]
 }
 
 model chi_tiet_to_khai {
@@ -611,6 +613,33 @@ model thong_bao_he_thong {
 
   id_nguoi_dung Int?
   nguoi_dung    nguoi_dung? @relation(fields: [id_nguoi_dung], references: [id_nguoi_dung])
+}
+
+model sua_doi {
+  id_sua_doi     Int      @id @default(autoincrement())
+  id_to_khai         Int
+  ma_phan_loai_sua   String
+  ngay_yeu_cau       DateTime
+  phan_loai_kiem_tra String?
+  ly_do_sua          String
+  so_van_ban         String?
+  ngay_van_ban       DateTime?
+  created_at         DateTime @default(now())
+
+  to_khai_hai_quan   to_khai_hai_quan @relation(fields: [id_to_khai], references: [id_to_khai])
+
+  @@index([id_to_khai])
+}
+
+model snapshot {
+  id_snapshot   Int      @id @default(autoincrement())
+  id_to_khai    Int
+  du_lieu_json  Json
+  created_at    DateTime @default(now())
+
+  to_khai_hai_quan to_khai_hai_quan @relation(fields: [id_to_khai], references: [id_to_khai])
+
+  @@index([id_to_khai])
 }
 
 //////////////////////////////////////////////////////
