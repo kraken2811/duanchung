@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require("../controllers/to_khai_hai_quan.controller");
 
 router.post("/idb/submit", controller.submitIDB);
+router.get("/status_tk", controller.getStatus);
 router.post("/ida/gen1", controller.saveGen1);
 router.put("/ida/gen2/:id", controller.saveGen2);
 router.post("/ida/declare/:id", controller.declareIDA);

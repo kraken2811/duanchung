@@ -72,6 +72,18 @@ exports.remove = async (req, res) => {
   }
 };
 
+exports.getStatus = async (_req, res) => {
+  try {
+    const data = await ToKhai.findTrangthai();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy dang sách tờ khai hải quan",
+      error: error.message,
+    })
+  }
+}
+
 exports.getIDB = async (req, res) => {
   try {
     const ma = req.params.ma;

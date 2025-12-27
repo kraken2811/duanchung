@@ -14,6 +14,7 @@ import {
   FiLogIn,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
+import { apiClient } from "@/lib/api";
 
 const { Sider } = Layout;
 
@@ -135,7 +136,7 @@ const menuItems = [
     label: "Tài khoản",
     icon: <FiLogIn />,
     children: [
-      { key: "/account", label: "Thông tin tài khoản" },
+      { key: "/account", label: "Đăng xuất" },
       { key: "/profile", label: "Hồ sơ cá nhân" },
     ],
   },
@@ -151,6 +152,22 @@ export default function Sidebar({ collapsed, onToggle }) {
   const onOpenChange = (keys) => {
     const latest = keys.find((k) => !openKeys.includes(k));
     setOpenKeys(latest ? [latest] : []);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Gọi BE để clear refresh_token (cookie)
+      await apiClient.post("/auths/logout");
+    } catch (err) {
+      // ignore lỗi logout
+    } finally {
+      // Xóa localStorage
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+
+      // Về trang login
+      navigate("/account", { replace: true });
+    }
   };
 
   return (
@@ -177,7 +194,13 @@ export default function Sidebar({ collapsed, onToggle }) {
         selectedKeys={[location.pathname]}
         openKeys={collapsed ? [] : openKeys}
         onOpenChange={onOpenChange}
-        onClick={(e) => navigate(e.key)}
+        onClick={(e) => {
+          if (e.key === "/account") {
+            handleLogout();
+          } else {
+            navigate(e.key);
+          }
+        }}
         items={menuItems}
         style={{ background: token.Layout?.siderBg }}
       />

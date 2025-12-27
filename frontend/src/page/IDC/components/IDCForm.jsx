@@ -63,6 +63,7 @@ export default function IDCForm() {
         declarationNumber: tk.so_to_khai,
         type: tk.loai_to_khai,
         regDate: tk.ngay_khai_bao,
+        customsOffice: tk.ma_cuc_hai_quan,
 
         importer: {
           taxCode: tk.cong_ty?.ma_so_thue || "",
@@ -656,6 +657,7 @@ export default function IDCForm() {
           <label>Điện thoại (Có thể sửa)</label>
           <Input
             placeholder="SĐT"
+            defaultValue={originalDeclaration?.importer.phone}
             onChange={(e) => {
               setValue("importer.phone", e.target.value);
               markFieldChanged("importer.phone");
