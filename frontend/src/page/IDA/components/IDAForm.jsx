@@ -7,6 +7,7 @@ import GeneralInfo1 from "./GeneralInfo1";
 import GeneralInfo2 from "./GeneralInfo2";
 import GoodsList from "./GoodsList";
 import dayjs from "dayjs";
+import '../css/IDA.css';
 import {
   createIDA,
   updateGen2,
@@ -197,11 +198,12 @@ export default function IDAForm() {
     <div>
       <div style={{ background: "#fff", padding: 12, marginBottom: 16 }}>
         <Space>
-          <Button onClick={handleSubmit(onSaveGen1)} icon={<FiSave />}>
+          <Button className="textSibar" onClick={handleSubmit(onSaveGen1)} icon={<FiSave />}>
             Ghi GEN 1
           </Button>
 
           <Button
+            className="textSibar"
             onClick={onSaveGen2}
             icon={<FiSave />}
             disabled={!idToKhai}
@@ -210,6 +212,7 @@ export default function IDAForm() {
           </Button>
 
           <Button
+            className="textSibar"
             type="primary"
             icon={<FiSend />}
             onClick={onDeclare}

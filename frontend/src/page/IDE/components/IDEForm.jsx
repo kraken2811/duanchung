@@ -12,6 +12,7 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs"; // Đảm bảo đã import dayjs
+import '../css/IDE.css';
 
 // --- GIẢ LẬP CÁC HẰNG SỐ & QUY TẮC ---
 const IDE_RULES = {

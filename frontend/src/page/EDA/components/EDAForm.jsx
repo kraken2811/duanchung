@@ -31,6 +31,7 @@ import {
   FiBox
 } from "react-icons/fi";
 import { useState } from "react";
+import '../css/EDA.css';
 import useNotify from "@/components/notification/useNotify";
 import { EDA_DEFAULT, GOOD_ITEM_DEFAULT, CONTAINER_DEFAULT, EXPORT_TYPES, INCOTERMS, TRANSPORT_METHODS, CURRENCIES } from "../types/eda.types";
 
@@ -364,7 +365,7 @@ export default function EDAForm() {
       <div className="mb-4">
         <Space>
           <Button type="primary" icon={<FiPlus />} onClick={handleAddGood}>Thêm hàng hóa</Button>
-          <Button icon={<FiUpload />}>Import Excel</Button>
+          <Button className="textSibar" icon={<FiUpload />}>Import Excel</Button>
         </Space>
       </div>
 
@@ -494,13 +495,13 @@ export default function EDAForm() {
       {/* TOOLBAR */}
       <Card bodyStyle={{ padding: "12px 16px" }} className="mb-4 bg-gray-50 sticky top-0 z-10 shadow-sm">
         <Space wrap>
-          <Button icon={<FiSave />} size="large" onClick={handleSubmit(onSave)}>Ghi tạm</Button>
-          <Button type="primary" icon={<FiSend />} size="large" onClick={handleSubmit(onDeclare)}>Khai báo (EDA)</Button>
-          <Button icon={<FiRefreshCw />} size="large">Lấy phản hồi</Button>
-          <Button icon={<FiPrinter />} size="large">In tờ khai</Button>
+          <Button className="textSibar" icon={<FiSave />} size="large" onClick={handleSubmit(onSave)}>Ghi tạm</Button>
+          <Button className="textSibar" type="primary" icon={<FiSend />} size="large" onClick={handleSubmit(onDeclare)}>Khai báo (EDA)</Button>
+          <Button className="textSibar" icon={<FiRefreshCw />} size="large">Lấy phản hồi</Button>
+          <Button className="textSibar" icon={<FiPrinter />} size="large">In tờ khai</Button>
           <Divider type="vertical" className="h-8" />
-          <Button icon={<FiPlus />} size="large" onClick={() => reset(EDA_DEFAULT)}>Tạo mới</Button>
-          <Button icon={<FiX />} size="large">Đóng</Button>
+          <Button className="textSibar" icon={<FiPlus />} size="large" onClick={() => reset(EDA_DEFAULT)}>Tạo mới</Button>
+          <Button className="textSibar" icon={<FiX />} size="large">Đóng</Button>
         </Space>
       </Card>
 

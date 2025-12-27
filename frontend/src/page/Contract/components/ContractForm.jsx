@@ -33,6 +33,7 @@ import {
   companyAPI,
   partnerAPI,
 } from "../api/contract.api";
+import '../css/Contract.css';
 
 const { Option } = Select;
 const { TextArea } = Input;
