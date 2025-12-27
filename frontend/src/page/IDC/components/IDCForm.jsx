@@ -14,6 +14,7 @@ import {
   Alert,
   Badge,
   Tooltip,
+  notification,
 } from "antd";
 import {
   FiSave,
@@ -24,56 +25,87 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import { useState } from "react";
-import useNotify from "@/components/notification/useNotify";
 import "../css/IDC.css";
+import {
+  getToKhai,
+  updateIDCChiTiet,
+  saveIDCForm,
+  guiIDC,
+  phanHoiHaiQuanIDC,
+} from "@/page/IDC/api/idc.api";
+import dayjs from "dayjs";
+import { MODIFICATION_TYPES } from "../types";
+import { type } from "@testing-library/user-event/dist/type";
 
 const { TextArea } = Input;
 
 export default function IDCForm() {
-  const notify = useNotify();
-  const { register, handleSubmit, setValue, watch } = useForm();
+  const { register, handleSubmit, setValue, watch, reset } = useForm();
 
   const [activeTab, setActiveTab] = useState("1");
   const [originalDeclaration, setOriginalDeclaration] = useState(null);
   const [modifiedGoods, setModifiedGoods] = useState([]);
   const [changedFields, setChangedFields] = useState(new Set());
+  const [editingGoods, setEditingGoods] = useState(null);
+  const [maPhanLoaiSua, setMaPhanLoaiSua] = useState(null);
+  const [tableKey, setTableKey] = useState(0);
 
   // Load tờ khai gốc
-  const loadOriginalDeclaration = (declarationNumber) => {
-    // Giả lập load dữ liệu tờ khai gốc
-    const mockOriginal = {
-      declarationNumber: declarationNumber,
-      type: "A11",
-      customsOffice: "1801",
-      regDate: "2024-01-15",
-      importer: {
-        taxCode: "0123456789",
-        name: "CÔNG TY TNHH ABC",
-        address: "123 Nguyễn Văn A, Q.1, TP.HCM",
-      },
-      invoice: {
-        number: "INV-2024-001",
-        date: "2024-01-10",
-        totalValue: 50000,
-        currency: "USD",
-      },
-      goods: [
-        {
-          id: 1,
-          index: 1,
-          description: "Máy tính xách tay",
-          hsCode: "84713000",
-          origin: "CN",
-          quantity: 100,
-          unit: "PCE",
-          unitPrice: 500,
-          totalValue: 50000,
+  const loadOriginalDeclaration = async (so_to_khai) => {
+    try {
+      const data = await getToKhai(so_to_khai);
+
+      const tk = data.to_khai;
+      const goods = data.hang_hoa || [];
+
+      const mapped = {
+        id_to_khai: tk.id_to_khai,
+        declarationNumber: tk.so_to_khai,
+        type: tk.loai_to_khai,
+        regDate: tk.ngay_khai_bao,
+
+        importer: {
+          taxCode: tk.cong_ty?.ma_so_thue || "",
+          name: tk.cong_ty?.ten_cong_ty || "",
+          address: tk.cong_ty?.dia_chi || "",
+          phone: tk.cong_ty?.dien_thoai || "",
         },
-      ],
-    };
-    setOriginalDeclaration(mockOriginal);
-    setModifiedGoods(mockOriginal.goods);
+
+        invoice: {
+          number: tk.hop_dong?.so_hop_dong || "",
+          totalValue: Number(tk.hop_dong?.tong_gia_tri || 0),
+          currency: "VND",
+        },
+        
+        goods: goods.map((g, idx) => ({
+          id: g.id_chi_tiet,
+          index: g.so_dong ?? idx + 1,
+          description: g.mo_ta_hang_hoa,
+          hsCode: g.ma_hs,
+          quantity: Number(g.so_luong || 0),
+          unit: g.don_vi_tinh,
+          unitPrice: Number(g.don_gia || 0),
+          totalValue: Number(g.tong_gia_tri || 0),
+          modified: false,
+        })),
+      };
+
+      setOriginalDeclaration(mapped);
+      setModifiedGoods(mapped.goods);
+
+      notification.success({
+        message: "Thành công",
+        description: "Đã tải tờ khai gốc",
+      });
+    } catch (err) {
+      console.error("LOAD IDC ERROR:", err);
+      notification.warning({
+        message: "Không hợp lệ",
+        description: "Tờ khai không tồn tại hoặc hiện không ở trạng thái cho phép sửa đổi",
+      });
+    }
   };
+
 
   // Đánh dấu trường đã thay đổi
   const markFieldChanged = (fieldName) => {
@@ -170,17 +202,85 @@ export default function IDCForm() {
   ];
 
   const editGoodsItem = (record) => {
-    console.log("Chỉnh sửa:", record);
+    setEditingGoods({
+      ...record,
+      reason: "",
+    });
   };
 
-  const onSave = (data) => {
-    console.log("LƯU IDC:", data);
-    notify.success("Đã lưu thông tin sửa đổi");
+  const onSave = async (formData) => {
+    try {
+      const duLieuSuaDoi = {
+        thong_tin_chung: {
+          importer: {
+            address: formData.importer?.address,
+            phone: formData.importer?.phone,
+          },
+          contract: {
+            so_hop_dong: formData.contract?.so_hop_dong,
+            tong_tri_gia: formData.contract?.tong_tri_gia,
+          },
+        },
+        hang_hoa_sua_doi: modifiedGoods,
+      };
+
+      await saveIDCForm({
+        id_to_khai: originalDeclaration.id_to_khai,
+        ma_phan_loai_sua: maPhanLoaiSua,
+        ly_do_sua: formData.modification.reason,
+        du_lieu_sua_doi: duLieuSuaDoi,
+      });
+
+      notification.success({
+        message: "Thành công",
+        description: "Đã lưu sửa đổi IDC",
+      });
+
+      reset();
+      setModifiedGoods([]);
+    } catch (err) {
+      notification.error({
+        message: "Lỗi",
+        description: err.message || "Lưu sửa đổi thất bại",
+      });
+    }
   };
 
-  const onDeclare = (data) => {
-    console.log("KHAI BÁO IDC:", data);
-    notify.success("Đã gửi tờ khai sửa đổi lên VNACCS");
+  const onDeclare = async () => {
+    try {
+      await guiIDC(originalDeclaration.id_to_khai);
+      notification.success({
+        message: "Thành công",
+        description: "Đã gửi tờ khai lên hải quan",
+      });
+
+      reset();
+    } catch {
+      notification.error({
+        message: "Lỗi",
+        description: "Có lỗi khi gửi tờ khai",
+      });
+    }
+  };
+
+  const handleGetResponse = async () => {
+    try {
+      const res = await phanHoiHaiQuanIDC(
+        originalDeclaration.id_to_khai,
+        {}
+      );
+
+      console.log("Phản hồi HQ:", res);
+      notification.success({
+        message: "Thành công",
+        description: "Đã nhận phản hồi hải quan",
+      });
+    } catch {
+      notification.error({
+        message: "Lỗi",
+        description: "Chưa có phản hồi",
+      });
+    }
   };
 
   // --- TAB RENDER FUNCTIONS ---
@@ -200,7 +300,7 @@ export default function IDCForm() {
           </label>
           <Input.Search
             size="large"
-            placeholder="Nhập số tờ khai gốc (VD: 1801240123)"
+            placeholder="Nhập số tờ khai gốc"
             enterButton={
               <Button type="primary" icon={<FiSearch />}>
                 Tìm kiếm
@@ -225,7 +325,7 @@ export default function IDCForm() {
                   <strong>Loại hình:</strong> {originalDeclaration.type}
                 </div>
                 <div>
-                  <strong>Người nhập khẩu:</strong>{" "}
+                  <strong>Người xuất/nhập khẩu:</strong>{" "}
                   {originalDeclaration.importer.name}
                 </div>
                 <div>
@@ -267,7 +367,11 @@ export default function IDCForm() {
               <label>Ngày  gốc</label>
               <Input
                 disabled
-                value={originalDeclaration.regDate}
+                value={
+                  originalDeclaration?.regDate
+                    ? dayjs(originalDeclaration.regDate).format("DD-MM-YYYY")
+                    : ""
+                }
                 style={{ background: "#f5f5f5", color: "#999" }}
               />
             </Col>
@@ -276,6 +380,23 @@ export default function IDCForm() {
       )}
     </div>
   );
+
+  const invoice = watch("invoice");
+  const goods = watch("goods");  
+  const renderDiff = (label, oldValue, newValue) => {
+    if (newValue === undefined || newValue === oldValue) return null;
+
+    return (
+      <div>
+        <strong>{label}:</strong>{" "}
+        <span style={{ color: "#999" }}>{oldValue ?? "-"}</span>{" "}
+        →{" "}
+        <span style={{ color: "#52c41a", fontWeight: 600 }}>
+          {newValue}
+        </span>
+      </div>
+    );
+  };
 
   const renderModificationInfo = () => (
     <div>
@@ -304,6 +425,7 @@ export default function IDCForm() {
               style={{ width: "100%" }}
               placeholder="Chọn loại sửa đổi"
               onChange={(v) => {
+                setMaPhanLoaiSua(v);
                 setValue("modification.type", v);
                 markFieldChanged("modification.type");
               }}
@@ -332,8 +454,14 @@ export default function IDCForm() {
             <DatePicker
               size="large"
               style={{ width: "100%" }}
+              disabledDate={(current) =>
+                current && current < dayjs().startOf("day")
+              }
               onChange={(d) => {
-                setValue("modification.requestDate", d);
+                setValue(
+                  "modification.requestDate",
+                  d ? d.toISOString() : null
+                );
                 markFieldChanged("modification.requestDate");
               }}
             />
@@ -404,7 +532,7 @@ export default function IDCForm() {
             {originalDeclaration && (
               <div style={{ fontSize: 13 }}>
                 <div>
-                  <strong>Invoice:</strong> {originalDeclaration.invoice.number}
+                  <strong>Hợp đồng:</strong> {originalDeclaration.invoice.number}
                 </div>
                 <div>
                   <strong>Tổng trị giá:</strong> $
@@ -429,8 +557,35 @@ export default function IDCForm() {
             }}
           >
             <h4 style={{ color: "#1890ff" }}>Thông tin SAU SỬA ĐỔI</h4>
-            <div style={{ fontSize: 13, color: "#1890ff" }}>
-              <div>Các thay đổi sẽ hiển thị ở đây sau khi bạn nhập liệu</div>
+
+            <div style={{ fontSize: 13 }}>
+              {renderDiff(
+                "Hợp đồng",
+                originalDeclaration?.invoice?.number,
+                invoice?.number
+              )}
+
+              {renderDiff(
+                "Tổng trị giá",
+                originalDeclaration?.invoice?.totalValue,
+                invoice?.totalValue
+              )}
+
+              {goods && goods.length !== originalDeclaration?.goods?.length &&
+                renderDiff(
+                  "Số lượng dòng hàng",
+                  originalDeclaration?.goods?.length,
+                  goods.length
+                )}
+
+              {/* Trường hợp CHƯA có thay đổi */}
+              {!invoice?.number &&
+                !invoice?.totalValue &&
+                (!goods || goods.length === originalDeclaration?.goods?.length) && (
+                  <div style={{ color: "#999" }}>
+                    Chưa có thông tin thay đổi
+                  </div>
+                )}
             </div>
           </div>
         </Col>
@@ -447,7 +602,7 @@ export default function IDCForm() {
         showIcon
         style={{ marginBottom: 16 }}
       />
-      <h3>Người nhập khẩu</h3>
+      <h3>Người xuất/nhập khẩu</h3>
       <Row gutter={16}>
         <Col span={8}>
           <label>Mã số thuế</label>
@@ -509,10 +664,10 @@ export default function IDCForm() {
         </Col>
       </Row>
       <Divider />
-      <h3>Thông tin Invoice (Các trường quan trọng)</h3>
+      <h3>Thông tin hợp đồng (Các trường quan trọng)</h3>
       <Row gutter={16}>
         <Col span={12}>
-          <label>Số Invoice (Có thể sửa)</label>
+          <label>Số hợp đồng (Có thể sửa)</label>
           <Input
             placeholder="Số hóa đơn"
             defaultValue={originalDeclaration?.invoice.number}
@@ -552,6 +707,55 @@ export default function IDCForm() {
     </div>
   );
 
+  const handleUpdateGoods = async () => {
+    const soLuong = Number(editingGoods.quantity) || 0;
+    const donGia = Number(editingGoods.unitPrice) || 0;
+
+    const tong_gia_tri = soLuong * donGia;
+
+    const payload = {
+      id_chi_tiet: editingGoods.id,
+      ma_hs: editingGoods.hsCode,
+      so_luong: soLuong,
+      don_gia: donGia,
+      tong_gia_tri,
+      ly_do: editingGoods.reason,
+    };
+
+    try {
+      const res = await updateIDCChiTiet(payload);
+
+      setModifiedGoods((prev) =>
+        prev.map((g) =>
+          g.id === editingGoods.id
+            ? {
+                ...g,
+                so_luong: soLuong,
+                don_gia: donGia,
+                tong_gia_tri,
+                modified: true,
+              }
+            : g
+        )
+      );
+
+      notification.success({
+        message: "Thành công",
+        description: "Đã cập nhật dòng hàng",
+      });
+
+      setEditingGoods(null);
+      setTableKey((k) => k + 1);
+    } catch (err) {
+      console.error("UPDATE IDC ERROR:", err);
+
+      notification.error({
+        message: "Lỗi",
+        description: "Cập nhật thất bại",
+      });
+    }
+  };
+
   const renderGoodsList = () => (
     <div>
       <Alert
@@ -562,13 +766,14 @@ export default function IDCForm() {
         style={{ marginBottom: 16 }}
       />
       <Table
-        className="custom-table" // <--- THÊM CLASS NÀY
+        key={tableKey}
+        className="custom-table"
         columns={goodsColumns}
         dataSource={modifiedGoods}
         rowKey="id"
         pagination={false}
-        bordered={false} // <--- ĐỔI THÀNH FALSE
-        size="middle"    // <--- ĐỔI SIZE CHO THOÁNG
+        bordered={false}
+        size="middle"
         rowClassName={(record) =>
           record.modified ? "row-modified" : ""
         }
@@ -591,15 +796,47 @@ export default function IDCForm() {
         <Row gutter={16}>
           <Col span={12}>
             <label>Mã HS Code (Có thể sửa)</label>
-            <Input placeholder="Nhập mã HS mới" />
+            <Input
+              placeholder="Nhập mã HS mới"
+              value={editingGoods?.hsCode}
+              disabled={!editingGoods}
+              onChange={(e) =>
+                setEditingGoods((prev) => ({
+                  ...prev,
+                  hsCode: e.target.value,
+                }))
+              }
+            />
           </Col>
           <Col span={6}>
             <label>Số lượng (Có thể sửa)</label>
-            <InputNumber style={{ width: "100%" }} placeholder="0" />
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="0"
+              value={editingGoods?.quantity}
+              disabled={!editingGoods}
+              onChange={(v) =>
+                setEditingGoods((prev) => ({
+                  ...prev,
+                  quantity: v,
+                }))
+              }
+            />
           </Col>
           <Col span={6}>
             <label>Đơn giá (Có thể sửa)</label>
-            <InputNumber style={{ width: "100%" }} placeholder="0.00" />
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="0.00"
+              value={editingGoods?.unitPrice}
+              disabled={!editingGoods}
+              onChange={(v) =>
+                setEditingGoods((prev) => ({
+                  ...prev,
+                  unitPrice: v,
+                }))
+              }
+            />
           </Col>
         </Row>
         <Row gutter={16} style={{ marginTop: 12 }}>
@@ -608,11 +845,34 @@ export default function IDCForm() {
             <TextArea
               rows={2}
               placeholder="Nhập lý do sửa đổi cho dòng hàng này"
+              value={editingGoods?.reason}
+              disabled={!editingGoods}
+              onChange={(e) =>
+                setEditingGoods((prev) => ({
+                  ...prev,
+                  reason: e.target.value,
+                }))
+              }
             />
           </Col>
         </Row>
         <div style={{ marginTop: 12, textAlign: "right" }}>
-          <Button type="primary">Cập nhật thay đổi</Button>
+          <Space>
+            <Button
+              disabled={!editingGoods}
+              onClick={() => setEditingGoods(null)}
+            >
+              Đóng
+            </Button>
+
+            <Button
+              type="primary"
+              disabled={!editingGoods}
+              onClick={handleUpdateGoods}
+            >
+              Cập nhật thay đổi
+            </Button>
+          </Space>
         </div>
       </div>
     </div>
@@ -715,8 +975,9 @@ export default function IDCForm() {
             In TK sửa đổi
           </Button>
           <Divider type="vertical" />
-          <Button disabled={!originalDeclaration}>Lấy phản hồi</Button>
-          <Button className="textSibar" >Đăng ký mới</Button>
+          <Button onClick={handleGetResponse} disabled={!originalDeclaration}>
+            Lấy phản hồi
+          </Button>
         </Space>
 
         <div style={{ marginTop: 8, fontSize: 12, color: "#cf1322" }}>

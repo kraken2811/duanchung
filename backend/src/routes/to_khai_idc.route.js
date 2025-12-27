@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const IDCController = require("../controllers/to_khai_idc.controller");
 
-router.get("/search/:so_to_khai", IDCController.searchTokhai);
-router.put("/chi-tiet", IDCController.updateChiTiet);
-router.post("/gui-hai-quan/:id_to_khai", IDCController.guiIDC);
-router.post("/phan-hoi-hai-quan", IDCController.phanHoiHaiQuan);
+const idcController = require("../controllers/to_khai_idc.controller");
+
+router.get("/:so_to_khai", idcController.getIDCDetail);
+router.post("/chi-tiet/update", idcController.updateChiTiet);
+router.post("/sua-doi", idcController.saveIDCForm);
+router.post("/gui/:id_to_khai", idcController.guiIDC);
+router.post("/phan-hoi/:id_to_khai",  idcController.phanHoiHaiQuan);
 
 module.exports = router;
