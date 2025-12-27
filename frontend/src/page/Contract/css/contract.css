@@ -43,3 +43,15 @@ button:hover{
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
 }
 
+.contract-btn-sidebar {
+  color: #595959 !important;
+}
+.contract-btn-sidebar:hover {
+  color: #f7f7f7 !important;
+  border-color: #1890ff;
+}
+
+.contract-save-btn-sidebar:hover {
+  background-color: #085399 !important;
+}
+

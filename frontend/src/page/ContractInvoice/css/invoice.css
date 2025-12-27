@@ -1,3 +1,7 @@
 .textSibar:hover{
     color: #ffff !important;
 }
+
+.invoice-save-btn-sidebar:hover{
+    background-color: #085399 !important;
+}
