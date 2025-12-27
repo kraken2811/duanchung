@@ -10,9 +10,11 @@ import {
   Tag,
   Typography,
   message,
+  Upload
 } from "antd";
 import dayjs from "dayjs"; // Đảm bảo đã import dayjs
-import '../css/IDE.css';
+import { getToKhaiIDE, getIDEList, uploadIDE } 
+  from "@/page/IDE/api/ide.api";
 
 // --- GIẢ LẬP CÁC HẰNG SỐ & QUY TẮC ---
 const IDE_RULES = {
@@ -31,40 +33,12 @@ const { TextArea } = Input;
 const { Option } = Select;
 const { Text } = Typography;
 
-export default function IDEForm({ formId, onSubmit }) {
-  // --- 1. DỮ LIỆU GIẢ LẬP (MOCK DATA) ---
-  // Lưu ý: Dữ liệu gốc thường là dạng chuẩn ISO (YYYY-MM-DD)
-  const mockDeclarations = [
-    {
-      no: "102742999910",
-      regDate: "2025-11-28", // Định dạng gốc YYYY-MM-DD
-      customsCode: "02CI - Chi cục HQ CK Cảng HP KV1",
-      typeCode: "A11 - Nhập kinh doanh tiêu dùng",
-      processDept: "Đội thủ tục hàng hóa XNK",
-      attachments: [
-        { id: 1, name: 'CV_XIN_HUY_102742.pdf', date: '28/11/2025', type: 'Công văn xin hủy' }
-      ]
-    },
-    {
-      no: "102742999911",
-      regDate: "2025-12-01", 
-      customsCode: "01B1 - Chi cục HQ CK Sân bay QT Nội Bài",
-      typeCode: "A12 - Nhập kinh doanh sản xuất",
-      processDept: "Đội giám sát kho hàng",
-      attachments: [
-        { id: 2, name: 'GIAI_TRINH_HUY_A12.pdf', date: '01/12/2025', type: 'Giải trình' },
-        { id: 3, name: 'BILL_OF_LADING.pdf', date: '01/12/2025', type: 'Vận đơn' }
-      ]
-    },
-    {
-      no: "102742999912",
-      regDate: "2025-12-05", 
-      customsCode: "03EE - Chi cục HQ CK Cảng Cái Lân",
-      typeCode: "E31 - Nhập nguyên liệu SXXK",
-      processDept: "Đội nghiệp vụ tổng hợp",
-      attachments: []
-    }
-  ];
+export default function IDEForm({ formId, onSubmit, onLoaded, onReset }) {
+  const [loading, setLoading] = React.useState(false);
+  const [currentIDE, setCurrentIDE] = React.useState(null);
+  const [options, setOptions] = React.useState([]);
+  const [fetching, setFetching] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
 
   // Khởi tạo Form
   const { 
@@ -72,6 +46,7 @@ export default function IDEForm({ formId, onSubmit }) {
     handleSubmit, 
     setValue, 
     watch, 
+    reset,
     formState: { errors } 
   } = useForm({
     defaultValues: {
@@ -86,36 +61,135 @@ export default function IDEForm({ formId, onSubmit }) {
     },
   });
 
+  React.useEffect(() => {
+    if (onReset) {
+      onReset(() => {
+        reset({
+          declarationNumber: null,
+          regDate: "",
+          customsCode: "",
+          typeCode: "",
+          processDept: "",
+          reasonCode: null,
+          reasonNote: "",
+          attachments: [],
+        });
+      });
+    }
+  }, [onReset, reset]);
+
+  const getProcessDeptLabel = (to_khai) => {
+    switch (to_khai.bo_phan_xu_ly) {
+      case "XANH":
+        return "Đội thủ tục hàng hóa XNK";
+      case "VANG":
+        return "Đội kiểm tra hồ sơ";
+      case "DO":
+        return "Đội kiểm tra thực tế";
+      default:
+        return "Đội thủ tục hàng hóa XNK";
+    }
+  };
+
   const currentAttachments = watch("attachments");
 
-  // --- 2. HÀM XỬ LÝ LOGIC CHỌN TỜ KHAI ---
-  const handleDeclarationChange = (value) => {
-    const selectedDecl = mockDeclarations.find(item => item.no === value);
+  const fetchDeclarations = async (value = "") => {
+    try {
+      setFetching(true);
+      const data = await getIDEList(value);
+      setOptions(data);
+    } catch (err) {
+      message.error("Không tải được danh sách tờ khai");
+    } finally {
+      setFetching(false);
+    }
+  };
 
-    if (selectedDecl) {
-      // Cập nhật các trường thông tin chung
-      setValue("customsCode", selectedDecl.customsCode);
-      setValue("typeCode", selectedDecl.typeCode);
-      setValue("processDept", selectedDecl.processDept);
-      setValue("attachments", selectedDecl.attachments);
-      
-      // --- XỬ LÝ FORMAT NGÀY THÁNG ---
-      // Nếu có ngày, dùng dayjs format lại thành "DD/MM/YYYY" trước khi hiển thị lên Input
-      if (selectedDecl.regDate) {
-        const formattedDate = dayjs(selectedDecl.regDate).format("DD/MM/YYYY");
-        setValue("regDate", formattedDate); 
-      } else {
-        setValue("regDate", "");
+  // --- 2. HÀM XỬ LÝ LOGIC CHỌN TỜ KHAI ---
+  const handleDeclarationChange = async (so_to_khai) => {
+    try {
+      setLoading(true);
+
+      reset({
+        declarationNumber: so_to_khai,
+        regDate: "",
+        customsCode: "",
+        typeCode: "",
+        processDept: "",
+        reasonCode: null,
+        reasonNote: "",
+        attachments: [],
+      });
+
+      const data = await getToKhaiIDE(so_to_khai);
+      setCurrentIDE(data);
+      onLoaded?.(data);
+
+      const { to_khai, ide_form, ho_so_dinh_kem } = data;
+
+      // ====== Đổ thông tin tờ khai ======
+      setValue("customsCode", to_khai.ma_hai_quan || "");
+      setValue("typeCode", to_khai.loai_hinh || "");
+      setValue("processDept", getProcessDeptLabel(to_khai));
+
+      if (to_khai.ngay_dang_ky) {
+        setValue(
+          "regDate",
+          dayjs(to_khai.ngay_dang_ky).format("DD/MM/YYYY")
+        );
       }
 
-      message.success(`Đã tải thông tin tờ khai ${value}`);
-    } else {
-      // Reset form nếu không tìm thấy
-      setValue("customsCode", "");
-      setValue("typeCode", "");
-      setValue("processDept", "");
-      setValue("regDate", "");
-      setValue("attachments", []);
+      // ====== IDE form (nếu đã từng lưu) ======
+      if (ide_form) {
+        setValue("reasonCode", ide_form.phan_loai_kiem_tra);
+        setValue("reasonNote", ide_form.ly_do_sua);
+      }
+
+      // ====== Hồ sơ đính kèm ======
+      setValue("attachments", ho_so_dinh_kem || []);
+
+      message.success(`Đã tải tờ khai ${so_to_khai}`);
+    } catch (err) {
+      console.error(err);
+      message.error("Không tải được tờ khai");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async ({ file, onSuccess, onError }) => {
+    try {
+      if (!currentIDE?.to_khai?.id_to_khai) {
+        message.error("Vui lòng chọn tờ khai trước");
+        return onError();
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("loai_doi_tuong", "TO_KHAI_HAI_QUAN");
+      formData.append("id_doi_tuong", currentIDE.to_khai.id_to_khai);
+      formData.append("phan_loai_khai_bao", "IDE");
+      formData.append("loai_tai_lieu", "Hồ sơ đính kèm");
+
+      const res = await uploadIDE(formData);
+
+      // đẩy file mới vào table
+      setValue("attachments", [
+        ...currentAttachments,
+        {
+          id: res.data.id_tai_lieu,
+          name: res.data.ten_file,
+          date: dayjs(res.data.ngay_tai_len).format("DD/MM/YYYY"),
+          type: res.data.loai_tai_lieu,
+        },
+      ]);
+
+      message.success("Upload thành công");
+      onSuccess();
+    } catch (err) {
+      console.error(err);
+      message.error("Upload thất bại");
+      onError(err);
     }
   };
 
@@ -163,15 +237,19 @@ export default function IDEForm({ formId, onSubmit }) {
                   {...field}
                   showSearch
                   placeholder="Chọn số tờ khai..."
-                  style={{ width: '100%', fontWeight: 'bold' }}
-                  status={errors.declarationNumber ? "error" : ""}
+                  filterOption={false}
+                  onSearch={fetchDeclarations}
+                  onFocus={() => fetchDeclarations("")}
+                  notFoundContent={fetching ? "Đang tải..." : "Không có dữ liệu"}
                   onChange={(val) => {
                     field.onChange(val);
                     handleDeclarationChange(val);
                   }}
                 >
-                  {mockDeclarations.map(item => (
-                    <Option key={item.no} value={item.no}>{item.no}</Option>
+                  {options.map((item) => (
+                    <Option key={item.so_to_khai} value={item.so_to_khai}>
+                      {item.so_to_khai}
+                    </Option>
                   ))}
                 </Select>
               )}
@@ -287,7 +365,32 @@ export default function IDEForm({ formId, onSubmit }) {
         title="3. Hồ sơ đính kèm (HYS)" 
         style={{ marginBottom: 16, border: '1px solid #d9d9d9' }}
         headStyle={{ backgroundColor: '#e6f7ff', borderBottom: '1px solid #91d5ff', color: '#0050b3' }}
-        extra={<a style={{ color: '#070707ff', fontWeight: 500 }} href="#">+ Thêm tệp</a>}
+        extra={
+          <Upload
+            showUploadList={false}
+            disabled={false}
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            customRequest={async (options) => {
+              const { file, onSuccess, onError } = options;
+              try {
+                setUploading(true);
+                await handleUpload({ file, onSuccess, onError });
+              } finally {
+                setUploading(false);
+              }
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 500,
+                cursor: "pointer",
+                color: "#0050b3",
+              }}
+            >
+              {uploading ? "Đang tải..." : "+ Thêm tệp"}
+            </span>
+          </Upload>
+        }
       >
         <Table 
           columns={columns} 

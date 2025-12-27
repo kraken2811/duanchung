@@ -112,7 +112,9 @@ export default function IDBForm() {
           code: item.ma_hs,
           desc: item.mo_ta_hang_hoa || "",
           qty: item.so_luong ?? "",
-          taxRate: "",
+          tt: item.ma_ngoai_te,
+          dv: item.don_vi_tinh,
+          taxRate: Number(item.bieu_thue?.thue_suat || 0),
           taxVal: Number(item.tien_thue || 0)
         }))
       );
@@ -204,11 +206,12 @@ export default function IDBForm() {
 
   const detailColumns = [
     { title: "Mã hàng", dataIndex: "code", width: 120 },
-    { title: "Mô tả", dataIndex: "desc", width: 300, align: "center" },
+    { title: "Mô tả", dataIndex: "desc", width: 380},
     { title: "Số lượng", dataIndex: "qty", width: 130, align: "center" },
+    { title: "Đơn vị tính", dataIndex: "dv", width: 180, align: "center" },
     { title: "Thuế suất (%)", dataIndex: "taxRate", width: 230, align: "center" },
     {
-      title: "Tiền thuế (VND)",
+      title: `Tiền thuế (${goods?.[0]?.tt || ""})`,
       dataIndex: "taxVal",
       align: "right",
       render: (val) => <b style={{ color: "#cf1322" }}>{val.toLocaleString()}</b>,
@@ -225,6 +228,8 @@ export default function IDBForm() {
       );
     }, 0);
   }, [goods]);
+
+  const currency = goods?.[0]?.tt || "";
 
   return (
     <div style={{ padding: "0 12px" }}>
@@ -334,10 +339,12 @@ export default function IDBForm() {
               <Col span={12} style={{ textAlign: 'right' }}>
                 <Statistic
                   title="Tổng thuế phải nộp"
-                  value={totalTaxFromTable}
+                  valueRender={() => (
+                    <span style={{ color: "#cf1322", fontWeight: "bold", fontSize: 24 }}>
+                      {totalTaxFromTable.toLocaleString()} {currency}
+                    </span>
+                  )}
                   precision={0}
-                  valueStyle={{ color: '#cf1322', fontWeight: 'bold', fontSize: 24 }}
-                  suffix="VND"
                 />
               </Col>
             </Row>

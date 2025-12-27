@@ -72,11 +72,18 @@ const getIDBData = async (so_to_khai) => {
           mo_ta_hang_hoa: true,
           so_luong: true,
           don_vi_tinh: true,
+          ma_ngoai_te: true,
 
           // KẾT QUẢ THUẾ (đã tính)
           tien_thue: true,
           tien_vat: true,
           thue_bo_sung: true,
+
+          bieu_thue: {
+            select: {
+              thue_suat: true,
+            },
+          },
         },
       },
     },
@@ -310,10 +317,10 @@ const statistics = async () => {
       where: { trang_thai_gui: 'DA_THONG_QUAN' },
     }),
     prisma.to_khai_hai_quan.count({
-      where: { trang_thai_gui: { in: ["NHAP", "CHO_GUI"]} },
+      where: { trang_thai_gui: "CHO_GUI" },
     }),
     prisma.to_khai_hai_quan.count({
-      where: { trang_thai_gui: 'YEU_CAU_SUA' },
+      where: { trang_thai_gui: 'TU_CHOI' },
     }),
   ]);
 

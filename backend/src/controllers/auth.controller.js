@@ -175,18 +175,34 @@ exports.refresh = async (req, res) => {
     res.status(401).json({ message: 'Refresh token hết hạn' });
   }
 };
+
 exports.logout = async (req, res) => {
-  const refreshToken = req.cookies.refresh_token;
-  if (refreshToken) {
+  try {
+    const refreshToken = req.cookies?.refresh_token;
+
+    if (!refreshToken) {
+      return res.status(200).json({ message: "Đã logout" });
+    }
+
+    // ❌ thu hồi refresh token
     await prisma.refresh_token.updateMany({
       where: { token: refreshToken },
       data: { is_revoked: true },
     });
-  }
 
-  res.clearCookie('refresh_token');
-  res.json({ message: 'Đăng xuất thành công' });
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // true nếu https
+    });
+
+    return res.json({ message: "Logout thành công" });
+  } catch (err) {
+    console.error("logout error:", err);
+    res.status(500).json({ message: "Logout thất bại" });
+  }
 };
+
 exports.checkMst = async (req, res) => {
   const { ma_so_thue } = req.body;
 
