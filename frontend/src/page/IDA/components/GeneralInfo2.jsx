@@ -1,13 +1,13 @@
 import { Row, Col, Input, DatePicker, Divider, Select, InputNumber } from "antd";
 import { Controller } from "react-hook-form";
 
-const { TextArea } = Input; 
+const { TextArea } = Input;
 const FieldLabel = ({ children, required }) => (
   <div
     style={{
-      height: 32,                
+      height: 32,
       display: "flex",
-      alignItems: "center",     
+      alignItems: "center",
       fontWeight: 500,
       fontSize: 13,
       marginBottom: 4,
@@ -218,7 +218,20 @@ export default function GeneralInfo2({ control }) {
             render={({ field }) => <Input {...field} />}
           />
         </Col>
-
+        <Col span={12}>
+          <FieldLabel required>Loại hợp đồng</FieldLabel>
+          <Controller
+            name="otherInformation.contractType"
+            control={control}
+            render={({ field }) => (
+              <Select {...field} style={{ width: "100%" }}>
+                <Select.Option value="GIA_CONG">Gia công</Select.Option>
+                <Select.Option value="XUAT_NHAP_KHAU">Xuất nhập khẩu</Select.Option>
+                <Select.Option value="MUA_BAN">Mua bán</Select.Option>
+              </Select>
+            )}
+          />
+        </Col>
         <Col span={12}>
           <FieldLabel>Ngày hợp đồng</FieldLabel>
           <Controller

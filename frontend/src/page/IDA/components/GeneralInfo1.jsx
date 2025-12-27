@@ -55,7 +55,7 @@ export default function GeneralInfo1({ control, setValue }) {
                 required
                 {...field}
                 options={loaiHinhs.map(l => ({
-                  value: l.id_loai_hinh, 
+                  value: l.id_loai_hinh,
                   label: `${l.ma_loai_hinh} - ${l.ten_loai_hinh}`,
                 }))}
               />
@@ -71,11 +71,15 @@ export default function GeneralInfo1({ control, setValue }) {
               <Select
                 label="Cơ quan hải quan"
                 required
+                showSearch
+                optionFilterProp="label"
                 {...field}
-                options={khoBais.map(k => ({
-                  value: k.ma_cuc_hai_quan,
-                  label: `${k.ma_cuc_hai_quan} - ${k.ten_dia_diem}`,
-                }))}
+                options={khoBais
+                  .filter(k => k.ma_cuc_hai_quan) // loại bỏ null
+                  .map(k => ({
+                    value: k.ma_dia_diem, // ← DÙNG ma_dia_diem ĐỂ UNIQUE
+                    label: `${k.ma_cuc_hai_quan} - ${k.ten_dia_diem}`,
+                  }))}
               />
             )}
           />

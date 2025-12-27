@@ -1,3 +1,5 @@
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 const ToKhai = require("../models/to_khai_hai_quan.model");
 
 /* ================= GET ALL ================= */
@@ -317,107 +319,199 @@ exports.saveGen1 = async (req, res) => {
       nguoi_tao,
     } = req.body;
 
-    if (!loai_to_khai || !id_cong_ty) {
-      return res.status(400).json({
-        message: "Thiếu loai_to_khai hoặc id_cong_ty",
-      });
-    }
-
-    const data = await prisma.to_khai_hai_quan.create({
+    const toKhai = await prisma.to_khai_hai_quan.create({
       data: {
         loai_to_khai,
         phan_loai,
         ma_cuc_hai_quan,
-        ngay_khai_bao,
-        id_cong_ty,
-        id_loai_hinh,
-        nguoi_tao,
+        ngay_khai_bao: ngay_khai_bao
+          ? new Date(ngay_khai_bao)
+          : null,
+
+        // ✅ đúng: connect công ty
+        cong_ty: {
+          connect: { id_cong_ty },
+        },
+
+        // ✅ đúng: connect loại hình
+        loai_hinh_dac_biet: {
+          connect: { id_loai_hinh },
+        },
+        nguoi_dung: {
+          connect: { id_nguoi_dung: nguoi_tao },
+        },
+
         trang_thai_gui: "CHO_GUI",
+        lo_hang: {
+          create: {
+            so_lo_hang: `LH-${Date.now()}`,
+          },
+        },
+      },
+
+      include: {
+        lo_hang: true,
       },
     });
 
     res.json({
-      message: "Tạo Gen 1 thành công",
-      data,
+      message: "Tạo GEN 1 thành công",
+      data: toKhai,
     });
   } catch (err) {
     console.error("GEN1 ERROR:", err);
     res.status(500).json({
-      message: "Lỗi ghi Gen 1 IDA",
+      message: "Lỗi lưu GEN 1",
       error: err.message,
     });
   }
 };
+
+
 exports.saveGen2 = async (req, res) => {
   try {
-    const idToKhai = Number(req.params.id);
-    const {
-      invoice,
-      customsValue,
-      taxesAndGuarantees,
-      otherInformation,
-      notes,
-    } = req.body;
+    const id = Number(req.params.id);
+    const { hoa_don, tri_gia, hop_dong } = req.body;
 
-    if (!idToKhai) {
+    if (!id)
       return res.status(400).json({ message: "Thiếu id tờ khai" });
-    }
 
-    // 1. Lấy tờ khai để biết id_lo_hang
-    const toKhai = await prisma.to_khai_hai_quan.findUnique({
-      where: { id_to_khai: idToKhai },
+    const result = await prisma.$transaction(async (tx) => {
+      const toKhai = await tx.to_khai_hai_quan.findUnique({
+        where: { id_to_khai: id },
+        include: { lo_hang: true },
+      });
+
+      if (!toKhai) throw new Error("Không tìm thấy tờ khai");
+
+      /* =======================
+         1. HỢP ĐỒNG
+      ======================= */
+      let hopDongId = toKhai.id_hop_dong;
+
+      if (hop_dong) {
+        if (hopDongId) {
+          // Update hợp đồng
+          await prisma.hop_dong.update({
+            where: { id_hop_dong: hopDongId },
+            data: {
+              so_hop_dong: hop_dong.so_hop_dong,
+              ngay_ky: hop_dong.ngay_ky
+                ? new Date(hop_dong.ngay_ky)
+                : null,
+            },
+          });
+        } else {
+          // Tạo mới hợp đồng
+          const newHopDong = await prisma.hop_dong.create({
+            data: {
+              id_hop_dong: `HD_${Date.now()}`,
+              so_hop_dong: hop_dong.so_hop_dong,
+              loai_hop_dong: "NHAP_KHAU",
+              ngay_ky: hop_dong.ngay_ky
+                ? new Date(hop_dong.ngay_ky)
+                : null,
+              id_cong_ty: toKhai.id_cong_ty,
+            },
+          });
+
+          hopDongId = newHopDong.id_hop_dong;
+
+          // Gắn hợp đồng vào tờ khai
+          await prisma.to_khai_hai_quan.update({
+            where: { id_to_khai: id },
+            data: {
+              id_hop_dong: hopDongId,
+            },
+          });
+        }
+      }
+
+
+      /* =======================
+         2. HÓA ĐƠN
+      ======================= */
+      if (hoa_don) {
+        const existed = await tx.hoa_don.findFirst({
+          where: { id_lo_hang: toKhai.id_lo_hang },
+        });
+
+        if (existed) {
+          await tx.hoa_don.update({
+            where: { id_hoa_don: existed.id_hoa_don },
+            data: {
+              so_hoa_don: hoa_don.so_hoa_don,
+              ngay_hoa_don: hoa_don.ngay_hoa_don
+                ? new Date(hoa_don.ngay_hoa_don)
+                : null,
+              dieu_kien_giao_hang: hoa_don.dieu_kien_giao_hang,
+              ma_ngoai_te: hoa_don.ma_ngoai_te,
+              tong_tien: hoa_don.tong_tien,
+            },
+          });
+        } else {
+          await tx.hoa_don.create({
+            data: {
+              ...hoa_don,
+              id_lo_hang: toKhai.id_lo_hang,
+            },
+          });
+        }
+      }
+
+      /* =======================
+         3. TRỊ GIÁ
+      ======================= */
+      if (tri_gia) {
+        const existed = await tx.to_khai_tri_gia.findFirst({
+          where: { id_to_khai_hai_quan: id },
+        });
+
+        const giaTri =
+          (tri_gia.phi_van_chuyen || 0) +
+          (tri_gia.phi_bao_hiem || 0);
+
+        if (existed) {
+          await tx.to_khai_tri_gia.update({
+            where: {
+              id_to_khai_tri_gia: existed.id_to_khai_tri_gia,
+            },
+            data: {
+              ma_phan_loai_khai_tri_gia: tri_gia.phuong_phap,
+              gia_co_so_hieu_chinh: giaTri,
+            },
+          });
+        } else {
+          await tx.to_khai_tri_gia.create({
+            data: {
+              id_to_khai_hai_quan: id,
+              ma_phan_loai_khai_tri_gia: tri_gia.phuong_phap,
+              gia_co_so_hieu_chinh: giaTri,
+              tong_he_so_phan_bo: 1,
+              ma_tien_te: "USD",
+              nguoi_nop_thue: "IMPORTER",
+            },
+          });
+        }
+
+        // cập nhật tổng tiền thuế tờ khai
+        await tx.to_khai_hai_quan.update({
+          where: { id_to_khai: id },
+          data: {
+            so_tien_thue: giaTri,
+          },
+        });
+      }
+
+      return {
+        id_to_khai: id,
+        id_hop_dong: hopDongId,
+      };
     });
 
-    if (!toKhai?.id_lo_hang) {
-      return res.status(400).json({
-        message: "Tờ khai chưa gắn lô hàng",
-      });
-    }
-
-    // 2. Lưu hóa đơn
-    if (invoice) {
-      await prisma.hoa_don.upsert({
-        where: {
-          id_lo_hang: toKhai.id_lo_hang, // ✅ ĐÚNG
-        },
-        update: {
-          so_hoa_don: invoice.number,
-          ngay_hoa_don: invoice.date,
-          tong_tien: invoice.totalValue,
-          ma_ngoai_te: invoice.currency,
-          dieu_kien_giao_hang: invoice.incoterms,
-        },
-        create: {
-          so_hoa_don: invoice.number,
-          ngay_hoa_don: invoice.date,
-          tong_tien: invoice.totalValue,
-          ma_ngoai_te: invoice.currency,
-          dieu_kien_giao_hang: invoice.incoterms,
-          id_lo_hang: toKhai.id_lo_hang,
-        },
-      });
-    }
-
-    // 3. Lưu trị giá
-    if (customsValue) {
-      await prisma.to_khai_tri_gia.upsert({
-        where: {
-          id_to_khai_hai_quan: idToKhai,
-        },
-        update: {
-          ma_phan_loai_khai_tri_gia: customsValue.method,
-          gia_co_so_hieu_chinh: customsValue.freight,
-        },
-        create: {
-          id_to_khai_hai_quan: idToKhai,
-          ma_phan_loai_khai_tri_gia: customsValue.method,
-          gia_co_so_hieu_chinh: customsValue.freight,
-        },
-      });
-    }
-
-    res.json({
+    return res.json({
       message: "Lưu GEN 2 thành công",
+      data: result,
     });
   } catch (err) {
     console.error("GEN2 ERROR:", err);
@@ -428,35 +522,48 @@ exports.saveGen2 = async (req, res) => {
   }
 };
 
+
+
+
 exports.declareIDA = async (req, res) => {
   try {
     const id_to_khai = Number(req.params.id);
-    const { id_lo_hang } = req.body;
 
-    if (!Number.isInteger(id_to_khai)) {
-      return res.status(400).json({ message: "id_to_khai không hợp lệ" });
+    if (!Number.isInteger(id_to_khai) || id_to_khai <= 0) {
+      return res.status(400).json({ message: "ID tờ khai không hợp lệ" });
     }
 
-    if (!id_lo_hang) {
-      return res.status(400).json({ message: "Chưa chọn lô hàng" });
+    // Kiểm tra tờ khai tồn tại và chưa gửi
+    const toKhai = await prisma.to_khai_hai_quan.findUnique({
+      where: { id_to_khai },
+    });
+
+    if (!toKhai) {
+      return res.status(404).json({ message: "Không tìm thấy tờ khai" });
     }
 
-    const updated = await ToKhai.update(id_to_khai, {
-      id_lo_hang,
-      trang_thai_gui: "CHO_GUI",
+    if (toKhai.trang_thai_gui === "DA_GUI") {
+      return res.status(400).json({ message: "Tờ khai đã được gửi trước đó" });
+    }
+
+    // Cập nhật trạng thái thành ĐÃ GỬI + ngày khai báo thực tế
+    const updated = await prisma.to_khai_hai_quan.update({
+      where: { id_to_khai },
+      data: {
+        trang_thai_gui: "DA_GUI",
+        ngay_khai_bao: new Date(), // ngày gửi thực tế
+      },
     });
 
     res.status(200).json({
-      message: "Khai báo IDA thành công",
+      message: "Khai báo tờ khai thành công! Trạng thái: Đã gửi",
       data: updated,
     });
   } catch (error) {
-    console.error("declareIDA:", error);
+    console.error("Khai báo IDA lỗi:", error);
     res.status(500).json({
-      message: "Lỗi khai báo IDA",
+      message: "Lỗi khi khai báo tờ khai",
       error: error.message,
     });
   }
 };
-
-

@@ -1,11 +1,9 @@
 // controllers/hop_dong.controller.js
+
 const HopDong = require("../models/hop_dong.model");
 
 /**
  * Chuẩn hoá dữ liệu đầu vào
- * - ép số
- * - trim chuỗi
- * - rỗng -> null
  */
 function normalize(body = {}) {
   const data = { ...body };
@@ -34,7 +32,7 @@ function normalize(body = {}) {
     if (typeof data[k] === "string") data[k] = data[k].trim();
   });
 
-  // Ngày
+  // Ngày rỗng → null
   [
     "ngay_ky",
     "ngay_het_han",
@@ -64,17 +62,20 @@ exports.getAll = async (_req, res) => {
 
 /**
  * GET /hop_dong/:id
+ * id_hop_dong là UUID (char(36)) → giữ nguyên string
  */
 exports.getById = async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
+  const id = req.params.id?.trim();
+
+  if (!id) {
+    return res.status(400).json({ error: "ID hợp đồng không hợp lệ hoặc thiếu" });
+  }
 
   try {
     const row = await HopDong.getById(id);
-    if (!row)
+    if (!row) {
       return res.status(404).json({ error: "Không tìm thấy hợp đồng" });
-
+    }
     res.json(row);
   } catch (err) {
     console.error("Lỗi khi lấy hợp đồng:", err);
@@ -86,12 +87,8 @@ exports.getById = async (req, res) => {
  * POST /hop_dong
  */
 exports.insert = async (req, res) => {
-  const userId = req.user?.id_nguoi_dung; 
+  const userId = req.user?.id_nguoi_dung;
   const payload = normalize(req.body);
-
-  // (tuỳ chọn) validate tối thiểu
-  // if (!payload.so_hop_dong || !payload.id_doi_tac)
-  //   return res.status(400).json({ error: "Thiếu so_hop_dong hoặc id_doi_tac" });
 
   try {
     const created = await HopDong.createFullContract(payload, userId);
@@ -104,14 +101,17 @@ exports.insert = async (req, res) => {
 
 /**
  * PUT /hop_dong/:id
+ * id_hop_dong là UUID → dùng string
  */
 exports.update = async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
+  const id = req.params.id?.trim();
+
+  if (!id) {
+    return res.status(400).json({ error: "ID hợp đồng không hợp lệ hoặc thiếu" });
+  }
 
   const payload = normalize(req.body);
-  payload.ngay_cap_nhat = new Date(); // auto update time
+  payload.ngay_cap_nhat = new Date();
 
   try {
     await HopDong.update(id, payload);
@@ -124,12 +124,14 @@ exports.update = async (req, res) => {
 
 /**
  * DELETE /hop_dong/:id
- * ⚠️ Thực tế nên chuyển sang soft delete / trạng thái HỦY
+ * Soft delete → chuyển trạng thái HỦY
  */
 exports.delete = async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id))
-    return res.status(400).json({ error: "id không hợp lệ" });
+  const id = req.params.id?.trim();
+
+  if (!id) {
+    return res.status(400).json({ error: "ID hợp đồng không hợp lệ hoặc thiếu" });
+  }
 
   try {
     await HopDong.remove(id);

@@ -23,10 +23,8 @@ export const createBillOfLading = (payload) =>
   apiClient
     .post("/van_dons", payload)
     .then((r) => r.data);
-export const declareIDA = (id) =>
-  apiClient
-    .post(`/to_khai_hai_quans/ida/declare/${id}`)
-    .then((r) => r.data);
+export const declareIDA = (idToKhai) =>
+  apiClient.post(`/to_khai_hai_quans/ida/declare/${idToKhai}`);
 export const getToKhaiList = (params) =>
   apiClient
     .get("/to_khai_hai_quans/list", { params })

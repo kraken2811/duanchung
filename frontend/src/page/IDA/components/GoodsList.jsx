@@ -1,298 +1,292 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
-  Space,
-  Tag,
-  message,
   Modal,
   Form,
   Input,
   InputNumber,
   Select,
-  Empty,
+  message,
+  Popconfirm,
+  Space,
 } from "antd";
-import { FiPlus, FiEdit, FiTrash2, FiPercent } from "react-icons/fi";
-
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import DataTable from "@/components/common/DataTable";
 import {
-  getByDraftId,
   getByToKhaiId,
   createChiTietToKhai,
-  updateChiTietToKhai,
   deleteChiTietToKhai,
-  calcTaxByMaHS,
 } from "../api/chiTietToKhai.api";
+import { getMaHs } from "../api/chiTietToKhai.api"; // API lấy mã HS
 
 const { TextArea } = Input;
 
-/**
- * Props:
- * - draftId?: string   // IDA nháp
- * - toKhaiId?: number // ID tờ khai sau khi ghi
- */
-export default function GoodsList({ draftId, toKhaiId }) {
+export default function GoodsList({ idToKhai }) {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+  const [maHsList, setMaHsList] = useState([]);
 
-  const isLocked = !!toKhaiId;
+  // Load danh sách mã HS
+  useEffect(() => {
+    getMaHs()
+      .then(setMaHsList)
+      .catch(() => message.error("Không tải được danh sách mã HS"));
+  }, []);
 
-  /* ================= LOAD DATA ================= */
+  // Load chi tiết hàng hóa theo tờ khai
   const fetchData = async () => {
-    if (!draftId && !toKhaiId) return;
-
-    setLoading(true);
-    try {
-      const res = toKhaiId
-        ? await getByToKhaiId(toKhaiId)
-        : await getByDraftId(draftId);
-
-      setData(res);
-    } catch {
-      message.error("Không tải được danh sách hàng hóa");
+    if (!idToKhai) {
+      setData([]);
+      return;
     }
-    setLoading(false);
+    try {
+      const res = await getByToKhaiId(idToKhai);
+      setData(res || []);
+    } catch {
+      message.error("Lỗi tải danh sách hàng hóa");
+      setData([]);
+    }
   };
 
   useEffect(() => {
     fetchData();
-  }, [draftId, toKhaiId]);
+  }, [idToKhai]);
 
-  /* ================= SAVE ================= */
+  // Tự động điền mô tả khi chọn mã HS
+  const handleMaHsChange = (ma_hs) => {
+    const hs = maHsList.find((h) => h.ma_hs === ma_hs);
+    if (hs) {
+      form.setFieldsValue({
+        mo_ta_hang_hoa: hs.mo_ta || "",
+      });
+    }
+  };
+
+  // Lưu hàng hóa
   const handleSave = async () => {
+    if (!idToKhai) {
+      message.error("Chưa tạo tờ khai, không thể thêm hàng hóa!");
+      setOpen(false);
+      return;
+    }
+
     try {
       const values = await form.validateFields();
 
+      const maHS = values.ma_hs;
+      const soLuong = Number(values.so_luong);
+      const tongGiaTri = Number(values.tong_gia_tri);
+
+      if (soLuong <= 0) return message.error("Số lượng phải lớn hơn 0");
+      if (tongGiaTri <= 0) return message.error("Trị giá phải lớn hơn 0");
+
       const payload = {
-        ...values,
-        ...(draftId && { draft_id: draftId }),
+        id_to_khai: idToKhai,
+        ma_hs: maHS,
+        mo_ta_hang_hoa: values.mo_ta_hang_hoa?.trim() || null,
+        so_luong: soLuong,
+        don_vi_tinh: values.don_vi_tinh || null,
+        tong_gia_tri: tongGiaTri,
+        ma_ngoai_te: values.ma_ngoai_te || "USD",
+        ma_quoc_gia: values.ma_quoc_gia || null,
       };
 
-      if (editing) {
-        await updateChiTietToKhai(editing.id_chi_tiet, payload);
-        message.success("Cập nhật hàng hóa thành công");
-      } else {
-        await createChiTietToKhai(payload);
-        message.success("Thêm hàng hóa thành công");
-      }
+      await createChiTietToKhai(payload);
 
+      message.success("Thêm hàng hóa thành công!");
       setOpen(false);
-      setEditing(null);
       form.resetFields();
       fetchData();
     } catch (err) {
-      message.error(err.message || "Lỗi lưu dữ liệu");
+      if (err.errorFields) return; // lỗi validate form
+      const msg = err.response?.data?.message || "Thêm hàng hóa thất bại";
+      message.error(msg);
     }
   };
 
-  /* ================= DELETE ================= */
-  const handleDelete = (id) => {
-    Modal.confirm({
-      title: "Xóa hàng hóa?",
-      content: "Dữ liệu sẽ bị xóa",
-      okType: "danger",
-      onOk: async () => {
-        await deleteChiTietToKhai(id);
-        message.success("Đã xóa");
-        fetchData();
-      },
-    });
-  };
-
-  /* ================= CALC TAX ================= */
-  const handleCalcTax = async (row) => {
+  // Xóa hàng hóa
+  const handleDelete = async (id) => {
     try {
-      await calcTaxByMaHS(row.id_chi_tiet, {
-        ma_hs: row.ma_hs,
-        tong_gia_tri: row.tong_gia_tri,
-      });
-      message.success("Đã tính thuế");
+      await deleteChiTietToKhai(id);
+      message.success("Xóa thành công");
       fetchData();
-    } catch (err) {
-      message.error(err.response?.data?.error || "Không tính được thuế");
+    } catch {
+      message.error("Xóa thất bại");
     }
   };
-
-  /* ================= COLUMNS ================= */
-  const columns = [
-    {
-      title: "STT",
-      render: (_, __, i) => i + 1,
-      width: 60,
-      align: "center",
-    },
-    {
-      title: "Mô tả hàng hóa",
-      dataIndex: "mo_ta_hang_hoa",
-    },
-    {
-      title: "HS",
-      dataIndex: "ma_hs",
-      width: 120,
-      align: "center",
-      render: (v) => <Tag color="blue">{v}</Tag>,
-    },
-    {
-      title: "SL",
-      dataIndex: "so_luong",
-      width: 90,
-      align: "right",
-    },
-    {
-      title: "ĐVT",
-      dataIndex: "don_vi_tinh",
-      width: 90,
-      align: "center",
-    },
-    {
-      title: "Trị giá",
-      dataIndex: "tong_gia_tri",
-      width: 130,
-      align: "right",
-    },
-    {
-      title: "Thuế NK",
-      dataIndex: "tien_thue",
-      width: 130,
-      align: "right",
-    },
-    {
-      title: "VAT",
-      dataIndex: "tien_vat",
-      width: 130,
-      align: "right",
-    },
-    {
-      title: "Tác vụ",
-      width: 160,
-      align: "center",
-      render: (_, r) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<FiEdit />}
-            disabled={isLocked}
-            onClick={() => {
-              setEditing(r);
-              setOpen(true);
-              form.setFieldsValue(r);
-            }}
-          />
-          <Button
-            size="small"
-            icon={<FiPercent />}
-            onClick={() => handleCalcTax(r)}
-          />
-          <Button
-            size="small"
-            danger
-            icon={<FiTrash2 />}
-            disabled={isLocked}
-            onClick={() => handleDelete(r.id_chi_tiet)}
-          />
-        </Space>
-      ),
-    },
-  ];
-
-  /* ================= EMPTY STATE ================= */
-  if (!draftId && !toKhaiId) {
-    return (
-      <Empty
-        description="Vui lòng ghi IDA trước khi nhập danh sách hàng hóa"
-      />
-    );
-  }
 
   return (
     <>
-      <Space style={{ marginBottom: 12 }}>
-        <Button
-          type="primary"
-          icon={<FiPlus />}
-          disabled={isLocked}
-          onClick={() => {
-            setEditing(null);
-            form.resetFields();
-            setOpen(true);
-          }}
-        >
-          Thêm hàng
-        </Button>
-      </Space>
+      {/* Nút thêm hàng hóa */}
+      <Button
+        type="primary"
+        icon={<FiPlus />}
+        onClick={() => {
+          if (!idToKhai) {
+            message.warning("Vui lòng tạo tờ khai trước khi thêm hàng hóa");
+            return;
+          }
+          setOpen(true);
+        }}
+        disabled={!idToKhai}
+      >
+        Thêm hàng hóa
+      </Button>
 
-      <DataTable
-        rowKey="id_chi_tiet"
-        columns={columns}
-        data={data}
-        loading={loading}
-      />
+      {/* Bảng danh sách hàng hóa */}
+      <div style={{ marginTop: 16 }}>
+        <DataTable
+          rowKey="id_chi_tiet"
+          data={data}
+          columns={[
+            { title: "STT", dataIndex: "so_dong", width: 80, align: "center" },
+            { title: "Mã HS", dataIndex: "ma_hs", width: 130 },
+            { title: "Mô tả hàng hóa", dataIndex: "mo_ta_hang_hoa" },
+            { title: "SL", dataIndex: "so_luong", width: 100, align: "center" },
+            { title: "ĐVT", dataIndex: "don_vi_tinh", width: 100, align: "center" },
+            { title: "Trị giá", dataIndex: "tong_gia_tri", width: 150 },
+            { title: "Ngoại tệ", dataIndex: "ma_ngoai_te", width: 100, align: "center" },
+            { title: "Thuế NK", dataIndex: "tien_thue", width: 130 },
+            { title: "VAT", dataIndex: "tien_vat", width: 130 },
+            {
+              title: "Thao tác",
+              width: 100,
+              align: "center",
+              render: (_, record) => (
+                <Popconfirm
+                  title="Xác nhận xóa?"
+                  description="Xóa dòng hàng hóa này?"
+                  onConfirm={() => handleDelete(record.id_chi_tiet)}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                >
+                  <Button danger size="small" icon={<FiTrash2 />} />
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
+      </div>
 
-      {/* ================= MODAL ================= */}
+      {/* Modal thêm hàng hóa */}
       <Modal
+        title="Thêm dòng hàng hóa"
         open={open}
-        title={editing ? "Cập nhật hàng hóa" : "Thêm hàng hóa"}
-        onCancel={() => setOpen(false)}
         onOk={handleSave}
+        onCancel={() => {
+          setOpen(false);
+          form.resetFields();
+        }}
         okText="Lưu"
         cancelText="Hủy"
-        destroyOnClose
+        width={1000}
       >
-        <Form layout="vertical" form={form}>
-          <Form.Item name="ma_hs" label="Mã HS" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-
+        <Form form={form} layout="vertical">
+          {/* MÃ HS - SELECT CÓ SEARCH */}
           <Form.Item
-            name="mo_ta_hang_hoa"
-            label="Mô tả hàng hóa"
-            rules={[{ required: true }]}
+            name="ma_hs"
+            label="Mã HS"
+            rules={[{ required: true, message: "Vui lòng chọn mã HS!" }]}
           >
-            <TextArea rows={2} />
-          </Form.Item>
-
-          <Form.Item name="so_luong" label="Số lượng" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} />
-          </Form.Item>
-
-          <Form.Item
-            name="don_vi_tinh"
-            label="Đơn vị"
-            rules={[{ required: true }]}
-          >
-            <Select>
-              <Select.Option value="Cái">Cái</Select.Option>
-              <Select.Option value="Chiếc">Chiếc</Select.Option>
-              <Select.Option value="Kg">Kg</Select.Option>
+            <Select
+              showSearch
+              placeholder="Tìm hoặc chọn mã HS..."
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={handleMaHsChange}
+            >
+              {maHsList.map((hs) => (
+                <Select.Option key={hs.ma_hs} value={hs.ma_hs}>
+                  {hs.ma_hs} {hs.mo_ta ? `- ${hs.mo_ta}` : ""}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item name="don_gia" label="Đơn giá">
-            <InputNumber style={{ width: "100%" }} />
+          {/* HIỂN THỊ THUẾ SUẤT THAM KHẢO */}
+          {form.getFieldValue("ma_hs") && (
+            <div style={{ marginBottom: 16, padding: 12, background: "#f0f8ff", borderRadius: 6 }}>
+              <Space>
+                <strong>Thuế suất:</strong>
+                <span>
+                  Thuế NK:{" "}
+                  <strong>
+                    {maHsList.find((h) => h.ma_hs === form.getFieldValue("ma_hs"))?.thue_nhap_khau ?? "N/A"}%
+                  </strong>
+                </span>
+                <span>
+                  VAT:{" "}
+                  <strong>
+                    {maHsList.find((h) => h.ma_hs === form.getFieldValue("ma_hs"))?.thue_vat ?? "10"}%
+                  </strong>
+                </span>
+              </Space>
+            </div>
+          )}
+
+          <Form.Item name="mo_ta_hang_hoa" label="Mô tả hàng hóa">
+            <TextArea rows={3} placeholder="Có thể chỉnh sửa mô tả tự động từ mã HS" />
+          </Form.Item>
+
+          <Form.Item
+            name="so_luong"
+            label="Số lượng"
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
+          >
+            <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item name="don_vi_tinh" label="Đơn vị tính">
+            <Select allowClear placeholder="Chọn đơn vị">
+              <Select.Option value="Cái">Cái</Select.Option>
+              <Select.Option value="Chiếc">Chiếc</Select.Option>
+              <Select.Option value="Bộ">Bộ</Select.Option>
+              <Select.Option value="Kg">Kg</Select.Option>
+              <Select.Option value="Tấn">Tấn</Select.Option>
+              <Select.Option value="Mét">Mét</Select.Option>
+              <Select.Option value="Thùng">Thùng</Select.Option>
+              <Select.Option value="Lít">Lít</Select.Option>
+            </Select>
           </Form.Item>
 
           <Form.Item
             name="tong_gia_tri"
             label="Tổng trị giá"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: "Vui lòng nhập trị giá!" }]}
           >
-            <InputNumber style={{ width: "100%" }} />
+            <InputNumber
+              min={0.01}
+              step={0.01}
+              style={{ width: "100%" }}
+              formatter={(value) => (value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "")}
+              parser={(value) => value.replace(/,/g, "")}
+            />
           </Form.Item>
 
-          <Form.Item name="ma_ngoai_te" label="Ngoại tệ">
+          <Form.Item name="ma_ngoai_te" label="Ngoại tệ" initialValue="USD">
             <Select>
               <Select.Option value="USD">USD</Select.Option>
+              <Select.Option value="EUR">EUR</Select.Option>
+              <Select.Option value="JPY">JPY</Select.Option>
               <Select.Option value="VND">VND</Select.Option>
             </Select>
           </Form.Item>
 
-          <Form.Item name="ma_quoc_gia" label="Xuất xứ">
-            <Select>
-              <Select.Option value="VN">VN</Select.Option>
-              <Select.Option value="CN">CN</Select.Option>
-              <Select.Option value="KR">KR</Select.Option>
+          <Form.Item name="ma_quoc_gia" label="Xuất xứ (mã quốc gia)">
+            <Select allowClear showSearch placeholder="Chọn quốc gia">
+              <Select.Option value="CN">Trung Quốc (CN)</Select.Option>
+              <Select.Option value="KR">Hàn Quốc (KR)</Select.Option>
+              <Select.Option value="JP">Nhật Bản (JP)</Select.Option>
+              <Select.Option value="US">Hoa Kỳ (US)</Select.Option>
+              <Select.Option value="TW">Đài Loan (TW)</Select.Option>
+              <Select.Option value="TH">Thái Lan (TH)</Select.Option>
+              <Select.Option value="DE">Đức (DE)</Select.Option>
+              <Select.Option value="FR">Pháp (FR)</Select.Option>
+              <Select.Option value="IT">Ý (IT)</Select.Option>
+              <Select.Option value="VN">Việt Nam (VN)</Select.Option>
             </Select>
           </Form.Item>
         </Form>

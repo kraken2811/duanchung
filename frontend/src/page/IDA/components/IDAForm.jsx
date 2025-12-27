@@ -6,7 +6,7 @@ import { FiSave, FiSend } from "react-icons/fi";
 import GeneralInfo1 from "./GeneralInfo1";
 import GeneralInfo2 from "./GeneralInfo2";
 import GoodsList from "./GoodsList";
-
+import dayjs from "dayjs";
 import {
   createIDA,
   updateGen2,
@@ -72,9 +72,25 @@ export default function IDAForm() {
     const saved = JSON.parse(localStorage.getItem("ida_gen1"));
 
     if (saved?.idToKhai) {
-      console.log("🔁 Restore idToKhai:", saved.idToKhai);
+      const form = saved.form;
+
+      reset({
+        ...form,
+        invoice: {
+          ...form.invoice,
+          date: form.invoice?.date
+            ? dayjs(form.invoice.date)
+            : null,
+        },
+        otherInformation: {
+          ...form.otherInformation,
+          contractDate: form.otherInformation?.contractDate
+            ? dayjs(form.otherInformation.contractDate)
+            : null,
+        },
+      });
+
       setIdToKhai(saved.idToKhai);
-      reset(saved.form);
       setActiveTab("2");
     }
   }, [reset]);
@@ -83,17 +99,24 @@ export default function IDAForm() {
       const payload = {
         loai_to_khai: "IDA",
         phan_loai: "IDA",
-        ma_cuc_hai_quan: form.customsOffice,
+        ma_cuc_hai_quan: form.customsOffice || null,
+        id_hop_dong: form.contractId,
         ngay_khai_bao: form.regDate
-          ? form.regDate.toISOString()
+          ? dayjs(form.regDate).toISOString()
           : null,
-        id_loai_hinh: form.typeCode,
-        id_cong_ty: form.importer.companyId,
-        nguoi_tao: JSON.parse(localStorage.getItem("user")).id_nguoi_dung,
+
+        id_loai_hinh: form.typeCode || null,
+        id_cong_ty: form.importer?.companyId,
+        nguoi_tao: JSON.parse(localStorage.getItem("user"))?.id_nguoi_dung,
       };
 
       const res = await createIDA(payload);
       const idToKhai = res.data.id_to_khai;
+
+      if (!idToKhai) {
+        throw new Error("Không nhận được id_to_khai từ server");
+      }
+
       localStorage.setItem(
         "ida_gen1",
         JSON.stringify({
@@ -104,16 +127,14 @@ export default function IDAForm() {
 
       setIdToKhai(idToKhai);
       setActiveTab("2");
-      console.log("GEN1 OK:", res);
-      setIdToKhai(res.data.id_to_khai);
 
-      message.success("Đã lưu GEN 1");
-      setActiveTab("2");
+      message.success("Lưu GEN 1 thành công");
     } catch (err) {
-      console.error(err);
+      console.error("GEN1 ERROR:", err);
       message.error("Lỗi lưu GEN 1");
     }
   };
+
   const onSaveGen2 = async () => {
     if (!idToKhai) {
       message.error("Chưa có tờ khai");
@@ -121,18 +142,24 @@ export default function IDAForm() {
     }
 
     const payload = {
-      invoice: {
-        number: watch("invoice.number"),
-        date: watch("invoice.date"),
-        incoterms: watch("invoice.incoterms"),
-        currency: watch("invoice.currency"),
-        totalValue: watch("invoice.totalValue"),
-        paymentMethod: watch("invoice.paymentMethod"),
+
+      hoa_don: {
+        so_hoa_don: watch("invoice.number"),
+        ngay_hoa_don: watch("invoice.date"),
+        dieu_kien_giao_hang: watch("invoice.incoterms"),
+        ma_ngoai_te: watch("invoice.currency"),
+        tong_tien: watch("invoice.totalValue"),
       },
-      customsValue: {
-        method: watch("customsValue.method"),
-        freight: watch("customsValue.freight"),
-        insurance: watch("customsValue.insurance"),
+
+      tri_gia: {
+        phuong_phap: watch("customsValue.method"),
+        phi_van_chuyen: watch("customsValue.freight"),
+        phi_bao_hiem: watch("customsValue.insurance"),
+      },
+      hop_dong: {
+        so_hop_dong: watch("otherInformation.contractNumber"),
+        ngay_ky: watch("otherInformation.contractDate"),
+        loai_hop_dong: watch("otherInformation.contractType"),
       },
     };
 
@@ -147,22 +174,24 @@ export default function IDAForm() {
   };
   const onDeclare = async () => {
     if (!idToKhai) {
-      message.error("Chưa có tờ khai");
+      message.error("Chưa có tờ khai để khai báo");
       return;
     }
 
     try {
       await declareIDA(idToKhai);
-      message.success("Khai báo IDA thành công");
 
+      message.success("Khai báo thành công! Tờ khai đã được gửi lên hệ thống hải quan.");
       reset(defaultValues);
-      setGoods([]);
       setIdToKhai(null);
       setActiveTab("1");
+      localStorage.removeItem("ida_gen1");
+
     } catch (err) {
-      message.error("Khai báo thất bại");
+      const msg = err.response?.data?.message || "Khai báo thất bại";
+      message.error(msg);
     }
-  };
+  }
 
   return (
     <div>
@@ -206,19 +235,17 @@ export default function IDAForm() {
           },
           {
             key: "2",
-            label: "Gen 2 – Hàng hóa",
+            label: "Gen 2 – Thông tin bổ sung",
             children: <GeneralInfo2 control={control} />,
+
           },
           {
             key: "3",
-            label: "Thông tin bổ sung",
-            children: (
-              <GoodsList
-                goods={goods}
-                setGoods={setGoods}
-              />
-            ),
 
+            label: "Hàng hoá",
+            children: (
+              <GoodsList idToKhai={idToKhai} />
+            ),
           },
         ]}
       />

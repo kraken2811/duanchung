@@ -9,6 +9,8 @@ export default function Select({
   required,
   showSearch = false,
   disabled,
+  filterOption, // ← THÊM PROP NÀY (tùy chỉnh filter khi search)
+  optionFilterProp = "label", // mặc định là label
 }) {
   return (
     <div style={{ marginBottom: 12 }}>
@@ -30,11 +32,12 @@ export default function Select({
         value={value}
         onChange={onChange}
         options={options}
-        placeholder={placeholder}
+        placeholder={placeholder || "Chọn..."}
         showSearch={showSearch}
         disabled={disabled}
         style={{ width: "100%" }}
-        optionFilterProp="label"
+        optionFilterProp={optionFilterProp}
+        filterOption={filterOption} // ← Cho phép override filter logic
       />
     </div>
   );
