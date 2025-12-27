@@ -20,9 +20,13 @@ export default function DeclarationsTable({
       width: 80,
       align: "center",
       render: (channel) => {
-        const config = getChannelConfig(channel);
+        const config = getChannelConfig(channel) || {
+          text: "Không xác định",
+          description: "",
+          color: "#d9d9d9",
+        };
         return (
-          <Tooltip title={`${config.text} - ${config.description}`}>
+          <Tooltip title={`${config.text} ${config.description}`}>
             <div
               style={{
                 width: 12,
@@ -78,7 +82,10 @@ export default function DeclarationsTable({
       key: "totalValue",
       width: 140,
       align: "right",
-      render: (value) => value.toLocaleString("en-US"),
+      render: (value) =>
+        typeof value === "number"
+          ? value.toLocaleString("en-US")
+          : "-",
     },
     {
       title: "Tổng thuế (USD)",
@@ -86,7 +93,10 @@ export default function DeclarationsTable({
       key: "totalTax",
       width: 130,
       align: "right",
-      render: (value) => value.toLocaleString("en-US"),
+      render: (value) =>
+        typeof value === "number"
+          ? value.toLocaleString("en-US")
+          : "-",
     },
     {
       title: "Trạng thái",
@@ -94,7 +104,11 @@ export default function DeclarationsTable({
       key: "status",
       width: 140,
       render: (status) => {
-        const config = getStatusConfig(status);
+        const config = getStatusConfig(status) || {
+          text: status || "Không rõ",
+          color: "default",
+        };
+
         return <Tag color={config.color}>{config.text}</Tag>;
       },
     },
@@ -154,11 +168,13 @@ export default function DeclarationsTable({
     <Table
       columns={columns}
       dataSource={data}
-      rowKey="id"
+      rowKey="id_to_khai"
       loading={loading}
       rowSelection={{
         selectedRowKeys: selectedRows,
         onChange: onSelectionChange,
+        preserveSelectedRowKeys: false,
+        selections: false,
       }}
       pagination={{
         ...pagination,

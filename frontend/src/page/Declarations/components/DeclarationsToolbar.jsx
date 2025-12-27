@@ -23,9 +23,6 @@ export default function DeclarationsToolbar({
       <Button type="primary" icon={<FiPlus />} onClick={onNew}>
         Tạo tờ khai mới
       </Button>
-      <Button icon={<FiEdit />} disabled={selectedCount !== 1} onClick={onEdit}>
-        Sửa/Xem
-      </Button>
       <Button danger icon={<FiTrash2 />} disabled={selectedCount === 0} onClick={onDelete}>
         Xóa
       </Button>
@@ -35,15 +32,6 @@ export default function DeclarationsToolbar({
       </Button>
       <Button className="textSibar" icon={<FiDownload />} onClick={onExport}>
         Xuất Excel
-      </Button>
-      <Divider type="vertical" />
-      <Button
-        type="primary"
-        icon={<FiSend />}
-        disabled={selectedCount === 0}
-        onClick={onSubmit}
-      >
-        Khai báo/Gửi
       </Button>
     </Space>
   );

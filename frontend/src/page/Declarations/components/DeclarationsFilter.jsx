@@ -1,11 +1,8 @@
-import { useState } from "react";
-import { Card, Row, Col, Input, DatePicker, Select, Button, Space } from "antd";
+import { useState, useEffect } from "react";
+import { Card, Row, Col, Input, DatePicker, Select, Button, Space, Divider} from "antd";
 import { FiSearch } from "react-icons/fi";
 import "../css/declaration.css";
-import {
-  DECLARATION_TYPES,
-  INCOTERMS,
-} from "@/page/IDA/api/rule.api";
+import { getLoaiHinh } from "../api/declarations.api";
 
 const { RangePicker } = DatePicker;
 
@@ -13,27 +10,65 @@ export default function DeclarationsFilter({ onSearch, onReset }) {
   const [filters, setFilters] = useState({
     dateRange: null,
     declarationNumber: "",
-    type: "",
+    loai_hinh: null,
     partnerName: "",
     status: "",
-    channel: "",
-  });
+  })
+
+  const [loaiHinhs, setLoaiHinhs] = useState([]);
+  const [loadingLoaiHinh, setLoadingLoaiHinh] = useState(false);
+
+  // 🔥 load loại hình
+  useEffect(() => {
+    const fetchLoaiHinh = async () => {
+      try {
+        setLoadingLoaiHinh(true);
+        const data = await getLoaiHinh();
+        setLoaiHinhs(data || []);
+      } finally {
+        setLoadingLoaiHinh(false);
+      }
+    };
+
+    fetchLoaiHinh();
+  }, []);
+
+  const STATUS_FE_TO_BE = {
+    pending: "CHO_GUI,DA_GUI",
+    inspection: "DA_TIEP_NHAN",
+    completed: "DA_THONG_QUAN",
+    cancelled: "HUY,TU_CHOI",
+  };
 
   const handleSearch = () => {
-    onSearch(filters);
+    const payload = {
+      so_to_khai: filters.declarationNumber || undefined,
+      loai_hinh: filters.loai_hinh || undefined,
+      doi_tac: filters.partnerName || undefined,
+      trang_thai: filters.status
+        ? STATUS_FE_TO_BE[filters.status]
+        : undefined,
+    };
+
+    if (filters.dateRange?.length === 2) {
+      payload.tu_ngay = filters.dateRange[0].format("YYYY-MM-DD");
+      payload.den_ngay = filters.dateRange[1].format("YYYY-MM-DD");
+    }
+
+    onSearch(payload);
   };
 
   const handleReset = () => {
-    const emptyFilters = {
+    const empty = {
       dateRange: null,
       declarationNumber: "",
-      type: "",
+      loai_hinh: null,
       partnerName: "",
       status: "",
-      channel: "",
     };
-    setFilters(emptyFilters);
-    onReset(emptyFilters);
+
+    setFilters(empty);
+    onReset({});
   };
 
   return (
@@ -71,13 +106,18 @@ export default function DeclarationsFilter({ onSearch, onReset }) {
           <Select
             style={{ width: "100%" }}
             placeholder="Chọn loại hình"
-            value={filters.type || undefined}
-            onChange={(value) => setFilters({ ...filters, type: value })}
+            value={filters.loai_hinh}
+            onChange={(value) =>
+              setFilters({ ...filters, loai_hinh: value })
+            }
             allowClear
+            loading={loadingLoaiHinh}
+            optionFilterProp="children"
+            showSearch
           >
-            {DECLARATION_TYPES.map((type) => (
-              <Select.Option key={type.value} value={type.value}>
-                {type.label}
+            {loaiHinhs.map((lh) => (
+              <Select.Option key={lh.id_loai_hinh} value={lh.id_loai_hinh}>
+                {lh.ma_loai_hinh} – {lh.ten_loai_hinh}
               </Select.Option>
             ))}
           </Select>
@@ -93,7 +133,6 @@ export default function DeclarationsFilter({ onSearch, onReset }) {
             onChange={(value) => setFilters({ ...filters, status: value })}
             allowClear
           >
-            <Select.Option value="draft">Bản nháp</Select.Option>
             <Select.Option value="pending">Chờ thông quan</Select.Option>
             <Select.Option value="completed">Đã thông quan</Select.Option>
             <Select.Option value="inspection">Đang kiểm tra</Select.Option>
@@ -114,22 +153,7 @@ export default function DeclarationsFilter({ onSearch, onReset }) {
             }
           />
         </Col>
-        <Col span={6}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
-            Luồng thông quan
-          </label>
-          <Select
-            style={{ width: "100%" }}
-            placeholder="Chọn luồng"
-            value={filters.channel || undefined}
-            onChange={(value) => setFilters({ ...filters, channel: value })}
-            allowClear
-          >
-            <Select.Option value="green">Luồng xanh</Select.Option>
-            <Select.Option value="yellow">Luồng vàng</Select.Option>
-            <Select.Option value="red">Luồng đỏ</Select.Option>
-          </Select>
-        </Col>
+        <Divider type="vertical" />
         <Col span={8} style={{ display: "flex", alignItems: "flex-end" }}>
           <Space>
             <Button type="primary" icon={<FiSearch />} size="large" onClick={handleSearch}>
