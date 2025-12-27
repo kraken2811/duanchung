@@ -50,8 +50,8 @@ exports.getById = async (req, res) => {
  */
 exports.getByHopDong = async (req, res) => {
   try {
-    const id_hop_dong = Number(req.params.id_hop_dong);
-    if (!Number.isInteger(id_hop_dong)) {
+    const id_hop_dong = req.params.id_hop_dong;
+    if (!id_hop_dong) {
       return res.status(400).json({ message: "id_hop_dong không hợp lệ" });
     }
 

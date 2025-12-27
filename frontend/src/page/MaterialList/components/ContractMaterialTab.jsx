@@ -3,13 +3,12 @@ import { Table, Input, Button, Space, Card, notification, Row, Col } from "antd"
 import { FiUpload, FiDownload, FiPrinter, FiPackage } from "react-icons/fi";
 
 // Import local
-import "@/page/ContractProducts/css/product.css";
-// 👇 Import CẢ contractProductAPI VÀ contractAPI từ CÙNG 1 FILE
-import { contractProductAPI, contractAPI } from "@/page/ContractProducts/api/contractproduct.api";
-import { mapAPIProductToUI } from "@/page/ContractProducts/utils/status";
+import "@/page/MaterialList/css/material.css";
+import { contractMaterialAPI, contractAPI } from "@/page/MaterialList/api/contractmaterial.api";
+import { mapAPIMaterialToUI } from "@/page/MaterialList/utils/status";
 
-export default function ContractProductTab({ contractId = null }) {
-  const [products, setProducts] = useState([]); // Dữ liệu gốc
+export default function ContractMaterialTab({ contractId = null }) {
+  const [materials, setMaterials] = useState([]); // Dữ liệu gốc
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [contractCurrency, setContractCurrency] = useState(""); // Đơn vị tiền tệ
@@ -22,7 +21,6 @@ export default function ContractProductTab({ contractId = null }) {
     }
     try {
       const res = await contractAPI.getById(contractId);
-      // Backend trả về `ma_ngoai_te` (VD: "USD", "VND")
       setContractCurrency(res.data.ma_ngoai_te || "USD");
     } catch (err) {
       console.warn("❌ Không lấy được đơn vị tiền tệ từ hợp đồng:", err);
@@ -34,23 +32,23 @@ export default function ContractProductTab({ contractId = null }) {
     }
   };
 
-  // === FETCH SẢN PHẨM ===
-  const fetchProducts = async () => {
+  // === FETCH VẬT LIỆU ===
+  const fetchMaterials = async () => {
     setLoading(true);
     try {
       let res;
       if (contractId) {
-        res = await contractProductAPI.getByContractId(contractId);
+        res = await contractMaterialAPI.getByContractId(contractId);
       } else {
-        res = await contractProductAPI.getAll();
+        res = await contractMaterialAPI.getAll();
       }
-      const mapped = (res.data || []).map(mapAPIProductToUI);
-      setProducts(mapped);
+      const mapped = (res.data || []).map(mapAPIMaterialToUI);
+      setMaterials(mapped);
     } catch (err) {
-      console.error("❌ Lỗi API sản phẩm:", err);
+      console.error("❌ Lỗi API vật liệu:", err);
       notification.error({
         message: "Lỗi tải dữ liệu",
-        description: "Không thể lấy danh sách sản phẩm.",
+        description: "Không thể lấy danh sách vật liệu.",
       });
     } finally {
       setLoading(false);
@@ -58,21 +56,21 @@ export default function ContractProductTab({ contractId = null }) {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchMaterials();
     fetchContractCurrency();
   }, [contractId]);
 
   // === SEARCH & FILTER ===
-  const filteredProducts = useMemo(() => {
-    if (!searchText.trim()) return products;
+  const filteredMaterials = useMemo(() => {
+    if (!searchText.trim()) return materials;
     const term = searchText.toLowerCase().trim();
-    return products.filter(
+    return materials.filter(
       (item) =>
-        item.productCode?.toLowerCase().includes(term) ||
-        item.productName?.toLowerCase().includes(term) ||
+        item.materialCode?.toLowerCase().includes(term) ||
+        item.materialName?.toLowerCase().includes(term) ||
         item.hsCode?.toLowerCase().includes(term)
     );
-  }, [products, searchText]);
+  }, [materials, searchText]);
 
   // === PAGINATION STATE ===
   const [pagination, setPagination] = useState({
@@ -92,8 +90,8 @@ export default function ContractProductTab({ contractId = null }) {
   const dataToShow = useMemo(() => {
     const start = (pagination.current - 1) * pagination.pageSize;
     const end = start + pagination.pageSize;
-    return filteredProducts.slice(start, end);
-  }, [filteredProducts, pagination.current, pagination.pageSize]);
+    return filteredMaterials.slice(start, end);
+  }, [filteredMaterials, pagination.current, pagination.pageSize]);
 
   // === COLUMNS ===
   const columns = [
@@ -105,14 +103,14 @@ export default function ContractProductTab({ contractId = null }) {
       render: (_, __, index) => (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
-      title: "MÃ SẢN PHẨM",
-      dataIndex: "productCode",
+      title: "MÃ VẬT LIỆU",
+      dataIndex: "materialCode",
       width: 150,
       render: (text) => <b style={{ color: "#1890ff" }}>{text}</b>,
     },
     {
-      title: "TÊN SẢN PHẨM",
-      dataIndex: "productName",
+      title: "TÊN VẬT LIỆU",
+      dataIndex: "materialName",
       ellipsis: true,
       width: 250,
     },
@@ -146,7 +144,7 @@ export default function ContractProductTab({ contractId = null }) {
       ? [
           {
             title: "ĐVT TỆ",
-            dataIndex: "", // không cần dữ liệu từ sản phẩm
+            dataIndex: "",
             width: 80,
             align: "center",
             render: () => contractCurrency || "—",
@@ -159,6 +157,12 @@ export default function ContractProductTab({ contractId = null }) {
       width: 120,
       align: "right",
       render: (value) => (value ? value : "0"),
+    },
+    {
+      title: "NGUỒN GỐC",
+      dataIndex: "origin",
+      width: 120,
+      align: "center",
     },
   ];
 
@@ -175,25 +179,12 @@ export default function ContractProductTab({ contractId = null }) {
             style={{ width: "100%", maxWidth: 400 }}
           />
         </Col>
-        <Col>
-          <Space size="middle">
-            <Button className="contract-product-btn-sidebar" icon={<FiUpload />}>
-              Nhập Excel
-            </Button>
-            <Button className="contract-product-btn-sidebar" icon={<FiDownload />}>
-              Xuất Excel
-            </Button>
-            <Button className="contract-product-btn-sidebar" icon={<FiPrinter />}>
-              In phiếu
-            </Button>
-          </Space>
-        </Col>
       </Row>
     </div>
   );
 
   return (
-    <div className="contract-product-wrapper">
+    <div className="contract-material-wrapper">
       {renderToolbar()}
       <div style={{ padding: "0 16px" }}>
         <Card
@@ -201,16 +192,16 @@ export default function ContractProductTab({ contractId = null }) {
             <span>
               <FiPackage style={{ marginRight: 8 }} />
               {contractId
-                ? `Sản phẩm của hợp đồng: ${contractId}${contractCurrency ? ` (Đơn vị: ${contractCurrency})` : ""}`
-                : "Danh sách tất cả sản phẩm"}
+                ? `Vật liệu của hợp đồng: ${contractId}${contractCurrency ? ` (ĐVT: ${contractCurrency})` : ""}`
+                : "Danh sách tất cả vật liệu"}
             </span>
           }
           size="small"
           bordered={false}
-          className="contract-product-card"
+          className="contract-material-card"
         >
           <Table
-            className="contract-product-table"
+            className="contract-material-table"
             columns={columns}
             dataSource={dataToShow}
             rowKey="id"
@@ -219,12 +210,12 @@ export default function ContractProductTab({ contractId = null }) {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: filteredProducts.length, // ← Tổng số bản ghi sau khi lọc
+              total: filteredMaterials.length, // ← Tổng số bản ghi sau khi lọc
               showSizeChanger: true,
               pageSizeOptions: ["10", "20", "50"],
               onChange: (page, pageSize) => handleTableChange({ current: page, pageSize }),
             }}
-            scroll={{ x: contractId ? 1100 : 1000 }}
+            scroll={{ x: contractId ? 1200 : 1100 }}
           />
         </Card>
       </div>
