@@ -29,7 +29,6 @@ export default function LotGoods({ onSelectLoHang, selectedLoHang }) {
 
   const [form] = Form.useForm();
 
-  /* ================= FETCH ================= */
   const fetchData = async (params = {}) => {
     setLoading(true);
     const res = await getLoHangList({
@@ -45,18 +44,15 @@ export default function LotGoods({ onSelectLoHang, selectedLoHang }) {
     fetchData();
   }, []);
 
-  /* ================= VIEW DETAIL ================= */
   const handleView = async (id) => {
     const res = await getLoHangById(id);
     setSelectedDetail(res.data);
   };
 
-  /* ================= SELECT MASTER ================= */
   const handleSelect = (record) => {
     onSelectLoHang && onSelectLoHang(record);
   };
 
-  /* ================= SEARCH ================= */
   const onSearch = (values) => {
     fetchData({
       page: 1,
@@ -64,7 +60,6 @@ export default function LotGoods({ onSelectLoHang, selectedLoHang }) {
     });
   };
 
-  /* ================= TABLE ================= */
   const columns = [
     { title: "Số lô hàng", dataIndex: "so_lo_hang" },
     {
