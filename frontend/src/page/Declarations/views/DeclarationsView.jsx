@@ -10,100 +10,85 @@ import DeclarationDetailPreview from "../components/DeclarationDetailPreview";
 import { declarationsAPI } from "../api/declarations.api";
 import { idaurl } from "@/routes/urls";
 
-// Mock data
-const mockDeclarations = [
-  {
-    id: 1,
-    declarationNumber: "101/NK/HCM/2024",
-    regDate: "15/11/2024",
-    type: "A11",
-    typeName: "NK Thông thường",
-    channel: "green",
-    importerCode: "0123456789",
-    partnerName: "CÔNG TY TNHH ABC VIỆT NAM",
-    totalValue: 125000,
-    totalTax: 18750,
-    status: "completed",
-    hasAttachment: true,
-    taxPaid: true,
-    itemCount: 5,
-  },
-  {
-    id: 2,
-    declarationNumber: "102/NK/HCM/2024",
-    regDate: "20/11/2024",
-    type: "A12",
-    typeName: "NK Tạm nhập tái xuất",
-    channel: "yellow",
-    importerCode: "0987654321",
-    partnerName: "CÔNG TY CP XYZ",
-    totalValue: 85000,
-    totalTax: 12750,
-    status: "pending",
-    hasAttachment: true,
-    taxPaid: false,
-    itemCount: 3,
-    requiresRevision: true,
-  },
-  {
-    id: 3,
-    declarationNumber: "103/NK/HCM/2024",
-    regDate: "25/11/2024",
-    type: "A11",
-    typeName: "NK Thông thường",
-    channel: "red",
-    importerCode: "1122334455",
-    partnerName: "CÔNG TY TNHH DEF",
-    totalValue: 250000,
-    totalTax: 37500,
-    status: "inspection",
-    hasAttachment: false,
-    taxPaid: false,
-    itemCount: 8,
-  },
-  {
-    id: 4,
-    declarationNumber: "104/NK/HCM/2024",
-    regDate: "28/11/2024",
-    type: "A13",
-    typeName: "NK Gia công",
-    channel: "green",
-    importerCode: "5544332211",
-    partnerName: "CÔNG TY TNHH GHI LOGISTICS",
-    totalValue: 95000,
-    totalTax: 9500,
-    status: "completed",
-    hasAttachment: true,
-    taxPaid: true,
-    itemCount: 4,
-  },
-];
-
 export default function DeclarationsView() {
   const navigate = useNavigate();
   const notify = useNotify();
   const [loading, setLoading] = useState(false);
-  const [declarations, setDeclarations] = useState(mockDeclarations);
+  const [declarations, setDeclarations] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
+  const [statistics, setStatistics] = useState(null);
 
-  const selectedDeclaration = declarations.find((d) => d.id === selectedRows[0]);
+  const selectedDeclaration = Array.isArray(declarations)
+    ? declarations.find((d) => d.id_to_khai === selectedRows[0])
+    : null;
 
   // Fetch data
   const fetchDeclarations = async (filters = {}) => {
     try {
       setLoading(true);
-      // const response = await declarationsAPI.getList(filters);
-      // setDeclarations(response.data);
-      // setPagination({ ...pagination, total: response.total });
-      
-      // Mock: Sử dụng dữ liệu giả
-      setDeclarations(mockDeclarations);
-      setPagination({ ...pagination, total: mockDeclarations.length });
+
+      const res = await declarationsAPI.fliterTK({
+        ...filters,
+        page: filters.page ?? pagination.current,
+        limit: filters.limit ?? pagination.pageSize,
+      });
+
+      const STATUS_MAP = {
+        CHO_GUI: "pending",
+        DA_GUI: "inspection",
+        DA_TIEP_NHAN: "inspection",
+        DA_THONG_QUAN: "completed",
+        TU_CHOI: "cancelled",
+        HUY: "cancelled",
+      };
+
+      const CHANNEL_MAP = {
+        XANH: "green",
+        VANG: "yellow",
+        DO: "red",
+      };
+
+      const mapped = Array.isArray(res.data)
+        ? res.data.map((d) => ({
+            id_to_khai: d.id_to_khai,
+
+            declarationNumber: d.so_to_khai,
+            regDate: d.ngay_khai_bao
+              ? new Date(d.ngay_khai_bao).toLocaleDateString("vi-VN")
+              : "-",
+
+            type: d.loai_hinh_dac_biet?.ma_loai_hinh,
+            typeName: d.loai_hinh_dac_biet?.ten_loai_hinh,
+
+            importerCode: d.cong_ty?.ma_so_thue,
+            partnerName: d.cong_ty?.ten_cong_ty,
+
+            totalValue: Number(d.tong_gia_tri) || 0,
+            totalTax: Number(d.so_tien_thue) || 0,
+
+            status: STATUS_MAP[d.trang_thai_gui] || "none",
+            channel: CHANNEL_MAP[d.phan_loai] || "none",
+
+            itemCount: d.so_dong_hang,
+
+            hasAttachment: false,
+            taxPaid: Number(d.so_tien_thue) > 0,
+            requiresRevision: d.trang_thai_gui === "YEU_CAU_SUA_DOI",
+
+            _raw: d,
+          }))
+        : [];
+
+      setDeclarations(mapped);
+      setPagination((prev) => ({
+        ...prev,
+        total: res.total || 0,
+      }));
     } catch (error) {
       notify.error("Lỗi khi tải danh sách tờ khai");
     } finally {
@@ -111,14 +96,33 @@ export default function DeclarationsView() {
     }
   };
 
+  const fetchStatistics = async (filters = {}) => {
+    try {
+      const data = await declarationsAPI.getThongKe(filters);
+      setStatistics(data);
+    } catch {
+      notify.error("Không thể tải thống kê");
+    }
+  };
+
   useEffect(() => {
     fetchDeclarations();
+    fetchStatistics();
   }, []);
 
   // Handlers
   const handleSearch = (filters) => {
-    console.log("Search with filters:", filters);
-    fetchDeclarations(filters);
+    setSelectedRows([]); // 🔥 reset selection
+
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+
+    fetchDeclarations({
+      ...filters,
+      page: 1,
+    });
   };
 
   const handleReset = () => {
@@ -134,14 +138,17 @@ export default function DeclarationsView() {
   };
 
   const handleDelete = async () => {
-    if (selectedRows.length === 0) return;
-    
+    if (!selectedRows.length) return;
+
     try {
-      // await declarationsAPI.delete(selectedRows[0]);
+      const id = selectedRows[0]; // id_to_khai
+      await declarationsAPI.deleteTK(id);
+
       notify.success("Đã xóa tờ khai thành công");
       setSelectedRows([]);
       fetchDeclarations();
     } catch (error) {
+      console.error(error);
       notify.error("Lỗi khi xóa tờ khai");
     }
   };
@@ -174,8 +181,19 @@ export default function DeclarationsView() {
   };
 
   const handlePageChange = (page, pageSize) => {
-    setPagination({ ...pagination, current: page, pageSize });
-    fetchDeclarations({ page, pageSize });
+    // 🔥 clear selection khi đổi trang
+    setSelectedRows([]);
+
+    setPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize,
+    }));
+
+    fetchDeclarations({
+      page,
+      limit: pageSize,
+    });
   };
 
   return (
@@ -197,7 +215,7 @@ export default function DeclarationsView() {
 
       {/* Statistics */}
       <div style={{ marginBottom: 16 }}>
-        <DeclarationsStatistics data={declarations} />
+        <DeclarationsStatistics data={statistics} />
       </div>
 
       {/* Toolbar */}
