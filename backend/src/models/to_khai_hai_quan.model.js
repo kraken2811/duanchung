@@ -9,6 +9,9 @@ const getAll = () => {
     orderBy: {
       ngay_tao: 'desc',
     },
+    include: {
+      chi_tiet_to_khai: true
+    }
   });
 };
 
@@ -247,18 +250,31 @@ const getList = async (query) => {
     tu_ngay,
     den_ngay,
     doi_tac,
-    page =1,
+    page = 1,
     limit = 10,
   } = query;
 
   const where = {};
+  const pageNum = Number(query.page) || 1;
+  const limitNum = Number(query.limit) || 10;
+  let trangThaiList = [];
 
   if (so_to_khai) {
     where.so_to_khai = { contains: so_to_khai };
   }
 
   if (trang_thai) {
-    where.trang_thai_gui = trang_thai;
+    if (Array.isArray(trang_thai)) {
+      trangThaiList = trang_thai;
+    } else if (typeof trang_thai === "string") {
+      trangThaiList = trang_thai.split(",");
+    }
+  }
+
+  if (trangThaiList.length > 0) {
+    where.trang_thai_gui = {
+      in: trangThaiList,
+    };
   }
 
   if (loai_hinh) {
@@ -268,42 +284,53 @@ const getList = async (query) => {
   if (tu_ngay || den_ngay) {
     where.ngay_khai_bao = {};
     if (tu_ngay) {
-      const fromDate = new Date(tu_ngay);
-      fromDate.setHours(0, 0, 0, 0);
-      where.ngay_khai_bao.gte = fromDate;
+      const from = new Date(tu_ngay);
+      from.setHours(0, 0, 0, 0);
+      where.ngay_khai_bao.gte = from;
     }
-
     if (den_ngay) {
-      const toDate = new Date(den_ngay);
-      toDate.setHours(23, 59, 59, 999);
-      where.ngay_khai_bao.lte = toDate;
+      const to = new Date(den_ngay);
+      to.setHours(23, 59, 59, 999);
+      where.ngay_khai_bao.lte = to;
     }
   }
 
   if (doi_tac) {
     where.cong_ty = {
       ten_cong_ty: { contains: doi_tac },
-    }
+    };
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const skip = (pageNum - 1) * limitNum;
 
-  return Promise.all([
+  const [total, list] = await Promise.all([
     prisma.to_khai_hai_quan.count({ where }),
     prisma.to_khai_hai_quan.findMany({
       where,
       skip,
-      take: Number(limit),
-      orderBy: { ngay_tao: 'desc' },
+      take: limitNum,
+      orderBy: { ngay_tao: "desc" },
       include: {
         cong_ty: true,
         loai_hinh_dac_biet: true,
+        chi_tiet_to_khai: {
+          select: { tong_gia_tri: true },
+        },
       },
     }),
-  ]).then (([total, data]) => { 
-    return { total, data  };
-  });
-}
+  ]);
+
+  const data = list.map((tk) => ({
+    ...tk,
+    tong_gia_tri: tk.chi_tiet_to_khai.reduce(
+      (sum, ct) => sum + Number(ct.tong_gia_tri || 0),
+      0
+    ),
+    so_dong_hang: tk.chi_tiet_to_khai.length,
+  }));
+
+  return { total, data };
+};
 
 const statistics = async () => {
   const [

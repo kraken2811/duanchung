@@ -26,14 +26,28 @@ export const getChannelConfig = (channel) => {
 
 export const getStatusConfig = (status) => {
   const configs = {
-    draft: { text: "Bản nháp", color: "default" },
-    pending: { text: "Chờ thông quan", color: "warning" },
-    completed: { text: "Đã thông quan", color: "success" },
-    inspection: { text: "Đang kiểm tra", color: "processing" },
-    cancelled: { text: "Đã hủy", color: "error" },
-    requires_revision: { text: "Yêu cầu sửa", color: "error" },
+    pending: {
+      text: "Chờ gửi",
+      color: "warning",
+    },
+    inspection: {
+      text: "Đang xử lý",
+      color: "processing",
+    },
+    completed: {
+      text: "Đã thông quan",
+      color: "success",
+    },
+    cancelled: {
+      text: "Đã hủy / Từ chối",
+      color: "error",
+    },
   };
-  return configs[status] || configs.draft;
+
+  return configs[status] || {
+    text: "Không xác định",
+    color: "default",
+  };
 };
 
 export const formatCurrency = (value, currency = "USD") => {
