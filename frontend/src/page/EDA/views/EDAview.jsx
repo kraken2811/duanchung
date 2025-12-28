@@ -1,11 +1,10 @@
-
 import { Card, Breadcrumb } from "antd";
 import { FiHome, FiFileText } from "react-icons/fi";
-import EDAForm from "../components/EDAForm";
+import EDAIndex from "../components/EDAIndex";
 
 export default function EDAView() {
   return (
-    <div style={{ padding: 24, background: "#f0f2f5", minHeight: "100vh" }}>
+    <div style={{ padding: 24, background: "#ffff", minHeight: "0" }}>
       {/* Breadcrumb */}
       <Breadcrumb
         style={{ marginBottom: 16 }}
@@ -35,7 +34,14 @@ export default function EDAView() {
       {/* Header */}
       <Card style={{ marginBottom: 16 }}>
         <div style={{ textAlign: "center" }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#1890ff" }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 24,
+              fontWeight: 600,
+              color: "#1890ff",
+            }}
+          >
             TỜ KHAI XUẤT KHẨU (EXPORT DECLARATION - EDA)
           </h2>
           <p style={{ margin: "8px 0 0 0", color: "#666" }}>
@@ -45,7 +51,7 @@ export default function EDAView() {
       </Card>
 
       {/* Form */}
-      <EDAForm />
+      <EDAIndex />
     </div>
   );
 }

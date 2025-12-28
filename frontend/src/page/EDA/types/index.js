@@ -1,93 +1,110 @@
-// src/types/eda.js
 
-export const EDA_DEFAULT = {
-  // 1. Thông tin đầu tờ khai
-  declarationNumber: "",
-  type: "B11", // Mặc định loại hình xuất phổ biến
-  customsOffice: "",
+const toISO = (d) => (d ? new Date(d).toISOString() : null);
+
+
+export const emptyEDAGen1 = {
+  declarationNumber: null,
+  typeCode: null,
+  customsOffice: null,
   regDate: null,
 
-  // 2. Người xuất khẩu (Là doanh nghiệp VN)
   exporter: {
-    taxCode: "",
-    name: "",
-    address: "",
-    phone: "",
-    postalCode: "",
+    companyId: null,
+    taxCode: null,
+    name: null,
+    address: null,
+    phone: null,
   },
 
-  // 3. Người nhập khẩu (Là đối tác nước ngoài)
   importer: {
-    name: "",
-    address: "",
-    countryCode: "", // Mã nước đến
+    doiTacId: null,
+    name: null,
+    address: null,
+    countryCode: null,
+    phone: null,
+    email: null,
   },
+};
 
-  // 4. Ủy thác xuất khẩu (Nếu có)
-  trustor: {
-    taxCode: "",
-    name: "",
-  },
+export const emptyEDAGoodsItem = {
+  hsCode: null,
+  description: null,
+  quantity: 0,
+  unit: null,
+  unitPrice: 0,
+  totalValue: 0,
+  origin: null,
+};
 
-  // 5. Vận đơn & Vận chuyển
-  transport: {
-    billOfLading: "",      // Số vận đơn
-    bookingNote: "",       // Số Booking (Quan trọng với xuất khẩu)
-    date: null,
-    totalPackages: 0,
-    packageUnit: "CT",     // Loại kiện
-    grossWeight: 0,        // Trọng lượng
-    weightUnit: "KGM",
-    loadingPort: "",       // Cảng xếp hàng (VN)
-    dischargePort: "",     // Cảng dỡ hàng (Nước ngoài)
-    vehicleName: "",
-    departureDate: null,   // Ngày hàng đi
-    warehouseCode: "",     // Địa điểm lưu kho chờ xuất
-  },
-
-  // 6. Hóa đơn & Trị giá
+export const emptyEDAGen2 = {
   invoice: {
-    number: "",
+    number: null,
     date: null,
-    term: "FOB",           // Incoterms
-    currency: "USD",
-    totalValue: 0,
-    paymentMethod: "TT",
+    totalValue: null,
+    currency: null,
+    incoterms: null,
   },
 
-  // 7. Hợp đồng
   contract: {
-    number: "",
+    number: null,
     date: null,
-    expiryDate: null,
+    type: null,
   },
 
-  // 8. Thuế (Xuất khẩu thường ít thuế hơn nhập khẩu)
-  tax: {
-    payer: "1", // 1: Người xuất khẩu
+  transport: {
+    portOfLoading: null,
+    portOfDischarge: null,
+    estimatedExportDate: null,
+    estimatedImportDate: null,
+    description: null,
   },
 
-  notes: "",
-  
-  // 9. Danh sách hàng
+  containers: [],
   goods: [],
 };
 
-// Cấu trúc một dòng hàng xuất khẩu
-export const GOODS_EXPORT_DEFAULT = {
-  id: null,
-  index: 0,
-  description: "",
-  hsCode: "",
-  origin: "VN", // Mặc định hàng xuất xứ Việt Nam
-  quantity: 0,
-  unit: "PCE",
-  unitPrice: 0,
-  totalValue: 0,
-  
-  // Thuế xuất khẩu
-  exportDuty: {
-    rate: 0,
-    amount: 0,
+export const formatEDAGen1 = (form) => ({
+  loai_to_khai: "EDA",
+  phan_loai: "EDA",
+  ma_cuc_hai_quan: form.customsOffice ?? null,
+  ngay_khai_bao: toISO(form.regDate),
+  id_cong_ty: form.exporter?.companyId ?? null,
+});
+
+export const formatEDAGen2 = (form) => ({
+  invoice: {
+    number: form.invoice?.number,
+    date: toISO(form.invoice?.date),
+    totalValue: form.invoice?.totalValue,
+    currency: form.invoice?.currency,
+    incoterms: form.invoice?.incoterms,
   },
-};
+
+  contract: {
+    number: form.contract?.number,
+    date: toISO(form.contract?.date),
+    type: form.contract?.type,
+  },
+
+  transport: {
+    portOfLoading: form.transport?.portOfLoading,
+    portOfDischarge: form.transport?.portOfDischarge,
+    estimatedExportDate: toISO(form.transport?.estimatedExportDate),
+    estimatedImportDate: toISO(form.transport?.estimatedImportDate),
+    description: form.transport?.description,
+  },
+
+  containers: form.containers || [],
+  goods: formatEDAGoods(form.goods || []),
+});
+
+export const formatEDAGoods = (goods = []) =>
+  goods.map((g, index) => ({
+    so_dong: index + 1,
+    ma_hs: g.hsCode,
+    mo_ta_hang_hoa: g.description,
+    so_luong: g.quantity,
+    don_gia: g.unitPrice,
+    tong_gia_tri: g.totalValue,
+    ma_quoc_gia: g.origin,
+  }));

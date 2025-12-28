@@ -39,5 +39,5 @@ router.use('/vai_tros', require('./vai_tro.route'));
 router.use('/van_ban_giay_pheps', require('./van_ban_giay_phep.route'));
 router.use('/van_dons', require('./van_don.route'));
 router.use('/vat_lieu_hop_dongs', require('./vat_lieu_hop_dong.route'));
-
+router.use('/eda', require ('./eda.routes'))
 module.exports = router;
