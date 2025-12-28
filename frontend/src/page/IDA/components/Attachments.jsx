@@ -1,5 +1,6 @@
 import { Button, Space } from "antd";
 import { FiUpload } from "react-icons/fi";
+import '../css/IDA.css';
 
 export default function Attachments() {
   return (

@@ -50,16 +50,21 @@ const insert = (data) => {
     data: {
       loai_doi_tuong: data.loai_doi_tuong,
       id_doi_tuong: data.id_doi_tuong,
+      id_to_khai: data.id_to_khai ?? null,
+
+      phan_loai_khai_bao: data.phan_loai_khai_bao,
       loai_tai_lieu: data.loai_tai_lieu,
+
       ten_file: data.ten_file,
       duong_dan: data.duong_dan,
       kich_thuoc: data.kich_thuoc,
       loai_mime: data.loai_mime,
+
       nguoi_tai_len: data.nguoi_tai_len,
       ngay_tai_len: new Date(),
-      id_to_khai: data.id_to_khai,
+
       ghi_chu: data.ghi_chu ?? null,
-      trang_thai_gui: "CHUA_GUI",
+      trang_thai_gui: data.trang_thai_gui || "NHAP",
     },
   });
 };

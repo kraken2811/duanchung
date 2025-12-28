@@ -1,130 +1,118 @@
-const IDE = require("../models/to_khai_idc.model");
+const IDE = require("../models/to_khai_ide.model");
 
 /**
- * 🔍 Tìm tờ khai để hủy (IDE)
- * GET /api/to_khai_ides/search/:so_to_khai
+ * GET /huy-to-khai/:so_to_khai
+ * Load dữ liệu màn hình IDE
  */
-exports.searchTokhaiIDE = async (req, res) => {
+exports.getIDEDetail = async (req, res) => {
   try {
     const { so_to_khai } = req.params;
-    if (!so_to_khai) {
-      return res.status(400).json({ message: "Số tờ khai là bắt buộc" });
-    }
 
-    const tk = await IDE.findTokhaiBySoToKhai(so_to_khai);
-
+    const tk = await IDE.getIDEDetail(so_to_khai);
     if (!tk) {
-      return res.status(404).json({ message: "Không tìm thấy tờ khai" });
-    }
-
-    if (tk.trang_thai_gui === "DA_THONG_QUAN") {
-      return res.status(400).json({
-        message: "Tờ khai đã thông quan, không được hủy",
+      return res.status(404).json({
+        message: "Không tìm thấy tờ khai",
       });
     }
 
-    if (tk.trang_thai_gui === "HUY") {
-      return res.status(400).json({
-        message: "Tờ khai đã bị hủy trước đó",
-      });
-    }
+    res.json({
+      to_khai: {
+        id_to_khai: tk.id_to_khai,
+        so_to_khai: tk.so_to_khai,
+        ngay_dang_ky: tk.ngay_khai_bao,
+        ma_hai_quan: tk.ma_cuc_hai_quan,
+        loai_hinh: tk.loai_hinh_dac_biet?.ten_loai_hinh,
+        bo_phan_xu_ly: tk.phan_loai,
+        trang_thai: tk.trang_thai_gui,
+      },
 
-    res.json(tk);
+      ide_form: tk.sua_doi?.[0] || null,
+      ho_so_dinh_kem: tk.taiLieus || [],
+      lich_su: tk.lich_su_trang_thai || [],
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("getIDEDetail error:", err);
+    res.status(500).json({
+      message: "Lỗi server",
+    });
   }
 };
 
 /**
- * 📤 Gửi yêu cầu hủy tờ khai (IDE)
- * POST /api/to_khai_ides/gui
+ * POST /huy-to-khai
+ * Tạo yêu cầu hủy (IDE – nháp)
+ */
+exports.createIDE = async (req, res) => {
+  try {
+    const {
+      id_to_khai,
+      ly_do_sua,
+      ma_ly_do_huy,
+      ngay_yeu_cau,
+    } = req.body;
+
+    if (!id_to_khai || !ly_do_sua || !ma_ly_do_huy) {
+      return res.status(400).json({
+        message: "Thiếu dữ liệu bắt buộc",
+      });
+    }
+
+    const ide = await IDE.createIDE({
+      id_to_khai,
+      ly_do_sua,
+      ma_ly_do_huy,
+      ngay_yeu_cau,
+    });
+
+    res.status(201).json(ide);
+  } catch (err) {
+    console.error("createIDE error:", err);
+    res.status(500).json({
+      message: "Không thể tạo yêu cầu hủy",
+    });
+  }
+};
+
+/**
+ * POST /huy-to-khai/gui/:id_sua_doi
+ * Khai báo hủy (IDE)
  */
 exports.guiIDE = async (req, res) => {
   try {
-    const { id_to_khai, ma_ly_do_huy, ghi_chu } = req.body;
-    const userId = req.user?.id || null;
+    const { id_sua_doi } = req.params;
 
-    if (!id_to_khai || !ghi_chu) {
-      return res.status(400).json({
-        message: "ID tờ khai và lý do hủy là bắt buộc",
-      });
-    }
+    // IDE là nghiệp vụ nội bộ → cho phép null
+    const id_nguoi_dung = req.user?.id_nguoi_dung ?? null;
 
-    const tk = await IDE.findToKhaiById(Number(id_to_khai));
-    if (!tk) {
-      return res.status(404).json({ message: "Không tìm thấy tờ khai" });
-    }
+    const result = await IDE.guiIDE(
+      Number(id_sua_doi),
+      id_nguoi_dung
+    );
 
-    // Ghi lịch sử trạng thái IDE
-    await IDE.createLichSuTrangThai({
-      id_to_khai: tk.id_to_khai,
-      trang_thai_cu: tk.trang_thai_gui,
-      trang_thai_moi: "YEU_CAU_HUY",
-      ghi_chu: `[${ma_ly_do_huy || "N/A"}] ${ghi_chu}`,
-      nguoi_thay_doi: userId,
-    });
-
-    res.json({
-      message: "Đã gửi yêu cầu hủy tờ khai (IDE)",
-    });
+    res.json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("guiIDE error:", err);
+    res.status(400).json({
+      message: err.message || "Không thể hủy tờ khai",
+    });
   }
 };
 
 /**
- * 📨 Hải quan phản hồi yêu cầu hủy (IDE)
- * POST /api/to_khai_ides/phan-hoi
+ * GET /to_khai_ides/list
+ * API cho dropdown chọn số tờ khai
  */
-exports.phanHoiHaiQuanIDE = async (req, res) => {
+exports.getIDEList = async (req, res) => {
   try {
-    const { id_to_khai, ket_qua, noi_dung } = req.body;
+    const { q } = req.query; // keyword search
 
-    if (!id_to_khai || !ket_qua) {
-      return res.status(400).json({
-        message: "Thiếu ID tờ khai hoặc kết quả phản hồi",
-      });
-    }
+    const list = await IDE.getIDEList(q);
 
-    const tk = await IDE.findToKhaiById(Number(id_to_khai));
-    if (!tk) {
-      return res.status(404).json({ message: "Không tìm thấy tờ khai" });
-    }
-
-    // Lưu phản hồi HQ
-    await IDE.createPhanHoiHaiQuan({
-      id_to_khai: tk.id_to_khai,
-      loai_thong_diep: "IDE",
-      noi_dung_thong_diep: noi_dung || "",
-    });
-
-    // Nếu chấp nhận → hủy tờ khai
-    if (ket_qua === "CHAP_NHAN") {
-      await IDE.createLichSuTrangThai({
-        id_to_khai: tk.id_to_khai,
-        trang_thai_cu: "YEU_CAU_HUY",
-        trang_thai_moi: "HUY",
-        ghi_chu: noi_dung || "Hải quan chấp nhận hủy",
-      });
-
-      await require("../middleware/to_khai_ide.helper").updateTrangThaiToKhai(
-        tk.id_to_khai,
-        "HUY"
-      );
-    } else {
-      await IDE.createLichSuTrangThai({
-        id_to_khai: tk.id_to_khai,
-        trang_thai_cu: "YEU_CAU_HUY",
-        trang_thai_moi: "TU_CHOI_HUY",
-        ghi_chu: noi_dung || "Hải quan từ chối hủy",
-      });
-    }
-
-    res.json({ message: "Đã xử lý phản hồi IDE" });
+    res.json(list);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("getIDEList error:", err);
+    res.status(500).json({
+      message: "Không tải được danh sách tờ khai",
+    });
   }
-};
+}; 

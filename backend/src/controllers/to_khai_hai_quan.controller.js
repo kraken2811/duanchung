@@ -72,6 +72,79 @@ exports.remove = async (req, res) => {
   }
 };
 
+
+/* ================= GET BY ID ================= */
+exports.getById = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
+  try {
+    const data = await ToKhai.getById(id);
+    if (!data) return res.status(404).json({ message: "Không tìm thấy" });
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= CREATE ================= */
+exports.insert = async (req, res) => {
+  try {
+    const data = await ToKhai.insert(req.body);
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= UPDATE ================= */
+exports.update = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
+  try {
+    const data = await ToKhai.update(id, req.body);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= DELETE ================= */
+exports.remove = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: "id không hợp lệ" });
+  }
+
+  try {
+    await ToKhai.remove(id);
+    res.json({ message: "Đã huỷ tờ khai" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getStatus = async (_req, res) => {
+  try {
+    const data = await ToKhai.findTrangthai();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi khi lấy dang sách tờ khai hải quan",
+      error: error.message,
+    })
+  }
+}
+
 exports.getIDB = async (req, res) => {
   try {
     const ma = req.params.ma;

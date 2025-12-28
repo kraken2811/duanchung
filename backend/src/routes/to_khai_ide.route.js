@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const ideController = require("../controllers/to_khai_ide.controller");
+const controller = require("../controllers/to_khai_ide.controller");
 
-router.get("/search/:so_to_khai", ideController.searchTokhaiIDE);
-router.post("/gui", ideController.guiIDE);
-router.post("/phan-hoi", ideController.phanHoiHaiQuanIDE);
+router.get("/list", controller.getIDEList);
+router.get("/:so_to_khai", controller.getIDEDetail);
+router.post("/", controller.createIDE);
+router.post("/gui/:id_sua_doi", controller.guiIDE);
 
 module.exports = router;

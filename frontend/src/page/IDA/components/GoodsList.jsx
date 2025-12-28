@@ -17,7 +17,8 @@ import {
   createChiTietToKhai,
   deleteChiTietToKhai,
 } from "../api/chiTietToKhai.api";
-import { getMaHs } from "../api/chiTietToKhai.api"; // API lấy mã HS
+import { getMaHs } from "../api/chiTietToKhai.api"; 
+import '../css/IDA.css';
 
 const { TextArea } = Input;
 
@@ -122,6 +123,7 @@ export default function GoodsList({ idToKhai }) {
       <Button
         type="primary"
         icon={<FiPlus />}
+        className="textSibar"
         onClick={() => {
           if (!idToKhai) {
             message.warning("Vui lòng tạo tờ khai trước khi thêm hàng hóa");

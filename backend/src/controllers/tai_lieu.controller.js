@@ -74,29 +74,46 @@ exports.getByToKhai = async (req, res) => {
  * POST /tai-lieu/upload/:id_to_khai
  */
 exports.upload = async (req, res) => {
-  const id_to_khai = Number(req.params.id_to_khai);
-  const file = req.file;
-  const userId = req.user?.id;
-  const { loai_tai_lieu, ghi_chu } = req.body;
-
-  if (!Number.isInteger(id_to_khai)) {
-    return res.status(400).json({ message: "id_to_khai không hợp lệ" });
-  }
-
-  if (!file) {
-    return res.status(400).json({ message: "Chưa upload file" });
-  }
-
   try {
-    const data = {
-      loai_doi_tuong: "TO_KHAI_HAI_QUAN",
-      id_doi_tuong: id_to_khai,
+    const file = req.file;
+    const userId = req.user?.id_nguoi_dung;
+
+    const {
+      loai_doi_tuong,
+      id_doi_tuong,
+      phan_loai_khai_bao,
       loai_tai_lieu,
+      ghi_chu,
+    } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ message: "Chưa upload file" });
+    }
+
+    if (!loai_doi_tuong || !id_doi_tuong) {
+      return res.status(400).json({
+        message: "Thiếu loai_doi_tuong hoặc id_doi_tuong",
+      });
+    }
+
+    const data = {
+      loai_doi_tuong,
+      id_doi_tuong: Number(id_doi_tuong),
+
+      // map thêm cho tờ khai nếu cần
+      id_to_khai:
+        loai_doi_tuong === "TO_KHAI_HAI_QUAN"
+          ? Number(id_doi_tuong)
+          : null,
+
+      phan_loai_khai_bao,
+      loai_tai_lieu,
+
       ten_file: file.originalname,
       duong_dan: file.path,
       kich_thuoc: file.size,
       loai_mime: file.mimetype,
-      id_to_khai,
+
       nguoi_tai_len: userId,
       ghi_chu,
     };
@@ -108,6 +125,7 @@ exports.upload = async (req, res) => {
       data: created,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import {
   Row,
   Col,
@@ -32,7 +32,10 @@ import {
   appendixAPI,
   companyAPI,
   partnerAPI,
+  materialAPI, // Import API mới
+  productAPI,   // Import API mới
 } from "../api/contract.api";
+import "../css/contract.css";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -85,6 +88,13 @@ export default function ContractForm() {
   const [loadingPartners, setLoadingPartners] = useState(false);
   const [loadingContracts, setLoadingContracts] = useState(false);
 
+  // ✅ Thêm state cho việc in hóa đơn
+  const [isInvoiceModalVisible, setIsInvoiceModalVisible] = useState(false);
+  const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
+  const [filteredContracts, setFilteredContracts] = useState([]);
+  const [loadingInvoiceDetails, setLoadingInvoiceDetails] = useState(false);
+
   const { control, handleSubmit, reset, getValues } = useForm({
     defaultValues: {
       id_hop_dong: "",
@@ -116,6 +126,15 @@ export default function ContractForm() {
   // ✅ BƯỚC 2: LẤY currentUser — NHƯNG KHÔNG RETURN SỚM
   const currentUser = useMemo(() => getLoggedInUser(), []);
 
+  // ✅ Theo dõi đồng tiền hiện tại
+  const currencyCode = useWatch({ control, name: "ma_ngoai_te" }) || "USD";
+
+  // ✅ Tính tổng giá trị
+  const totalValue = useMemo(() => {
+    return materials.reduce((sum, m) => sum + (m.so_luong || 0) * (m.don_gia || 0), 0) +
+           products.reduce((sum, p) => sum + (p.so_luong || 0) * (p.don_gia || 0), 0);
+  }, [materials, products]);
+
   // ✅ BƯỚC 3: useEffect redirect — nhưng KHÔNG DÙNG useState trong điều kiện
   useEffect(() => {
     if (!currentUser) {
@@ -144,6 +163,7 @@ export default function ContractForm() {
         setCompanies(compRes.data || []);
         setPartners(partRes.data || []);
         setContracts(contractRes.data || []);
+        setFilteredContracts(contractRes.data || []); // Initialize filtered contracts
       } catch (err) {
         notification.error({
           message: "Lỗi tải dữ liệu",
@@ -158,7 +178,74 @@ export default function ContractForm() {
     fetchLookups();
   }, [currentUser]);
 
-  // ✅ BƯỚC 5: Nếu chưa đăng nhập → render loading đơn giản (KHÔNG GỌI HOOK SAU ĐIỀU KIỆN)
+  // ✅ Hàm xử lý tìm kiếm hóa đơn
+  const handleSearchInvoice = (value) => {
+    if (!value) {
+      setFilteredContracts(contracts);
+    } else {
+      const filtered = contracts.filter(
+        (contract) =>
+          contract.so_hop_dong.toLowerCase().includes(value.toLowerCase()) ||
+          contract.id_hop_dong.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredContracts(filtered);
+    }
+  };
+
+  // ✅ Hàm xử lý chọn hóa đơn
+  const handleSelectInvoice = async (contractId) => {
+    setLoadingInvoiceDetails(true);
+    try {
+      // Gọi API để lấy chi tiết hợp đồng theo id_hop_dong
+      const [contractRes, materialsRes, productsRes] = await Promise.all([
+        contractAPI.getById(contractId),
+        materialAPI.getByContractId(contractId),
+        productAPI.getByContractId(contractId),
+      ]);
+
+      // Kết hợp dữ liệu từ các API
+      const contractDetail = {
+        ...contractRes.data,
+        vat_lieus: materialsRes.data || [],
+        san_phams: productsRes.data || [],
+      };
+
+      setSelectedContract(contractDetail);
+      setIsInvoiceModalVisible(false);
+      setIsPrintModalVisible(true);
+    } catch (err) {
+      notification.error({
+        message: "Lỗi tải chi tiết hóa đơn",
+        description: "Không thể tải chi tiết hợp đồng hoặc danh sách vật liệu/sản phẩm. Vui lòng thử lại.",
+      });
+    } finally {
+      setLoadingInvoiceDetails(false);
+    }
+  };
+
+  // ✅ Hàm xử lý in hóa đơn
+  const handlePrintInvoice = () => {
+    if (!selectedContract) {
+      notification.warning({
+        message: "Chưa chọn hóa đơn",
+        description: "Vui lòng chọn một hóa đơn để in.",
+      });
+      return;
+    }
+    setIsPrintModalVisible(true);
+  };
+
+  // ✅ Hàm xử lý in
+  const printInvoice = () => {
+    const printContent = document.getElementById('printable-invoice-content');
+    const originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContent.innerHTML;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload(); // Quay lại trạng thái ban đầu
+  };
+
+  // ✅ PHẦN CÒN LẠI: currentUser ĐÃ TỒN TẠI → DÙNG TỰ DO
   if (!currentUser) {
     return (
       <div style={{ padding: 24, textAlign: "center" }}>
@@ -167,7 +254,6 @@ export default function ContractForm() {
     );
   }
 
-  // ✅ PHẦN CÒN LẠI: currentUser ĐÃ TỒN TẠI → DÙNG TỰ DO
   const handleModeChange = (newMode) => {
     if (newMode === mode) return;
 
@@ -251,10 +337,10 @@ export default function ContractForm() {
     { title: "Tên vật liệu", dataIndex: "ten_vat_lieu", width: 250, render: (v, r) => renderTableInput(v, r, "ten_vat_lieu", setMaterials, materials) },
     { title: "ĐVT", width: 100, align: "center", dataIndex: "don_vi_tinh", render: (v, r) => renderTableInput(v, r, "don_vi_tinh", setMaterials, materials) },
     { title: "Mã HS", width: 130, dataIndex: "ma_hs", render: (v, r) => renderTableInput(v, r, "ma_hs", setMaterials, materials) },
-    { title: "Số lượng", width: 130, align: "right", dataIndex: "so_luong", render: (v, r) => renderTableNumber(v, r, "so_luong", setMaterials, materials) },
+    { title: "Số lượng", width: 130, align: "left", dataIndex: "so_luong", render: (v, r) => renderTableNumber(v, r, "so_luong", setMaterials, materials) },
     { title: "Nguồn gốc", width: 150, dataIndex: "nguon_goc", render: (v, r) => renderTableInput(v, r, "nguon_goc", setMaterials, materials) },
-    { title: "Đơn giá", width: 140, align: "right", dataIndex: "don_gia", render: (v, r) => renderTableNumber(v, r, "don_gia", setMaterials, materials) },
-    { title: "Thành tiền", width: 150, align: "right", render: (_, r) => ((r.so_luong || 0) * (r.don_gia || 0)).toLocaleString("vi-VN") },
+    { title: "Đơn giá", width: 140, align: "left", dataIndex: "don_gia", render: (v, r) => renderTableNumber(v, r, "don_gia", setMaterials, materials) },
+    { title: "Thành tiền", width: 150, align: "left", render: (_, r) => ((r.so_luong || 0) * (r.don_gia || 0)).toLocaleString("vi-VN") },
     { title: "Tác vụ", width: 80, align: "center", render: (_, r) => <FiTrash2 className="text-red-500 cursor-pointer hover:text-red-700" onClick={() => removeItem(r.key, "material")} /> },
   ];
 
@@ -264,9 +350,9 @@ export default function ContractForm() {
     { title: "Tên sản phẩm", dataIndex: "ten_san_pham", render: (v, r) => renderTableInput(v, r, "ten_san_pham", setProducts, products) },
     { title: "ĐVT", width: 100, dataIndex: "don_vi_tinh", render: (v, r) => renderTableInput(v, r, "don_vi_tinh", setProducts, products) },
     { title: "Mã HS", width: 120, dataIndex: "ma_hs", render: (v, r) => renderTableInput(v, r, "ma_hs", setProducts, products) },
-    { title: "Số lượng", width: 120, align: "right", dataIndex: "so_luong", render: (v, r) => renderTableNumber(v, r, "so_luong", setProducts, products) },
-    { title: "Đơn giá", width: 140, align: "right", dataIndex: "don_gia", render: (v, r) => renderTableNumber(v, r, "don_gia", setProducts, products) },
-    { title: "Thành tiền", width: 140, align: "right", render: (_, r) => ((r.so_luong || 0) * (r.don_gia || 0)).toLocaleString() },
+    { title: "Số lượng", width: 120, align: "left", dataIndex: "so_luong", render: (v, r) => renderTableNumber(v, r, "so_luong", setProducts, products) },
+    { title: "Đơn giá", width: 140, align: "left", dataIndex: "don_gia", render: (v, r) => renderTableNumber(v, r, "don_gia", setProducts, products) },
+    { title: "Thành tiền", width: 140, align: "left", render: (_, r) => ((r.so_luong || 0) * (r.don_gia || 0)).toLocaleString() },
     { title: "Tác vụ", width: 80, align: "center", render: (_, r) => <FiTrash2 className="text-red-500 cursor-pointer" onClick={() => removeItem(r.key, "product")} /> },
   ];
 
@@ -319,9 +405,6 @@ export default function ContractForm() {
   };
 
   const renderContractFields = () => {
-    const totalValue = materials.reduce((sum, m) => sum + (m.so_luong || 0) * (m.don_gia || 0), 0) +
-                      products.reduce((sum, p) => sum + (p.so_luong || 0) * (p.don_gia || 0), 0);
-
     return (
       <Card title="Thông tin hợp đồng" size="small">
         <Row gutter={[16, 24]}>
@@ -397,11 +480,30 @@ export default function ContractForm() {
           </Col>
           <Col span={6}>
             <label>Đồng tiền</label>
-            <Controller name="ma_ngoai_te" control={control} render={({ field }) => (<Select {...field} style={{ width: "100%" }}><Option value="USD">USD</Option><Option value="VND">VND</Option><Option value="EUR">EUR</Option></Select>)} />
+            <Controller name="ma_ngoai_te" control={control} render={({ field }) => (
+              <Select {...field} style={{ width: "100%" }}>
+                <Option value="USD">USD (Đô la Mỹ)</Option>
+                <Option value="VND">VND (Việt Nam Đồng)</Option>
+                <Option value="EUR">EUR (Euro)</Option>
+                <Option value="GBP">GBP (Bảng Anh)</Option>
+                <Option value="JPY">JPY (Yên Nhật)</Option>
+                <Option value="KRW">KRW (Won Hàn Quốc)</Option>
+                <Option value="CNY">CNY (Nhân dân tệ Trung Quốc)</Option>
+                <Option value="AUD">AUD (Đô la Úc)</Option>
+              </Select>
+            )} />
           </Col>
           <Col span={6}><label>Điều kiện thanh toán</label><Controller name="dieu_kien_thanh_toan" control={control} render={({ field }) => <Input {...field} />} /></Col>
           <Col span={6}><label>Phí gia công</label><Controller name="phi_gia_cong" control={control} render={({ field }) => <InputNumber {...field} style={{ width: "100%" }} min={0} />} /></Col>
-          <Col span={6}><label>Tổng giá trị (Tạm tính)</label><Input value={totalValue.toLocaleString()} readOnly style={{ background: "#f5f5f5", fontWeight: "bold", color: "#1677ff" }} addonAfter={getValues("ma_ngoai_te")} /></Col>
+          <Col span={6}>
+            <label>Tổng giá trị (Tạm tính)</label>
+            <Input 
+              value={totalValue.toLocaleString()} 
+              readOnly 
+              style={{ background: "#f5f5f5", fontWeight: "bold", color: "#1677ff" }} 
+              addonAfter={currencyCode} 
+            />
+          </Col>
           <Col span={6}><label>Ngày ký</label><Controller name="ngay_ky" control={control} render={({ field }) => <DatePicker {...field} style={{ width: "100%" }} format="DD/MM/YYYY" />} /></Col>
           <Col span={6}><label>Ngày hết hạn</label><Controller name="ngay_het_han" control={control} render={({ field }) => <DatePicker {...field} style={{ width: "100%" }} format="DD/MM/YYYY" />} /></Col>
           <Col span={6}><label>Hiệu lực từ</label><Controller name="hieu_luc_tu" control={control} render={({ field }) => <DatePicker {...field} style={{ width: "100%" }} format="DD/MM/YYYY" />} /></Col>
@@ -409,8 +511,17 @@ export default function ContractForm() {
         </Row>
         <Divider orientation="left" style={{ fontSize: 12, color: '#999' }}>Thông tin hệ thống</Divider>
         <Row gutter={16}>
-          <Col span={8}><label style={{ color: '#888' }}>Người tạo:</label> <span style={{ marginLeft: 8, fontWeight: 500 }}>{currentUser.name}</span></Col>
-          <Col span={8}><label style={{ color: '#888' }}>Ngày tạo:</label> <span style={{ marginLeft: 8 }}>{dayjs().format('DD/MM/YYYY HH:mm')} (Tự động)</span></Col>
+          {/* ✅ SỬA: Hiển thị cả id và tên người tạo */}
+          <Col span={8}>
+            <label style={{ color: '#888' }}>Người tạo:</label> 
+            <span style={{ marginLeft: 8, fontWeight: 500 }}>
+              {currentUser.name} (ID: {currentUser.id})
+            </span>
+          </Col>
+          <Col span={8}>
+            <label style={{ color: '#888' }}>Ngày tạo:</label> 
+            <span style={{ marginLeft: 8 }}>{dayjs().format('DD/MM/YYYY HH:mm')}</span>
+          </Col>
         </Row>
         {renderDetailsTabs()}
       </Card>
@@ -473,6 +584,21 @@ export default function ContractForm() {
     </Card>
   );
 
+  // ✅ Hàm xử lý in hóa đơn
+  const handleOpenInvoiceModal = () => {
+    setIsInvoiceModalVisible(true);
+  };
+
+  const invoiceColumns = [
+    { title: "ID Hợp đồng", dataIndex: "id_hop_dong", width: 150 },
+    { title: "Số hợp đồng", dataIndex: "so_hop_dong", width: 200 },
+    { title: "Loại hợp đồng", dataIndex: "loai_hop_dong", width: 150 },
+    { title: "Công ty", width: 200, render: (text, record) => companies.find(c => c.id_cong_ty === record.id_cong_ty)?.ten_cong_ty },
+    { title: "Đối tác", width: 200, render: (text, record) => partners.find(p => p.id_doi_tac === record.id_doi_tac)?.ten_doi_tac },
+    { title: "Ngày ký", dataIndex: "ngay_ky", width: 120, render: (text) => text ? dayjs(text).format('DD/MM/YYYY') : '' },
+    { title: "Tổng giá trị", width: 150, render: (text, record) => (record.tong_gia_tri || 0).toLocaleString() }, // ✅ SỬA: Hiển thị tong_gia_tri
+  ];
+
   const onSaveContract = async (formData) => {
     try {
       const payload = {
@@ -516,6 +642,7 @@ export default function ContractForm() {
         description: `Đã tạo mới hợp đồng ${formData.so_hop_dong} thành công!`,
       });
 
+      // ✅ RESET FORM
       reset({
         id_hop_dong: "",
         so_hop_dong: "",
@@ -527,6 +654,18 @@ export default function ContractForm() {
       });
       setMaterials([]);
       setProducts([]);
+
+      // ✅ 🟢 QUAN TRỌNG: Tải lại danh sách hợp đồng để cập nhật trong phụ lục
+      try {
+        const contractRes = await contractAPI.getAll();
+        const newContracts = contractRes.data || [];
+        setContracts(newContracts);
+        setFilteredContracts(newContracts); // Cập nhật cả danh sách lọc
+      } catch (err) {
+        console.warn("Không thể tải lại danh sách hợp đồng sau khi tạo:", err);
+        // Không cần thông báo lỗi vì không ảnh hưởng chính, chỉ thiếu cập nhật UI
+      }
+
     } catch (err) {
       let errorMessage = "Lỗi không xác định";
       if (err?.response?.data) {
@@ -555,7 +694,7 @@ export default function ContractForm() {
         mo_ta: formData.mo_ta || "",
         loai_thay_doi: selectedAccessoryTypes.map(t => t.code),
         trang_thai: "NHAP",
-        nguoi_tao: currentUser.id,
+        nguoi_tao: currentUser.id, // ✅ SỬA: Dùng id từ currentUser (chính là id_nguoi_dung)
         ngay_tao: new Date().toISOString(),
       };
 
@@ -606,7 +745,16 @@ export default function ContractForm() {
     }
   };
 
-  const handleSaveContract = () => {
+  const handleSaveContract = async () => {
+    const formData = getValues();
+    // Nếu chưa có ID hệ thống, không cho in
+    if (!formData.id_hop_dong) {
+      notification.warning({
+        message: "Thiếu thông tin",
+        description: "Vui lòng nhập ID Hợp đồng trước khi lưu.",
+      });
+      return;
+    }
     handleSubmit(onSaveContract)();
   };
 
@@ -620,18 +768,19 @@ export default function ContractForm() {
       <div style={{ background: "#fff", padding: "12px 16px", borderBottom: "1px solid #d9d9d9" }}>
         <Space>
           {mode === "contract" && (
-            <Button type="primary" icon={<FiSave />} onClick={handleSaveContract}>
+            <Button className="contract-save-btn-sidebar" type="primary" icon={<FiSave />} onClick={handleSaveContract}>
               Ghi lại Hợp đồng
             </Button>
           )}
           {mode === "accessory" && (
-            <Button type="primary" icon={<FiSave />} onClick={handleSaveAppendix}>
+            <Button className="contract-save-btn-sidebar" type="primary" icon={<FiSave />} onClick={handleSaveAppendix}>
               Ghi lại Phụ lục
             </Button>
           )}
-          <Button icon={<FiUpload />}>Nhập Excel</Button>
-          <Button icon={<FiPrinter />}>In</Button>
-          <Button icon={<FiFileText />}>Khai báo</Button>
+          {/* ✅ Thêm nút in hóa đơn */}
+          <Button className="contract-btn-sidebar" icon={<FiPrinter />} onClick={handleOpenInvoiceModal}>
+            In Hóa đơn
+          </Button>
         </Space>
       </div>
 
@@ -663,6 +812,114 @@ export default function ContractForm() {
           }}
           columns={[{ title: "Mã", dataIndex: "code", width: 100 }, { title: "Nội dung", dataIndex: "content" }]}
         />
+      </Modal>
+
+      {/* ✅ Modal chọn hóa đơn */}
+      <Modal
+        title="Chọn hóa đơn để in"
+        open={isInvoiceModalVisible}
+        onCancel={() => setIsInvoiceModalVisible(false)}
+        width={1000}
+        footer={null}
+      >
+        <Input
+          placeholder="Tìm kiếm theo ID hoặc số hợp đồng..."
+          onChange={(e) => handleSearchInvoice(e.target.value)}
+          style={{ marginBottom: 16 }}
+        />
+        <Table
+          dataSource={filteredContracts}
+          columns={invoiceColumns}
+          rowKey="id_hop_dong"
+          pagination={{ pageSize: 8 }}
+          loading={loadingContracts}
+          onRow={(record) => ({
+            onClick: () => handleSelectInvoice(record.id_hop_dong),
+            style: { cursor: 'pointer' }
+          })}
+        />
+      </Modal>
+
+      {/* ✅ Modal xem trước hóa đơn */}
+      <Modal
+        title="Xem trước hóa đơn"
+        open={isPrintModalVisible}
+        onOk={printInvoice}
+        onCancel={() => setIsPrintModalVisible(false)}
+        okText="In"
+        cancelText="Đóng"
+        width={1000}
+        loading={loadingInvoiceDetails}
+      >
+        {selectedContract && (
+          <div id="printable-invoice-content" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+            <h1 style={{ textAlign: 'center', textDecoration: 'underline' }}>HÓA ĐƠN HỢP ĐỒNG</h1>
+            
+            {/* Thông tin chung chia 2 cột */}
+            <Row gutter={16}>
+              <Col span={12}>
+                <p><strong>ID Hợp đồng:</strong> {selectedContract.id_hop_dong}</p>
+                <p><strong>Số hợp đồng:</strong> {selectedContract.so_hop_dong}</p>
+                <p><strong>Loại hợp đồng:</strong> {selectedContract.loai_hop_dong}</p>
+                <p><strong>Ngày ký:</strong> {selectedContract.ngay_ky ? dayjs(selectedContract.ngay_ky).format('DD/MM/YYYY') : ''}</p>
+                <p><strong>Hiệu lực từ:</strong> {selectedContract.hieu_luc_tu ? dayjs(selectedContract.hieu_luc_tu).format('DD/MM/YYYY') : ''}</p>
+                <p><strong>Hiệu lực đến:</strong> {selectedContract.hieu_luc_den ? dayjs(selectedContract.hieu_luc_den).format('DD/MM/YYYY') : ''}</p>
+              </Col>
+              <Col span={12}>
+                <p><strong>Đồng tiền:</strong> {selectedContract.ma_ngoai_te}</p>
+                <p><strong>Điều kiện thanh toán:</strong> {selectedContract.dieu_kien_thanh_toan}</p>
+                <p><strong>Phí gia công:</strong> {(selectedContract.phi_gia_cong || 0).toLocaleString()}</p>
+                <p><strong>Tổng giá trị:</strong> {(selectedContract.tong_gia_tri || 0).toLocaleString()}</p> {/* ✅ HIỂN THỊ TỔNG GIÁ TRỊ */}
+                <p><strong>Công ty:</strong> {companies.find(c => c.id_cong_ty === selectedContract.id_cong_ty)?.ten_cong_ty}</p>
+                <p><strong>Đối tác:</strong> {partners.find(p => p.id_doi_tac === selectedContract.id_doi_tac)?.ten_doi_tac}</p>
+                <p><strong>Mã cục hải quan:</strong> {selectedContract.ma_cuc_hai_quan}</p>
+              </Col>
+            </Row>
+            
+            <Divider orientation="left">Nguyên phụ liệu</Divider>
+            <Table 
+              dataSource={selectedContract.vat_lieus || []} 
+              columns={[
+                { title: 'Mã', dataIndex: 'ma_vat_lieu' },
+                { title: 'Tên', dataIndex: 'ten_vat_lieu' },
+                { title: 'ĐVT', dataIndex: 'don_vi_tinh' },
+                { title: 'Mã HS', dataIndex: 'ma_hs' },
+                { title: 'Số lượng', dataIndex: 'so_luong' },
+                { title: 'Đơn giá', dataIndex: 'don_gia' },
+                { title: 'Thành tiền', render: (_, r) => (r.so_luong * r.don_gia).toLocaleString() },
+              ]}
+              pagination={false}
+              size="small"
+            />
+
+            <Divider orientation="left">Sản phẩm</Divider>
+            <Table 
+              dataSource={selectedContract.san_phams || []} 
+              columns={[
+                { title: 'Mã', dataIndex: 'ma_san_pham' },
+                { title: 'Tên', dataIndex: 'ten_san_pham' },
+                { title: 'ĐVT', dataIndex: 'don_vi_tinh' },
+                { title: 'Mã HS', dataIndex: 'ma_hs' },
+                { title: 'Số lượng', dataIndex: 'so_luong' },
+                { title: 'Đơn giá', dataIndex: 'don_gia' },
+                { title: 'Thành tiền', render: (_, r) => (r.so_luong * r.don_gia).toLocaleString() },
+              ]}
+              pagination={false}
+              size="small"
+            />
+
+            <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p><strong>Bên Công ty</strong></p>
+                <p>(Ký tên, đóng dấu)</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p><strong>Bên Đối tác</strong></p>
+                <p>(Ký tên, đóng dấu)</p>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
